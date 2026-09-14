@@ -22,6 +22,63 @@ class ObjectPerception:
     visible: NDArray[np.bool_]
 
 
+def summarize_perception(
+    results: Mapping[str, ObjectPerception],
+) -> dict[str, object]:
+    """Compute annotation-free diagnostics without claiming ground-truth accuracy."""
+    objects: dict[str, dict[str, float]] = {}
+    for name, result in results.items():
+        masks = np.asarray(result.masks, dtype=bool)
+        tracks = np.asarray(result.tracks_xy)
+        visible = np.asarray(result.visible, dtype=bool)
+        if masks.ndim != 3 or tracks.ndim != 3 or visible.shape != tracks.shape[:2]:
+            raise ValueError(f"Invalid perception arrays for {name!r}")
+        if len(masks) != len(tracks):
+            raise ValueError(f"Mask and track frame counts differ for {name!r}")
+
+        areas = masks.mean(axis=(1, 2))
+        adjacent_ious = []
+        for previous, current in zip(masks[:-1], masks[1:], strict=True):
+            union = np.logical_or(previous, current).sum()
+            adjacent_ious.append(
+                float(np.logical_and(previous, current).sum() / union) if union else 1.0
+            )
+
+        height, width = masks.shape[1:]
+        rounded = np.rint(tracks).astype(np.int64)
+        in_bounds = (
+            (rounded[..., 0] >= 0)
+            & (rounded[..., 0] < width)
+            & (rounded[..., 1] >= 0)
+            & (rounded[..., 1] < height)
+        )
+        eligible = visible & in_bounds
+        inside = np.zeros_like(eligible)
+        frame_ids, point_ids = np.nonzero(eligible)
+        inside[frame_ids, point_ids] = masks[
+            frame_ids,
+            rounded[frame_ids, point_ids, 1],
+            rounded[frame_ids, point_ids, 0],
+        ]
+        objects[name] = {
+            "mask_area_fraction_min": float(areas.min()),
+            "mask_area_fraction_max": float(areas.max()),
+            "mean_adjacent_mask_iou": float(np.mean(adjacent_ious))
+            if adjacent_ious
+            else 1.0,
+            "track_survival": float(visible.mean()),
+            "mean_visible_tracks": float(visible.sum(axis=1).mean()),
+            "mean_tracks_inside_mask": float(inside.sum() / eligible.sum())
+            if eligible.any()
+            else 0.0,
+        }
+    return {
+        "provisional": True,
+        "note": "No manual ground-truth masks yet; temporal diagnostics only.",
+        "objects": objects,
+    }
+
+
 def load_prompt_file(path: str | Path) -> dict[str, Sam2PointPrompt]:
     """Load named SAM2 point prompts from a small JSON configuration."""
     with Path(path).open(encoding="utf-8") as stream:
@@ -119,3 +176,63 @@ def save_perception_artifacts(
         np.savez_compressed(
             tracks_dir / f"{name}.npz", xy=result.tracks_xy, visible=result.visible
         )
+
+
+def save_perception_overlay(
+    frames: NDArray[np.uint8],
+    results: Mapping[str, ObjectPerception],
+    output_path: str | Path,
+    *,
+    fps: float,
+) -> None:
+    """Write an RGB mask-and-track overlay for fast visual identity review."""
+    try:
+        import cv2
+    except ImportError as exc:  # pragma: no cover - depends on optional extra
+        raise RuntimeError("Saving an overlay requires: uv sync --extra video") from exc
+    frames = np.asarray(frames, dtype=np.uint8)
+    if frames.ndim != 4 or frames.shape[-1] != 3 or fps <= 0:
+        raise ValueError("Frames must have shape [T,H,W,3] and fps must be positive")
+    palette = [(75, 220, 90), (70, 140, 255), (255, 100, 100), (220, 180, 60)]
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    height, width = frames.shape[1:3]
+    writer = cv2.VideoWriter(
+        str(output_path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height)
+    )
+    if not writer.isOpened():
+        raise OSError(f"Could not open video writer for {output_path}")
+    names = list(results)
+    try:
+        for frame_idx, rgb in enumerate(frames):
+            overlay = rgb.copy()
+            for color, (name, result) in zip(palette, results.items(), strict=False):
+                mask = result.masks[frame_idx]
+                overlay[mask] = (
+                    0.55 * overlay[mask] + 0.45 * np.asarray(color)
+                ).astype(np.uint8)
+                for (x, y), is_visible in zip(
+                    result.tracks_xy[frame_idx], result.visible[frame_idx], strict=True
+                ):
+                    if is_visible and 0 <= x < width and 0 <= y < height:
+                        cv2.circle(overlay, (round(float(x)), round(float(y))), 3, color, -1)
+                cv2.putText(
+                    overlay,
+                    name,
+                    (16, 30 + 28 * names.index(name)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    color,
+                    2,
+                    cv2.LINE_AA,
+                )
+            writer.write(cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
+    finally:
+        writer.release()
+
+
+def save_perception_report(report: Mapping[str, object], output_path: str | Path) -> None:
+    """Write a deterministic, machine-readable perception report."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

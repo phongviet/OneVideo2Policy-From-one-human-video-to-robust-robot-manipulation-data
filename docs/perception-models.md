@@ -32,14 +32,17 @@ The `weights/` directory is Git-ignored. Do not commit downloaded checkpoints.
 ## Adapter flow
 
 1. Supply positive and negative `(x, y)` prompts for each object on a selected
-   frame using `Sam2PointPrompt`.
+   frame using `Sam2PointPrompt`. Coordinates are original-image pixels; the
+   adapter asks SAM2 to normalize them to its internal image size.
 2. `Sam2VideoAdapter` propagates one binary mask per object over all video frames.
 3. `run_perception` samples unique, deterministic points inside each prompted
    mask using the configured seed.
 4. `CoTracker3Adapter` converts those points to upstream `(t, x, y)` queries and
    returns tracks shaped `[T, N, 2]` with visibility shaped `[T, N]`.
-5. `save_perception_artifacts` writes lossless PNG masks and compressed track files
-   under the repository's established artifact layout.
+5. `save_perception_artifacts` writes lossless PNG masks and compressed track files.
+6. The CLI also writes an inspection overlay and `gate-report.json`. The report is
+   deliberately provisional until its mask IoU is measured against independently
+   annotated ground-truth masks.
 
 The adapters validate all frame, mask, query, and output dimensions before saving
 results. They deliberately do not download weights or silently choose a device.
@@ -58,3 +61,8 @@ uv run ov2p run-perception data/interim/place_demo/manifest.json \
 
 The command intentionally fails early if the optional model packages, checkpoint,
 input frames, prompts, or upstream output dimensions are invalid.
+
+The temporary UniHand run was verified on CUDA. The first visual audit exposed an
+incorrect coordinate-normalization flag, which made SAM2 segment much of the table;
+the adapter now correctly treats configured prompts as original-image pixels. The
+corrected run keeps the cup and tray identities stable through the 35-frame clip.

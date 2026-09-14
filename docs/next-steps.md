@@ -88,9 +88,10 @@ protocols:
 5. Pin model revisions and installation instructions; do not vendor model weights.
 
 The deterministic mask-point sampler and model adapters required by steps 1–3 are
-implemented and covered by model-free contract tests. The next execution task is
-to install the pinned optional dependencies, provide frame-zero prompts, and run
-the adapters on a CUDA machine to produce the first real mask/track artifacts.
+implemented, covered by model-free contract tests, and verified in a real CUDA run.
+The temporary UniHand fixture now has masks, tracks, an inspection overlay, and a
+provisional gate report. The next task is independent manual annotation so that
+mask IoU can be measured without using the predictions as ground truth.
 
 Use a stable artifact contract:
 
@@ -160,10 +161,10 @@ Do not combine model integration, reconstruction, and policy training in one cha
 ## First action
 
 `data/raw/place_demo.mp4` is prepared from UniHand `2025-0723-07-35-56`. The
-highest-value code task is now adding manifest validation and a deterministic
-point-sampling utility; it is not installing the full robot-learning stack. Use
-the supplied depth frames for the fixed-camera baseline rather than attempting
-camera-motion reconstruction. See the [data audit](data-audits/unihand-2025-0723-07-35-56.md).
+highest-value task is now annotating the 30 evaluation frames and running the
+perception gate. Use the supplied depth frames for the fixed-camera baseline rather
+than attempting camera-motion reconstruction. See the
+[data audit](data-audits/unihand-2025-0723-07-35-56.md).
 
 The reviewed `subject_2-20231022_201316` capture was rejected and removed; it must not
 be used as `place_demo`. See its [`data audit`](data-audits/subject_2-20231022_201316.md).
