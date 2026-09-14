@@ -14,7 +14,8 @@ data/interim/*
 data/processed/*
 results/*
 experiments/runs/*
+weights/*
 !data/**/.gitkeep
 !results/.gitkeep
 !experiments/runs/.gitkeep
-
+!weights/.gitkeep

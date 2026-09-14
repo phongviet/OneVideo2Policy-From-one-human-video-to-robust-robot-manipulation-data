@@ -25,7 +25,11 @@ video:
 tracking:
   initial_selection: manual
   segmenter: sam2
+  sam2_model: facebook/sam2.1-hiera-small
+  sam2_code_revision: 2b90b9f5ceec907a1c18123530e92e794ad901a4
   point_tracker: cotracker3
+  cotracker3_checkpoint: weights/cotracker3/scaled_offline.pth
+  cotracker3_code_revision: 82e02e8029753ad4ef13cf06be7f4fc5facdda4d
   min_visible_points: 12
   evaluation_frames: 30
   weights:

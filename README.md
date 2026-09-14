@@ -216,6 +216,9 @@ onevideo2policy/
 └── tests/                    # Fast, model-free unit tests
 ```
 
+Optional SAM2 and CoTracker3 installation, pinned revisions, and adapter usage are
+documented in [`docs/perception-models.md`](docs/perception-models.md).
+
 ## Research gates
 
 The project uses explicit GO/NO-GO checks to prevent downstream ML from hiding an

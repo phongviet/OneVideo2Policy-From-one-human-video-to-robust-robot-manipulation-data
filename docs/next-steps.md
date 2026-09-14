@@ -87,8 +87,10 @@ protocols:
 4. Store tracks in compressed NumPy files with `xy` and `visible` arrays.
 5. Pin model revisions and installation instructions; do not vendor model weights.
 
-The deterministic mask-point sampler required by step 3 is implemented as
-`ov2p sample-points`; the SAM2 and CoTracker3 adapters remain the next code task.
+The deterministic mask-point sampler and model adapters required by steps 1–3 are
+implemented and covered by model-free contract tests. The next execution task is
+to install the pinned optional dependencies, provide frame-zero prompts, and run
+the adapters on a CUDA machine to produce the first real mask/track artifacts.
 
 Use a stable artifact contract:
 

@@ -16,5 +16,9 @@ class PointTracker(Protocol):
     """Adapter boundary for CoTracker3 or an equivalent point tracker."""
 
     def track(
-        self, frames: NDArray[np.uint8], query_points: NDArray[np.floating]
+        self,
+        frames: NDArray[np.uint8],
+        query_points: NDArray[np.floating],
+        *,
+        query_frame: int = 0,
     ) -> tuple[NDArray[np.floating], NDArray[np.bool_]]: ...
