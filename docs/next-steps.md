@@ -135,6 +135,11 @@ The retained HOI4D ball-to-bowl fixture has passed this intake check. Its config
 selection rationale and limitations are recorded in the
 [data audit](data-audits/hoi4d-ball-to-bowl.md).
 
+Its first formal perception run passes both mask-IoU thresholds but fails target
+track survival (0.758 vs 0.80). Reconstruction therefore remains blocked. The next
+single-variable experiment is windowed or periodic mask-guided CoTracker reseeding,
+with SAM2 masks, model revisions, data, and thresholds held fixed.
+
 Suggested output:
 
 ```text

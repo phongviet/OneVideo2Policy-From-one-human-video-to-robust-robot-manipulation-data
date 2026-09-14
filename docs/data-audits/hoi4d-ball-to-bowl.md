@@ -38,3 +38,11 @@ provided mask ground truth. It is not the final geometry/reconstruction benchmar
 it is egocentric RGB-only, has camera motion, and lacks retained depth. Keep the
 fixed-camera UniHand fixture for RGB-D adapter checks, and replace both with a
 longer recorded real Place demonstration before policy training.
+
+## Perception gate result
+
+The 2026-09-15 CUDA run produced mean mask IoU of 0.777 for the ball and 0.920 for
+the bowl. Ball track survival was 0.973; bowl track survival was 0.758. With the
+frozen 0.80 survival threshold, the formal gate result is **fail**, despite both
+segmentation metrics passing and no visual identity swap. See the experiment log
+for the controlled next action.
