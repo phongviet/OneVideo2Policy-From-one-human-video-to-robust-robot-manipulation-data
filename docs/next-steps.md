@@ -125,6 +125,11 @@ and gate logic are now implemented. Follow the
 [independent annotation guide](perception-annotation.md) to create the remaining 60
 human-drawn masks without exposing the annotator to SAM2 predictions.
 
+As an alternative evaluation fixture, the project can import HOI4D RGB-D sequences
+and retain their official motion masks as ground truth. Use this only after checking
+that both source and destination are separately labeled; see the
+[HOI4D integration guide](hoi4d-integration.md).
+
 Suggested output:
 
 ```text
