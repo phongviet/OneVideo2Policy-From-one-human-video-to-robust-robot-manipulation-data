@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+  <title id="title">OneVideo2Policy project media placeholder</title>
+  <desc id="desc">A visual pipeline from a human video through 3D reconstruction to diverse robot demonstrations.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081525"/>
+      <stop offset="1" stop-color="#123c54"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#59d6ff"/>
+      <stop offset="1" stop-color="#8af0b5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="440" rx="26" fill="url(#bg)"/>
+  <circle cx="1060" cy="70" r="180" fill="#39bde8" opacity=".08"/>
+  <circle cx="130" cy="410" r="210" fill="#70e4a1" opacity=".06"/>
+  <text x="600" y="62" fill="#eaf8ff" font-family="Inter,Segoe UI,sans-serif" font-size="23" font-weight="600" text-anchor="middle">ONE VIDEO → EDITABLE 3D DATA → ROBUST POLICY</text>
+  <g>
+    <rect x="55" y="108" width="280" height="240" rx="18" fill="#10283b" stroke="#397493"/>
+    <rect x="80" y="135" width="230" height="135" rx="9" fill="#09131d"/>
+    <polygon points="170,171 170,234 225,202" fill="#63d9ff"/>
+    <circle cx="114" cy="304" r="8" fill="#ffb86b"/>
+    <rect x="132" y="298" width="146" height="12" rx="6" fill="#31516a"/>
+    <text x="195" y="332" fill="#ccecff" font-family="Inter,Segoe UI,sans-serif" font-size="17" text-anchor="middle">Human demonstration</text>
+  </g>
+  <path d="M360 228H430" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M419 217L432 228 419 239" fill="none" stroke="#7ae9c1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g>
+    <rect x="460" y="108" width="280" height="240" rx="18" fill="#10283b" stroke="#397493"/>
+    <g fill="#67ddff" opacity=".85">
+      <circle cx="523" cy="177" r="7"/><circle cx="558" cy="151" r="5"/><circle cx="596" cy="183" r="8"/><circle cx="636" cy="155" r="6"/><circle cx="677" cy="188" r="5"/>
+      <circle cx="533" cy="222" r="5"/><circle cx="571" cy="239" r="8"/><circle cx="612" cy="211" r="6"/><circle cx="653" cy="238" r="7"/><circle cx="684" cy="218" r="6"/>
+    </g>
+    <path d="M525 258C560 215 632 290 681 246" fill="none" stroke="#82efb7" stroke-width="4" stroke-dasharray="8 8"/>
+    <text x="600" y="304" fill="#ccecff" font-family="Inter,Segoe UI,sans-serif" font-size="17" text-anchor="middle">Geometry + 6D motion</text>
+    <text x="600" y="329" fill="#769db4" font-family="Inter,Segoe UI,sans-serif" font-size="13" text-anchor="middle">CURRENT MILESTONE</text>
+  </g>
+  <path d="M765 228H835" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M824 217L837 228 824 239" fill="none" stroke="#7ae9c1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g>
+    <rect x="865" y="108" width="280" height="240" rx="18" fill="#10283b" stroke="#397493" stroke-dasharray="7 7"/>
+    <rect x="891" y="139" width="100" height="81" rx="7" fill="#274b62"/>
+    <rect x="1018" y="139" width="100" height="81" rx="7" fill="#315945"/>
+    <rect x="891" y="236" width="100" height="58" rx="7" fill="#51445d"/>
+    <rect x="1018" y="236" width="100" height="58" rx="7" fill="#5d4d35"/>
+    <path d="M933 193V165L947 153 961 165V193" fill="none" stroke="#8ee9ff" stroke-width="4"/>
+    <path d="M1060 193V165L1074 153 1088 165V193" fill="none" stroke="#9bf0bc" stroke-width="4"/>
+    <text x="1005" y="321" fill="#ccecff" font-family="Inter,Segoe UI,sans-serif" font-size="17" text-anchor="middle">Diverse robot episodes</text>
+  </g>
+  <text x="600" y="402" fill="#6f9db7" font-family="Inter,Segoe UI,sans-serif" font-size="14" text-anchor="middle" letter-spacing="2">DEMO GIF PLACEHOLDER</text>
+</svg>

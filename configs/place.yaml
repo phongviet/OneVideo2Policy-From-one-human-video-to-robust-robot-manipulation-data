@@ -1,0 +1,46 @@
+project:
+  name: onevideo2policy-place
+  seed: 42
+
+task:
+  name: place
+  source_object: white_cup
+  target_object: square_serving_tray
+  rigid_objects_only: true
+  interaction_distance_m: 0.03
+  stationary_speed_m_s: 0.01
+  success:
+    max_xy_error_m: 0.03
+    max_height_error_m: 0.02
+
+video:
+  input: data/raw/place_demo.mp4
+  output_dir: data/interim/place_demo
+  sample_fps: 30.0
+  expected_duration_s: [1.0, 1.5]
+  monocular_rgb_only: false
+  depth_dir: data/raw/sources/unihand_2025-0723-07-35-56/depth
+  capture: realsense_l515_fixed_camera
+
+tracking:
+  initial_selection: manual
+  segmenter: sam2
+  point_tracker: cotracker3
+  min_visible_points: 12
+  evaluation_frames: 30
+  weights:
+    rgb: 1.0
+    depth: 1.0
+    mask: 1.0
+    track: 1.0
+
+reconstruction:
+  object_model: trellis
+  geometry_model: vggt
+  optimize_scale: true
+
+gates:
+  min_mask_iou: 0.70
+  min_track_survival: 0.80
+  max_reprojection_error_px: 5.0
+  max_translation_jitter_m: 0.02

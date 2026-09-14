@@ -1,0 +1,1 @@
+"""Relative-object skill extraction."""
