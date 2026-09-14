@@ -120,6 +120,11 @@ artifact shapes and object identities.
 4. Generate a JSON report plus a small Markdown summary and failure montage.
 5. Add tests using a tiny synthetic fixture rather than committing the real video.
 
+The frame selection, blank annotation workspace, completeness checks, IoU evaluator,
+and gate logic are now implemented. Follow the
+[independent annotation guide](perception-annotation.md) to create the remaining 60
+human-drawn masks without exposing the annotator to SAM2 predictions.
+
 Suggested output:
 
 ```text

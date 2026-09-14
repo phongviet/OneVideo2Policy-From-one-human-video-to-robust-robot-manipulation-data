@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 
 from onevideo2policy.config import load_config
+from onevideo2policy.evaluation.perception_gate import (
+    evaluate_annotation_workspace,
+    prepare_annotation_workspace,
+)
 from onevideo2policy.video.cotracker_adapter import CoTracker3Adapter
 from onevideo2policy.video.manifest import validate_manifest
 from onevideo2policy.video.perception import (
@@ -56,6 +60,23 @@ def build_parser() -> argparse.ArgumentParser:
     perception.add_argument("--points", default=32, type=int)
     perception.add_argument("--seed", default=42, type=int)
     perception.add_argument("--border", default=4, type=int)
+
+    annotation = subparsers.add_parser(
+        "prepare-perception-gate", help="Create a prediction-independent mask workspace"
+    )
+    annotation.add_argument("manifest", type=Path)
+    annotation.add_argument("--spec", required=True, type=Path)
+    annotation.add_argument("--output", required=True, type=Path)
+
+    gate = subparsers.add_parser(
+        "evaluate-perception-gate", help="Score complete manual masks against predictions"
+    )
+    gate.add_argument("--workspace", required=True, type=Path)
+    gate.add_argument("--predictions", required=True, type=Path)
+    gate.add_argument("--diagnostics", required=True, type=Path)
+    gate.add_argument("--config", required=True, type=Path)
+    gate.add_argument("--identity-swaps", required=True, type=int)
+    gate.add_argument("--output", required=True, type=Path)
     return parser
 
 
@@ -77,6 +98,32 @@ def main() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         np.save(args.output, sampled)
         print(f"Saved {len(sampled)} points to {args.output}")
+    elif args.command == "prepare-perception-gate":
+        workspace = prepare_annotation_workspace(args.manifest, args.spec, args.output)
+        print(
+            json.dumps(
+                {
+                    "workspace": str(args.output / "workspace.json"),
+                    "frames": len(workspace["frames"]),
+                    "objects": workspace["objects"],
+                },
+                indent=2,
+            )
+        )
+    elif args.command == "evaluate-perception-gate":
+        config = load_config(args.config)
+        report = evaluate_annotation_workspace(
+            args.workspace,
+            args.predictions,
+            args.diagnostics,
+            min_mask_iou=float(config["gates"]["min_mask_iou"]),
+            min_track_survival=float(config["gates"]["min_track_survival"]),
+            min_visible_points=int(config["tracking"]["min_visible_points"]),
+            identity_swaps=args.identity_swaps,
+        )
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2))
     elif args.command == "run-perception":
         if not args.cotracker_checkpoint.is_file():
             raise FileNotFoundError(args.cotracker_checkpoint)

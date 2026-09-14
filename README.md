@@ -8,7 +8,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-Ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
-[![Tests](https://img.shields.io/badge/tests-6%20passing-2EA44F)](#testing)
+[![Tests](https://img.shields.io/badge/tests-19%20passing-2EA44F)](#testing)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-early%20research%20prototype-orange)](#project-status)
 
@@ -42,7 +42,7 @@ measurable reproduction of its central data-generation claim.
 | **Synthetic output** | Robot demonstrations with geometric and appearance variation |
 | **Policy** | Diffusion Policy using front/side RGB and robot joint state |
 | **Main comparison** | One demo vs. 2D augmentation vs. 3D geometry vs. full 3DGS |
-| **Current focus** | Video preparation and temporally coherent 6D tracking |
+| **Current focus** | Independent perception annotation and gate evaluation |
 
 ## System overview
 
@@ -78,7 +78,8 @@ claim an end-to-end result.
 | Place benchmark and thresholds | ✅ | [`configs/place.yaml`](configs/place.yaml) |
 | Video sampling and manifests | ✅ | `ov2p prepare-video` |
 | SE(3), relative motion, tracking metrics | ✅ | Unit tested core package |
-| SAM2 and CoTracker3 adapters | 🟡 | Interfaces ready; GPU integration next |
+| SAM2 and CoTracker3 adapters | ✅ | CUDA run, overlay, and diagnostics complete |
+| Independent perception gate | 🟡 | 30-frame workspace ready; manual masks required |
 | TRELLIS and VGGT adapters | 🟡 | Interfaces ready; model selection next |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | Synthetic robot demonstrations | ⬜ | Starts after tracking Gate B |
