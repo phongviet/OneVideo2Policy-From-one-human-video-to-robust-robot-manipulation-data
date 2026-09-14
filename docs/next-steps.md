@@ -169,6 +169,13 @@ time—prompt, point sampling, mask propagation, or video choice.
 The output of this package should be useful object representations and an honest
 reconstruction audit—not photogrammetry-grade assets.
 
+**Status: blocked after crop export.** Native-resolution RGBA export is implemented
+and verified, but the retained fixture yields only a 99×99 ball crop and 196×196
+bowl crop. More decisively, the host has 6 GB VRAM while official image-conditioned
+TRELLIS requires at least 16 GB. See the
+[reconstruction readiness audit](reconstruction-readiness.md). Resume this package
+on a 16 GB+ CUDA host with the planned close, real Place recording.
+
 ## Recommended first three commits
 
 Keep changes reviewable and experiments attributable:
