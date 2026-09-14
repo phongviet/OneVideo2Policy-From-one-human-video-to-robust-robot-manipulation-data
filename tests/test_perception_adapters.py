@@ -8,6 +8,7 @@ from onevideo2policy.video.perception import (
     ObjectPerception,
     load_prompt_file,
     run_perception,
+    run_tracking_on_masks,
     summarize_perception,
 )
 from onevideo2policy.video.point_sampling import sample_mask_points
@@ -118,6 +119,103 @@ def test_perception_runner_uses_deterministic_mask_points(tmp_path: Path) -> Non
     assert np.array_equal(result.seed_points_xy, expected)
     assert np.array_equal(cotracker_predictor.calls[0][1][0, :, 1:], expected)
     assert result.tracks_xy.shape == (3, 6, 2)
+
+
+def test_perception_runner_reseeds_deterministically_by_window(tmp_path: Path) -> None:
+    frames_dir = tmp_path / "frames"
+    frames_dir.mkdir()
+    frames = np.zeros((5, 8, 10, 3), dtype=np.uint8)
+    masks = np.zeros((5, 8, 10), dtype=bool)
+    masks[:, 1:7, 2:9] = True
+    sam = Sam2VideoAdapter(FakeSam2Predictor({3: masks}))
+    predictor = FakeCoTrackerPredictor()
+    tracker = CoTracker3Adapter(predictor, device="cpu", tensor_factory=lambda x, _: x)
+    prompt = Sam2PointPrompt(3, np.array([[4, 3]]), np.array([1]))
+
+    result = run_perception(
+        frames,
+        frames_dir,
+        {"target": prompt},
+        sam,
+        tracker,
+        point_count=4,
+        seed=11,
+        border=1,
+        reseed_interval=2,
+    )["target"]
+
+    assert np.array_equal(result.reseed_frames, [0, 2, 4])
+    assert result.seed_points_xy.shape == (3, 4, 2)
+    assert [call[0].shape[1] for call in predictor.calls] == [2, 2, 1]
+    for window_id, frame_id in enumerate([0, 2, 4]):
+        expected = sample_mask_points(
+            masks[frame_id], 4, seed=14 + window_id, border=1
+        )
+        assert np.array_equal(result.seed_points_xy[window_id], expected)
+        assert np.array_equal(result.tracks_xy[frame_id], expected)
+
+
+def test_perception_reseeding_advances_to_valid_mask_inside_window(tmp_path: Path) -> None:
+    frames_dir = tmp_path / "frames"
+    frames_dir.mkdir()
+    frames = np.zeros((4, 8, 10, 3), dtype=np.uint8)
+    masks = np.zeros((4, 8, 10), dtype=bool)
+    masks[0, 1:7, 2:9] = True
+    masks[3, 1:7, 2:9] = True
+    sam = Sam2VideoAdapter(FakeSam2Predictor({3: masks}))
+    predictor = FakeCoTrackerPredictor()
+    tracker = CoTracker3Adapter(predictor, device="cpu", tensor_factory=lambda x, _: x)
+    prompt = Sam2PointPrompt(3, np.array([[4, 3]]), np.array([1]))
+
+    result = run_perception(
+        frames,
+        frames_dir,
+        {"target": prompt},
+        sam,
+        tracker,
+        point_count=4,
+        border=1,
+        reseed_interval=2,
+    )["target"]
+
+    assert np.array_equal(result.reseed_frames, [0, 3])
+    assert predictor.calls[1][2] is True
+    assert np.array_equal(predictor.calls[1][1][0, :, 0], [1, 1, 1, 1])
+
+
+def test_perception_runner_rejects_invalid_reseed_interval(tmp_path: Path) -> None:
+    frames = np.zeros((2, 4, 5, 3), dtype=np.uint8)
+    prompt = Sam2PointPrompt(1, np.array([[2, 2]]), np.array([1]))
+    sam = Sam2VideoAdapter(FakeSam2Predictor({1: np.ones((2, 4, 5), dtype=bool)}))
+    tracker = CoTracker3Adapter(
+        FakeCoTrackerPredictor(), device="cpu", tensor_factory=lambda x, _: x
+    )
+    with pytest.raises(ValueError, match="at least 2"):
+        run_perception(
+            frames,
+            tmp_path,
+            {"object": prompt},
+            sam,
+            tracker,
+            point_count=2,
+            reseed_interval=1,
+        )
+
+
+def test_tracking_on_masks_requires_matching_names() -> None:
+    frames = np.zeros((2, 4, 5, 3), dtype=np.uint8)
+    prompt = Sam2PointPrompt(1, np.array([[2, 2]]), np.array([1]))
+    tracker = CoTracker3Adapter(
+        FakeCoTrackerPredictor(), device="cpu", tensor_factory=lambda x, _: x
+    )
+    with pytest.raises(ValueError, match="exactly match"):
+        run_tracking_on_masks(
+            frames,
+            {"wrong": np.ones((2, 4, 5), dtype=bool)},
+            {"object": prompt},
+            tracker,
+            point_count=2,
+        )
 
 
 def test_adapters_reject_invalid_prompts_and_queries(tmp_path: Path) -> None:

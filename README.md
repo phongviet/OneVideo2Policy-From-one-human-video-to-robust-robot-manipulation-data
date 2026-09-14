@@ -79,7 +79,7 @@ claim an end-to-end result.
 | Video sampling and manifests | ✅ | `ov2p prepare-video` |
 | SE(3), relative motion, tracking metrics | ✅ | Unit tested core package |
 | SAM2 and CoTracker3 adapters | ✅ | CUDA run, overlay, and diagnostics complete |
-| Independent perception gate | 🟡 | 30-frame workspace ready; manual masks required |
+| Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
 | TRELLIS and VGGT adapters | 🟡 | Interfaces ready; model selection next |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | Synthetic robot demonstrations | ⬜ | Starts after tracking Gate B |
