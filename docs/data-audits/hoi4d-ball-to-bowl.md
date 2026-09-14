@@ -19,6 +19,11 @@ the destination bowl.
 | Target-mask coverage | 300/300 frames |
 | Depth | Not retained: the downloaded depth archive was an incomplete shard |
 
+The GPU gate view uses original frames 86–299, sampled at 5 FPS and resized to
+640×360. This yields 72 aligned frames over 14.2 seconds. Frame 86 has the largest
+initial visible ball mask, so it supplies the positive source prompt without
+starting from a clipped object at the image boundary.
+
 ## Storage decision
 
 The retained HOI4D subset contains 61 RGB clips with their 2D masks, actions, and

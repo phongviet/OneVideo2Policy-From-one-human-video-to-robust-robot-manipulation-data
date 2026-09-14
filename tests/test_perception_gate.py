@@ -2,10 +2,12 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from onevideo2policy.evaluation.perception_gate import (
     binary_mask_iou,
     build_gate_report,
+    evaluate_ground_truth_directories,
     load_evaluation_spec,
 )
 
@@ -60,3 +62,37 @@ def test_gate_report_applies_all_thresholds() -> None:
     assert passing["status"] == "pass"
     assert passing["provisional"] is False
     assert swapped["status"] == "fail"
+
+
+def test_dataset_ground_truth_evaluation(tmp_path: Path) -> None:
+    cv2 = pytest.importorskip("cv2")
+    ground_truth = tmp_path / "ground_truth" / "source"
+    predictions = tmp_path / "predictions" / "masks" / "source"
+    ground_truth.mkdir(parents=True)
+    predictions.mkdir(parents=True)
+    mask = np.array([[255, 0], [0, 0]], dtype=np.uint8)
+    assert cv2.imwrite(str(ground_truth / "000000.png"), mask)
+    assert cv2.imwrite(str(predictions / "000000.png"), mask)
+    diagnostics = tmp_path / "diagnostics.json"
+    diagnostics.write_text(
+        json.dumps(
+            {
+                "objects": {
+                    "source": {"track_survival": 0.9, "mean_visible_tracks": 20.0}
+                }
+            }
+        )
+    )
+
+    report = evaluate_ground_truth_directories(
+        tmp_path / "ground_truth",
+        tmp_path / "predictions",
+        diagnostics,
+        min_mask_iou=0.7,
+        min_track_survival=0.8,
+        min_visible_points=12,
+        identity_swaps=0,
+    )
+
+    assert report["status"] == "pass"
+    assert report["objects"]["source"]["mean_mask_iou"] == 1.0

@@ -36,7 +36,8 @@ The `weights/` directory is Git-ignored. Do not commit downloaded checkpoints.
    adapter asks SAM2 to normalize them to its internal image size.
 2. `Sam2VideoAdapter` propagates one binary mask per object over all video frames.
 3. `run_perception` samples unique, deterministic points inside each prompted
-   mask using the configured seed.
+   mask using the configured seed. The `border` value erodes the object mask by
+   that many pixels before sampling, keeping queries away from uncertain edges.
 4. `CoTracker3Adapter` converts those points to upstream `(t, x, y)` queries and
    returns tracks shaped `[T, N, 2]` with visibility shaped `[T, N]`.
 5. `save_perception_artifacts` writes lossless PNG masks and compressed track files.
