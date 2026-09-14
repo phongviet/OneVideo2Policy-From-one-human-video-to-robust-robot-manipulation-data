@@ -4,7 +4,12 @@ import numpy as np
 import pytest
 
 from onevideo2policy.video.cotracker_adapter import CoTracker3Adapter
-from onevideo2policy.video.perception import load_prompt_file, run_perception
+from onevideo2policy.video.perception import (
+    ObjectPerception,
+    load_prompt_file,
+    run_perception,
+    summarize_perception,
+)
 from onevideo2policy.video.point_sampling import sample_mask_points
 from onevideo2policy.video.sam2_adapter import Sam2PointPrompt, Sam2VideoAdapter
 
@@ -65,7 +70,7 @@ def test_sam2_adapter_propagates_prompted_objects(tmp_path: Path) -> None:
     assert predictor.reset
     assert set(result) == {1, 2}
     assert result[1].shape == (3, 4, 5)
-    assert predictor.prompts[0]["normalize_coords"] is False
+    assert predictor.prompts[0]["normalize_coords"] is True
 
 
 def test_cotracker_adapter_builds_txy_queries() -> None:
@@ -140,3 +145,20 @@ def test_load_prompt_file(tmp_path: Path) -> None:
     assert prompts["cup"].object_id == 3
     assert prompts["cup"].frame_idx == 0
     assert np.array_equal(prompts["cup"].points_xy, [[4, 5]])
+
+
+def test_perception_summary_is_explicitly_provisional() -> None:
+    masks = np.zeros((2, 4, 5), dtype=bool)
+    masks[:, 1:3, 1:4] = True
+    tracks = np.array([[[1, 1], [2, 2]], [[1, 1], [4, 3]]], dtype=np.float32)
+    visible = np.array([[True, True], [True, False]])
+    result = ObjectPerception(masks, tracks[0].astype(np.int64), tracks, visible)
+
+    report = summarize_perception({"cup": result})
+    metrics = report["objects"]["cup"]
+
+    assert report["provisional"] is True
+    assert metrics["mean_adjacent_mask_iou"] == 1.0
+    assert metrics["track_survival"] == 0.75
+    assert metrics["mean_visible_tracks"] == 1.5
+    assert metrics["mean_tracks_inside_mask"] == 1.0

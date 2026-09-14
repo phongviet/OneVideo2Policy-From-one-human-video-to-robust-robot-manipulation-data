@@ -116,7 +116,7 @@ class Sam2VideoAdapter:
                 points=prompt.points_xy,
                 labels=prompt.labels,
                 clear_old_points=True,
-                normalize_coords=False,
+                normalize_coords=True,
             )
 
         per_object: dict[int, dict[int, NDArray[np.bool_]]] = {obj_id: {} for obj_id in object_ids}

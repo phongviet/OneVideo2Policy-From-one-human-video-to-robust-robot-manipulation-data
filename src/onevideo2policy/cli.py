@@ -12,6 +12,9 @@ from onevideo2policy.video.perception import (
     load_prompt_file,
     run_perception,
     save_perception_artifacts,
+    save_perception_overlay,
+    save_perception_report,
+    summarize_perception,
 )
 from onevideo2policy.video.point_sampling import sample_mask_points
 from onevideo2policy.video.preprocessing import prepare_video
@@ -94,6 +97,13 @@ def main() -> None:
             border=args.border,
         )
         save_perception_artifacts(results, args.output)
+        with args.manifest.open(encoding="utf-8") as stream:
+            sample_fps = float(json.load(stream)["sample_fps"])
+        save_perception_overlay(
+            frames, results, args.output / "overlays" / "perception.mp4", fps=sample_fps
+        )
+        report = summarize_perception(results)
+        save_perception_report(report, args.output / "gate-report.json")
         summary = {
             name: {
                 "frames": len(result.masks),
@@ -102,6 +112,7 @@ def main() -> None:
             }
             for name, result in results.items()
         }
+        summary["report"] = report
         print(json.dumps(summary, indent=2))
 
 
