@@ -220,6 +220,9 @@ onevideo2policy/
 Optional SAM2 and CoTracker3 installation, pinned revisions, and adapter usage are
 documented in [`docs/perception-models.md`](docs/perception-models.md).
 
+The RGB-D import path for HOI4D's official motion masks is documented in
+[`docs/hoi4d-integration.md`](docs/hoi4d-integration.md).
+
 ## Research gates
 
 The project uses explicit GO/NO-GO checks to prevent downstream ML from hiding an

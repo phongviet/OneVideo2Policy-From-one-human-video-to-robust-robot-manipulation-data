@@ -10,6 +10,7 @@ from onevideo2policy.evaluation.perception_gate import (
     prepare_annotation_workspace,
 )
 from onevideo2policy.video.cotracker_adapter import CoTracker3Adapter
+from onevideo2policy.video.hoi4d import import_hoi4d_sequence
 from onevideo2policy.video.manifest import validate_manifest
 from onevideo2policy.video.perception import (
     load_manifest_rgb,
@@ -77,6 +78,15 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--config", required=True, type=Path)
     gate.add_argument("--identity-swaps", required=True, type=int)
     gate.add_argument("--output", required=True, type=Path)
+
+    hoi4d = subparsers.add_parser(
+        "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
+    )
+    hoi4d.add_argument("sequence", type=Path, help="Decoded HOI4D sequence directory")
+    hoi4d.add_argument("--output", required=True, type=Path)
+    hoi4d.add_argument("--source-label", required=True, action="append", type=int)
+    hoi4d.add_argument("--target-label", required=True, action="append", type=int)
+    hoi4d.add_argument("--fps", default=15.0, type=float, help="Official decoded frame rate")
     return parser
 
 
@@ -124,6 +134,15 @@ def main() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
+    elif args.command == "import-hoi4d":
+        manifest = import_hoi4d_sequence(
+            args.sequence,
+            args.output,
+            source_labels=args.source_label,
+            target_labels=args.target_label,
+            decoded_fps=args.fps,
+        )
+        print(json.dumps({"manifest": str(args.output / "manifest.json"), **manifest}, indent=2))
     elif args.command == "run-perception":
         if not args.cotracker_checkpoint.is_file():
             raise FileNotFoundError(args.cotracker_checkpoint)
