@@ -80,7 +80,8 @@ claim an end-to-end result.
 | SE(3), relative motion, tracking metrics | ✅ | Unit tested core package |
 | SAM2 and CoTracker3 adapters | ✅ | CUDA run, overlay, and diagnostics complete |
 | Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
-| TRELLIS and VGGT adapters | 🟡 | Interfaces ready; model selection next |
+| Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
+| TRELLIS and VGGT adapters | 🟡 | Blocked by 6 GB VRAM; official TRELLIS needs 16 GB |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | Synthetic robot demonstrations | ⬜ | Starts after tracking Gate B |
 | Diffusion Policy benchmark | ⬜ | Starts after generation Gate C |

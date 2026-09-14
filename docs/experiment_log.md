@@ -56,3 +56,22 @@
   `results/perception/hoi4d_ball_to_bowl_reseed16/metrics.json` (Git-ignored).
 - Next action: export clean RGBA object crops, then audit whether this monocular
   egocentric fixture is adequate for TRELLIS and VGGT integration.
+
+## HOI4D reconstruction readiness
+
+- Date / commit: 2026-09-15 / pending
+- Hypothesis: Native-resolution RGB can make the retained fixture sufficient for
+  the first image-to-3D smoke test without changing the passing perception masks.
+- Configuration: `configs/hoi4d_ball_to_bowl.yaml`
+- Changed variable: RGB crops are decoded from original 1920×1080 frame 86 while
+  the frozen masks are scaled by nearest-neighbor interpolation.
+- Fixed variables: object identities, selected frame, SAM2 masks, and 15% padding.
+- Metrics: transparent ball crop 99×99 with 3,402 foreground pixels; bowl crop
+  196×196 with 13,104 foreground pixels. Host GPU has 6 GB VRAM; official TRELLIS
+  minimum is 16 GB.
+- Result: deterministic crop export passes, but the ball lacks adequate image
+  detail and TRELLIS cannot run on this host.
+- Gate decision: **Blocked.** Gate A was not attempted.
+- Artifacts: `data/interim/hoi4d_ball_to_bowl_gate_reseed16/crops_native/`
+  (Git-ignored) and `docs/reconstruction-readiness.md`.
+- Next action: use a 16 GB+ CUDA host and record the planned close real Place demo.

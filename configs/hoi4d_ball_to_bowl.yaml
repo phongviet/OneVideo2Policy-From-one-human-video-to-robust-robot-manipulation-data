@@ -34,6 +34,12 @@ tracking:
   min_visible_points: 12
   evaluation_frames: 30
 
+reconstruction:
+  input_crop_dir: data/interim/hoi4d_ball_to_bowl_gate_reseed16/crops_native
+  object_model: trellis
+  geometry_model: vggt
+  status: blocked_insufficient_vram_and_input_resolution
+
 gates:
   min_mask_iou: 0.70
   min_track_survival: 0.80

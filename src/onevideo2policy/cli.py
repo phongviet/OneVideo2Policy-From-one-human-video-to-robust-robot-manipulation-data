@@ -10,6 +10,11 @@ from onevideo2policy.evaluation.perception_gate import (
     evaluate_ground_truth_directories,
     prepare_annotation_workspace,
 )
+from onevideo2policy.reconstruction.crops import (
+    export_rgba_crops,
+    load_video_frame,
+    resize_masks_to_frame,
+)
 from onevideo2policy.video.cotracker_adapter import CoTracker3Adapter
 from onevideo2policy.video.hoi4d import import_hoi4d_rgb_video, import_hoi4d_sequence
 from onevideo2policy.video.manifest import validate_manifest
@@ -111,6 +116,20 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_gate.add_argument("--identity-swaps", required=True, type=int)
     dataset_gate.add_argument("--output", required=True, type=Path)
 
+    crops = subparsers.add_parser(
+        "export-rgba-crops", help="Export square transparent crops from frozen masks"
+    )
+    crops.add_argument("manifest", type=Path)
+    crops.add_argument("--masks", required=True, type=Path)
+    crops.add_argument("--output", required=True, type=Path)
+    crops.add_argument("--frame", default=0, type=int)
+    crops.add_argument("--padding", default=0.15, type=float)
+    crops.add_argument(
+        "--source-video",
+        type=Path,
+        help="Use the manifest's original source-frame ID at native video resolution",
+    )
+
     hoi4d = subparsers.add_parser(
         "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
     )
@@ -186,6 +205,35 @@ def main() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
+    elif args.command == "export-rgba-crops":
+        frames = load_manifest_rgb(args.manifest)
+        if not 0 <= args.frame < len(frames):
+            raise ValueError("Crop frame is outside the manifest")
+        object_names = sorted(path.name for path in args.masks.iterdir() if path.is_dir())
+        masks = load_mask_directories(
+            args.masks, object_names, expected_frame_count=len(frames)
+        )
+        rgb = frames[args.frame]
+        frame_masks = {name: values[args.frame] for name, values in masks.items()}
+        source_frame_id = None
+        if args.source_video is not None:
+            with args.manifest.open(encoding="utf-8") as stream:
+                source_frame_id = int(json.load(stream)["frames"][args.frame]["source_frame_id"])
+            rgb = load_video_frame(args.source_video, source_frame_id)
+            frame_masks = resize_masks_to_frame(frame_masks, rgb.shape[:2])
+        manifest = export_rgba_crops(
+            rgb,
+            frame_masks,
+            args.output,
+            frame_idx=args.frame,
+            padding_fraction=args.padding,
+        )
+        if source_frame_id is not None:
+            manifest["source_frame_id"] = source_frame_id
+            (args.output / "crops.json").write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
+        print(json.dumps(manifest, indent=2))
     elif args.command == "import-hoi4d":
         if args.annotations is not None:
             manifest = import_hoi4d_rgb_video(
