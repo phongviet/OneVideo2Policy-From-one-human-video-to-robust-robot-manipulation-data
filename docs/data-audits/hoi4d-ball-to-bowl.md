@@ -19,6 +19,11 @@ the destination bowl.
 | Target-mask coverage | 300/300 frames |
 | Depth | Not retained: the downloaded depth archive was an incomplete shard |
 
+The GPU gate view uses original frames 86–299, sampled at 5 FPS and resized to
+640×360. This yields 72 aligned frames over 14.2 seconds. Frame 86 has the largest
+initial visible ball mask, so it supplies the positive source prompt without
+starting from a clipped object at the image boundary.
+
 ## Storage decision
 
 The retained HOI4D subset contains 61 RGB clips with their 2D masks, actions, and
@@ -33,3 +38,11 @@ provided mask ground truth. It is not the final geometry/reconstruction benchmar
 it is egocentric RGB-only, has camera motion, and lacks retained depth. Keep the
 fixed-camera UniHand fixture for RGB-D adapter checks, and replace both with a
 longer recorded real Place demonstration before policy training.
+
+## Perception gate result
+
+The 2026-09-15 CUDA run produced mean mask IoU of 0.777 for the ball and 0.920 for
+the bowl. Ball track survival was 0.973; bowl track survival was 0.758. With the
+frozen 0.80 survival threshold, the formal gate result is **fail**, despite both
+segmentation metrics passing and no visual identity swap. See the experiment log
+for the controlled next action.

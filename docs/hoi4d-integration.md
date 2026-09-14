@@ -59,5 +59,9 @@ uv run ov2p import-hoi4d \
   --annotations data/raw/sources/hoi4d/HOI4D_annotations/ZY20210800001/H1/C7/N14/S280/s04/T5 \
   --output data/interim/hoi4d_ball_to_bowl \
   --source-label 3 \
-  --target-label 1
+  --target-label 1 \
+  --fps 5 --max-width 640 --start-frame 82 --end-frame 299
 ```
+
+This active-action view contains 73 aligned frames. It begins when the ball first
+receives a non-empty official mask and is small enough for the 6 GB development GPU.

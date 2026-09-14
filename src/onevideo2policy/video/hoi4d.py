@@ -171,6 +171,10 @@ def import_hoi4d_rgb_video(
     *,
     source_labels: list[int],
     target_labels: list[int],
+    sample_fps: float | None = None,
+    max_width: int | None = None,
+    start_frame: int = 0,
+    end_frame: int | None = None,
 ) -> dict[str, Any]:
     """Import an archive-native HOI4D RGB video with its separate mask tree.
 
@@ -207,6 +211,31 @@ def import_hoi4d_rgb_video(
     if source_frame_count != len(motion_files):
         capture.release()
         raise ValueError("HOI4D RGB video and 2D motion-mask frame counts must match")
+    sample_fps = native_fps if sample_fps is None else sample_fps
+    if not 0 < sample_fps <= native_fps:
+        capture.release()
+        raise ValueError("sample_fps must be positive and no greater than native FPS")
+    if max_width is not None and max_width <= 0:
+        capture.release()
+        raise ValueError("max_width must be positive")
+    end_frame = source_frame_count - 1 if end_frame is None else end_frame
+    if not 0 <= start_frame <= end_frame < source_frame_count:
+        capture.release()
+        raise ValueError("Frame range must be inside the source video")
+
+    selected_source_ids: list[int] = []
+    next_sample_s = start_frame / native_fps
+    for source_id in range(start_frame, end_frame + 1):
+        timestamp_s = source_id / native_fps
+        if timestamp_s + 1e-9 >= next_sample_s:
+            selected_source_ids.append(source_id)
+            next_sample_s += 1.0 / sample_fps
+    selected_source_id_set = set(selected_source_ids)
+    motion_by_id = {int(path.stem): path for path in motion_files}
+    missing_masks = selected_source_id_set.difference(motion_by_id)
+    if missing_masks:
+        capture.release()
+        raise ValueError(f"Missing HOI4D masks for source frames: {sorted(missing_masks)}")
 
     output_dir = Path(output_dir)
     frames_dir = output_dir / "frames"
@@ -218,13 +247,25 @@ def import_hoi4d_rgb_video(
     frames: list[dict[str, Any]] = []
     resolution: tuple[int, int] | None = None
     try:
-        for frame_id, motion_path in enumerate(motion_files):
+        frame_id = 0
+        for source_id in range(source_frame_count):
             ok, rgb = capture.read()
+            if not ok:
+                raise ValueError(f"Could not decode HOI4D RGB frame {source_id}")
+            if source_id not in selected_source_id_set:
+                continue
+            motion_path = motion_by_id[source_id]
             motion_bgr = cv2.imread(str(motion_path), cv2.IMREAD_COLOR)
-            if not ok or motion_bgr is None:
-                raise ValueError(f"Could not decode HOI4D frame {frame_id}")
+            if motion_bgr is None:
+                raise ValueError(f"Could not decode HOI4D mask {motion_path}")
             if rgb.shape[:2] != motion_bgr.shape[:2]:
-                raise ValueError(f"HOI4D RGB and mask shapes disagree at frame {frame_id}")
+                raise ValueError(f"HOI4D RGB and mask shapes disagree at frame {source_id}")
+            if max_width is not None and rgb.shape[1] > max_width:
+                height = round(rgb.shape[0] * max_width / rgb.shape[1])
+                rgb = cv2.resize(rgb, (max_width, height), interpolation=cv2.INTER_AREA)
+                motion_bgr = cv2.resize(
+                    motion_bgr, (max_width, height), interpolation=cv2.INTER_NEAREST
+                )
             current_resolution = (rgb.shape[1], rgb.shape[0])
             if resolution is None:
                 resolution = current_resolution
@@ -244,11 +285,12 @@ def import_hoi4d_rgb_video(
             frames.append(
                 {
                     "frame_id": frame_id,
-                    "source_frame_id": int(motion_path.stem),
-                    "timestamp_s": frame_id / native_fps,
+                    "source_frame_id": source_id,
+                    "timestamp_s": source_id / native_fps,
                     "rgb": f"frames/{name}.jpg",
                 }
             )
+            frame_id += 1
     finally:
         capture.release()
 
@@ -259,7 +301,7 @@ def import_hoi4d_rgb_video(
         "source_frame_count": source_frame_count,
         "resolution": {"width": resolution[0], "height": resolution[1]},
         "native_fps": native_fps,
-        "sample_fps": native_fps,
+        "sample_fps": sample_fps,
         "frame_count": len(frames),
         "frames": frames,
         "dataset": {
@@ -270,6 +312,8 @@ def import_hoi4d_rgb_video(
             "source_labels": source_labels,
             "target_labels": target_labels,
             "has_depth": False,
+            "source_frame_range": [start_frame, end_frame],
+            "max_width": max_width,
         },
     }
     (output_dir / "manifest.json").write_text(

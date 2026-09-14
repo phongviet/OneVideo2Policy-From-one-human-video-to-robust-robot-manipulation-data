@@ -7,6 +7,7 @@ from pathlib import Path
 from onevideo2policy.config import load_config
 from onevideo2policy.evaluation.perception_gate import (
     evaluate_annotation_workspace,
+    evaluate_ground_truth_directories,
     prepare_annotation_workspace,
 )
 from onevideo2policy.video.cotracker_adapter import CoTracker3Adapter
@@ -79,6 +80,16 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--identity-swaps", required=True, type=int)
     gate.add_argument("--output", required=True, type=Path)
 
+    dataset_gate = subparsers.add_parser(
+        "evaluate-dataset-gate", help="Score predictions against dataset-provided masks"
+    )
+    dataset_gate.add_argument("--ground-truth", required=True, type=Path)
+    dataset_gate.add_argument("--predictions", required=True, type=Path)
+    dataset_gate.add_argument("--diagnostics", required=True, type=Path)
+    dataset_gate.add_argument("--config", required=True, type=Path)
+    dataset_gate.add_argument("--identity-swaps", required=True, type=int)
+    dataset_gate.add_argument("--output", required=True, type=Path)
+
     hoi4d = subparsers.add_parser(
         "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
     )
@@ -90,6 +101,9 @@ def build_parser() -> argparse.ArgumentParser:
     hoi4d.add_argument("--source-label", required=True, action="append", type=int)
     hoi4d.add_argument("--target-label", required=True, action="append", type=int)
     hoi4d.add_argument("--fps", default=15.0, type=float, help="Official decoded frame rate")
+    hoi4d.add_argument("--max-width", type=int, help="Resize archive-native RGB and masks")
+    hoi4d.add_argument("--start-frame", default=0, type=int)
+    hoi4d.add_argument("--end-frame", type=int)
     return parser
 
 
@@ -137,6 +151,20 @@ def main() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
+    elif args.command == "evaluate-dataset-gate":
+        config = load_config(args.config)
+        report = evaluate_ground_truth_directories(
+            args.ground_truth,
+            args.predictions,
+            args.diagnostics,
+            min_mask_iou=float(config["gates"]["min_mask_iou"]),
+            min_track_survival=float(config["gates"]["min_track_survival"]),
+            min_visible_points=int(config["tracking"]["min_visible_points"]),
+            identity_swaps=args.identity_swaps,
+        )
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2))
     elif args.command == "import-hoi4d":
         if args.annotations is not None:
             manifest = import_hoi4d_rgb_video(
@@ -145,6 +173,10 @@ def main() -> None:
                 args.output,
                 source_labels=args.source_label,
                 target_labels=args.target_label,
+                sample_fps=args.fps,
+                max_width=args.max_width,
+                start_frame=args.start_frame,
+                end_frame=args.end_frame,
             )
         else:
             manifest = import_hoi4d_sequence(

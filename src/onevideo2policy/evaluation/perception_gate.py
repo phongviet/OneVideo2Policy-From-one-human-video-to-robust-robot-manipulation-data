@@ -215,3 +215,54 @@ def evaluate_annotation_workspace(
         min_visible_points=min_visible_points,
         identity_swaps=identity_swaps,
     )
+
+
+def evaluate_ground_truth_directories(
+    ground_truth_dir: str | Path,
+    predictions_dir: str | Path,
+    diagnostics_path: str | Path,
+    *,
+    min_mask_iou: float,
+    min_track_survival: float,
+    min_visible_points: int,
+    identity_swaps: int,
+) -> dict[str, Any]:
+    """Evaluate predicted mask folders against dataset-provided binary PNG masks."""
+    try:
+        import cv2
+    except ImportError as exc:  # pragma: no cover - depends on optional extra
+        raise RuntimeError("Evaluating masks requires: uv sync --extra video") from exc
+    ground_truth_dir = Path(ground_truth_dir)
+    predictions_dir = Path(predictions_dir)
+    with Path(diagnostics_path).open(encoding="utf-8") as stream:
+        diagnostics_report = json.load(stream)
+    objects = diagnostics_report.get("objects")
+    if not isinstance(objects, dict) or not objects:
+        raise ValueError("Diagnostics report must contain named objects")
+
+    ious: dict[str, list[float]] = {}
+    for name in objects:
+        predicted_files = sorted((predictions_dir / "masks" / name).glob("*.png"))
+        ground_truth_files = sorted((ground_truth_dir / name).glob("*.png"))
+        if not predicted_files or [path.name for path in predicted_files] != [
+            path.name for path in ground_truth_files
+        ]:
+            raise ValueError(f"Prediction and ground-truth masks do not align for {name!r}")
+        values = []
+        for predicted_path, ground_truth_path in zip(
+            predicted_files, ground_truth_files, strict=True
+        ):
+            predicted = cv2.imread(str(predicted_path), cv2.IMREAD_GRAYSCALE)
+            ground_truth = cv2.imread(str(ground_truth_path), cv2.IMREAD_GRAYSCALE)
+            if predicted is None or ground_truth is None:
+                raise ValueError("Could not decode a prediction or ground-truth mask")
+            values.append(binary_mask_iou(predicted > 0, ground_truth > 0))
+        ious[name] = values
+    return build_gate_report(
+        ious,
+        objects,
+        min_mask_iou=min_mask_iou,
+        min_track_survival=min_track_survival,
+        min_visible_points=min_visible_points,
+        identity_swaps=identity_swaps,
+    )

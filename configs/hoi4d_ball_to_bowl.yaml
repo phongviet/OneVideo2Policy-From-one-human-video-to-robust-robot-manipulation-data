@@ -15,14 +15,15 @@ task:
 
 video:
   input: data/raw/sources/hoi4d/HOI4D_release/ZY20210800001/H1/C7/N14/S280/s04/T5/align_rgb/image.mp4
-  output_dir: data/interim/hoi4d_ball_to_bowl
-  sample_fps: 15.0
-  expected_duration_s: [19.0, 21.0]
+  output_dir: data/interim/hoi4d_ball_to_bowl_gate
+  sample_fps: 5.0
+  expected_duration_s: [14.0, 14.5]
   monocular_rgb_only: true
   capture: hoi4d_egocentric_rgb
 
 tracking:
   initial_selection: official_motion_masks
+  prompt_file: configs/hoi4d_ball_to_bowl_prompts.json
   segmenter: sam2
   sam2_model: facebook/sam2.1-hiera-small
   sam2_code_revision: 2b90b9f5ceec907a1c18123530e92e794ad901a4

@@ -90,3 +90,14 @@ def test_point_sampling_is_deterministic_and_xy_ordered() -> None:
 def test_point_sampling_rejects_insufficient_pixels() -> None:
     with pytest.raises(ValueError, match="eligible pixels"):
         sample_mask_points(np.eye(3, dtype=bool), 4)
+
+
+def test_point_sampling_border_erodes_object_boundary() -> None:
+    mask = np.zeros((9, 9), dtype=bool)
+    mask[1:8, 1:8] = True
+
+    points = sample_mask_points(mask, 9, seed=7, border=2)
+
+    assert {(int(x), int(y)) for x, y in points} == {
+        (x, y) for y in range(3, 6) for x in range(3, 6)
+    }
