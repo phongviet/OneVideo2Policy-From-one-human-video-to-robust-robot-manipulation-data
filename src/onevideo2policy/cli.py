@@ -15,8 +15,10 @@ from onevideo2policy.video.hoi4d import import_hoi4d_rgb_video, import_hoi4d_seq
 from onevideo2policy.video.manifest import validate_manifest
 from onevideo2policy.video.perception import (
     load_manifest_rgb,
+    load_mask_directories,
     load_prompt_file,
     run_perception,
+    run_tracking_on_masks,
     save_perception_artifacts,
     save_perception_overlay,
     save_perception_report,
@@ -62,6 +64,25 @@ def build_parser() -> argparse.ArgumentParser:
     perception.add_argument("--points", default=32, type=int)
     perception.add_argument("--seed", default=42, type=int)
     perception.add_argument("--border", default=4, type=int)
+    perception.add_argument(
+        "--reseed-interval",
+        type=int,
+        help="Deterministically refresh mask points every N frames",
+    )
+
+    retrack = subparsers.add_parser(
+        "retrack-perception", help="Run CoTracker3 on an exact frozen set of mask PNGs"
+    )
+    retrack.add_argument("manifest", type=Path)
+    retrack.add_argument("--masks", required=True, type=Path)
+    retrack.add_argument("--prompts", required=True, type=Path)
+    retrack.add_argument("--output", required=True, type=Path)
+    retrack.add_argument("--cotracker-checkpoint", required=True, type=Path)
+    retrack.add_argument("--device", default="cuda")
+    retrack.add_argument("--points", default=32, type=int)
+    retrack.add_argument("--seed", default=42, type=int)
+    retrack.add_argument("--border", default=4, type=int)
+    retrack.add_argument("--reseed-interval", required=True, type=int)
 
     annotation = subparsers.add_parser(
         "prepare-perception-gate", help="Create a prediction-independent mask workspace"
@@ -187,25 +208,41 @@ def main() -> None:
                 decoded_fps=args.fps,
             )
         print(json.dumps({"manifest": str(args.output / "manifest.json"), **manifest}, indent=2))
-    elif args.command == "run-perception":
+    elif args.command in {"run-perception", "retrack-perception"}:
         if not args.cotracker_checkpoint.is_file():
             raise FileNotFoundError(args.cotracker_checkpoint)
         frames = load_manifest_rgb(args.manifest)
         prompts = load_prompt_file(args.prompts)
-        segmenter = Sam2VideoAdapter.from_hugging_face(args.sam_model, device=args.device)
         tracker = CoTracker3Adapter.from_checkpoint(
             args.cotracker_checkpoint, device=args.device
         )
-        results = run_perception(
-            frames,
-            args.manifest.parent / "frames",
-            prompts,
-            segmenter,
-            tracker,
-            point_count=args.points,
-            seed=args.seed,
-            border=args.border,
-        )
+        if args.command == "run-perception":
+            segmenter = Sam2VideoAdapter.from_hugging_face(args.sam_model, device=args.device)
+            results = run_perception(
+                frames,
+                args.manifest.parent / "frames",
+                prompts,
+                segmenter,
+                tracker,
+                point_count=args.points,
+                seed=args.seed,
+                border=args.border,
+                reseed_interval=args.reseed_interval,
+            )
+        else:
+            masks = load_mask_directories(
+                args.masks, list(prompts), expected_frame_count=len(frames)
+            )
+            results = run_tracking_on_masks(
+                frames,
+                masks,
+                prompts,
+                tracker,
+                point_count=args.points,
+                seed=args.seed,
+                border=args.border,
+                reseed_interval=args.reseed_interval,
+            )
         save_perception_artifacts(results, args.output)
         with args.manifest.open(encoding="utf-8") as stream:
             sample_fps = float(json.load(stream)["sample_fps"])
@@ -217,7 +254,12 @@ def main() -> None:
         summary = {
             name: {
                 "frames": len(result.masks),
-                "points": len(result.seed_points_xy),
+                "points_per_window": int(result.seed_points_xy.shape[-2]),
+                "reseed_frames": (
+                    result.reseed_frames.tolist()
+                    if result.reseed_frames is not None
+                    else []
+                ),
                 "track_shape": list(result.tracks_xy.shape),
             }
             for name, result in results.items()

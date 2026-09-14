@@ -41,8 +41,8 @@ longer recorded real Place demonstration before policy training.
 
 ## Perception gate result
 
-The 2026-09-15 CUDA run produced mean mask IoU of 0.777 for the ball and 0.920 for
-the bowl. Ball track survival was 0.973; bowl track survival was 0.758. With the
-frozen 0.80 survival threshold, the formal gate result is **fail**, despite both
-segmentation metrics passing and no visual identity swap. See the experiment log
-for the controlled next action.
+The initial 2026-09-15 CUDA run produced mean mask IoU of 0.777 for the ball and
+0.920 for the bowl, but bowl survival was only 0.758. The controlled follow-up held
+the exact masks and all thresholds fixed while refreshing deterministic CoTracker
+queries every 16 frames. Ball and bowl survival reached 0.914 and 0.951,
+respectively, with no visual identity swap. The formal perception gate **passes**.

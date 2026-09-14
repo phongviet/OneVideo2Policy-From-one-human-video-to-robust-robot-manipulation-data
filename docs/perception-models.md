@@ -48,6 +48,20 @@ The `weights/` directory is Git-ignored. Do not commit downloaded checkpoints.
 The adapters validate all frame, mask, query, and output dimensions before saving
 results. They deliberately do not download weights or silently choose a device.
 
+For long sequences, `retrack-perception` can consume the exact saved mask PNGs and
+refresh deterministic queries at fixed intervals without rerunning SAM2. Each NPZ
+records the actual `reseed_frames`; if a boundary is occluded, the first sampleable
+mask inside that window is used and CoTracker tracks backward within the window.
+
+```bash
+uv run ov2p retrack-perception data/interim/place_demo/manifest.json \
+  --masks data/interim/place_demo/masks \
+  --prompts configs/place_prompts.json \
+  --cotracker-checkpoint weights/cotracker3/scaled_offline.pth \
+  --output data/interim/place_demo_reseed16 \
+  --reseed-interval 16 --device cuda --points 32 --seed 42 --border 4
+```
+
 The imported UniHand fixture has reviewed frame-zero prompts in
 `configs/place_prompts.json`. After installing the pinned dependencies and placing
 the CoTracker checkpoint, run:
