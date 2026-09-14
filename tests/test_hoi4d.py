@@ -4,6 +4,7 @@ import pytest
 from onevideo2policy.video.hoi4d import (
     decode_hoi4d_motion_mask,
     hoi4d_color_map,
+    import_hoi4d_rgb_video,
     import_hoi4d_sequence,
 )
 from onevideo2policy.video.manifest import validate_manifest
@@ -58,3 +59,37 @@ def test_import_hoi4d_sequence_preserves_ground_truth(tmp_path) -> None:
     target = cv2.imread(str(output / "ground_truth/target/000000.png"), cv2.IMREAD_GRAYSCALE)
     assert source[0, 1] == 255
     assert target[3, 4] == 255
+
+
+def test_import_hoi4d_rgb_video_uses_separate_annotations(tmp_path) -> None:
+    cv2 = pytest.importorskip("cv2")
+    rgb_sequence = tmp_path / "release" / "sequence"
+    annotation_sequence = tmp_path / "annotations" / "sequence"
+    (rgb_sequence / "align_rgb").mkdir(parents=True)
+    mask_dir = annotation_sequence / "2Dseg" / "mask"
+    mask_dir.mkdir(parents=True)
+    video_path = rgb_sequence / "align_rgb" / "image.mp4"
+    writer = cv2.VideoWriter(str(video_path), cv2.VideoWriter_fourcc(*"mp4v"), 15, (6, 4))
+    assert writer.isOpened()
+    palette = hoi4d_color_map()
+    for frame_id in range(2):
+        writer.write(np.full((4, 6, 3), 50 + frame_id, dtype=np.uint8))
+        motion = np.zeros((4, 6, 3), dtype=np.uint8)
+        motion[0, 1] = palette[1]
+        motion[3, 4] = palette[3]
+        assert cv2.imwrite(
+            str(mask_dir / f"{frame_id:05d}.png"), cv2.cvtColor(motion, cv2.COLOR_RGB2BGR)
+        )
+    writer.release()
+
+    output = tmp_path / "imported"
+    manifest = import_hoi4d_rgb_video(
+        rgb_sequence, annotation_sequence, output, source_labels=[3], target_labels=[1]
+    )
+
+    assert manifest["dataset"]["has_depth"] is False
+    assert validate_manifest(output / "manifest.json")["has_depth"] is False
+    source = cv2.imread(str(output / "ground_truth/source/000000.png"), cv2.IMREAD_GRAYSCALE)
+    target = cv2.imread(str(output / "ground_truth/target/000000.png"), cv2.IMREAD_GRAYSCALE)
+    assert source[3, 4] == 255
+    assert target[0, 1] == 255

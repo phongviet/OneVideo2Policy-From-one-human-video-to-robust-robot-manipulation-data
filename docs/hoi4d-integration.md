@@ -48,3 +48,16 @@ uv run ov2p validate-manifest data/interim/hoi4d_mug_t1/manifest.json
 The masks are official motion labels, not SAM2 results. They are suitable as
 ground truth for an evaluation fixture only after confirming the two selected labels
 refer to distinct physical source and target objects throughout the selected clip.
+
+If only the official RGB and annotation ZIPs are retained, use their separate
+archive-native sequence directories directly. This creates a valid RGB-only
+manifest and preserves the motion masks:
+
+```bash
+uv run ov2p import-hoi4d \
+  data/raw/sources/hoi4d/HOI4D_release/ZY20210800001/H1/C7/N14/S280/s04/T5 \
+  --annotations data/raw/sources/hoi4d/HOI4D_annotations/ZY20210800001/H1/C7/N14/S280/s04/T5 \
+  --output data/interim/hoi4d_ball_to_bowl \
+  --source-label 3 \
+  --target-label 1
+```

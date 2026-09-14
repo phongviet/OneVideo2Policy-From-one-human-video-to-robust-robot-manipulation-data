@@ -162,3 +162,117 @@ def import_hoi4d_sequence(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )
     return manifest
+
+
+def import_hoi4d_rgb_video(
+    rgb_sequence_dir: str | Path,
+    annotation_sequence_dir: str | Path,
+    output_dir: str | Path,
+    *,
+    source_labels: list[int],
+    target_labels: list[int],
+) -> dict[str, Any]:
+    """Import an archive-native HOI4D RGB video with its separate mask tree.
+
+    This supports the official release and annotation ZIP layout directly. It is an
+    RGB-only import when the corresponding depth archive is unavailable; the normal
+    ``import_hoi4d_sequence`` path remains available for fully decoded RGB-D data.
+    """
+    try:
+        import cv2
+    except ImportError as exc:  # pragma: no cover - depends on optional extra
+        raise RuntimeError("HOI4D import requires: uv sync --extra video") from exc
+
+    rgb_sequence_dir = Path(rgb_sequence_dir)
+    annotation_sequence_dir = Path(annotation_sequence_dir)
+    source_video = rgb_sequence_dir / "align_rgb" / "image.mp4"
+    if not source_video.is_file():
+        raise FileNotFoundError(source_video)
+    motion_root = annotation_sequence_dir / "2Dseg"
+    motion_dir = (
+        motion_root / "mask" if (motion_root / "mask").is_dir() else motion_root / "shift_mask"
+    )
+    if not motion_dir.is_dir():
+        raise NotADirectoryError(motion_dir)
+    motion_files = _numbered_files(motion_dir, {".png"})
+    if not motion_files:
+        raise ValueError("HOI4D sequence has no 2D motion masks")
+
+    capture = cv2.VideoCapture(str(source_video))
+    native_fps = float(capture.get(cv2.CAP_PROP_FPS))
+    source_frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    if native_fps <= 0 or source_frame_count <= 0:
+        capture.release()
+        raise ValueError(f"Could not decode HOI4D RGB video: {source_video}")
+    if source_frame_count != len(motion_files):
+        capture.release()
+        raise ValueError("HOI4D RGB video and 2D motion-mask frame counts must match")
+
+    output_dir = Path(output_dir)
+    frames_dir = output_dir / "frames"
+    source_gt_dir = output_dir / "ground_truth" / "source"
+    target_gt_dir = output_dir / "ground_truth" / "target"
+    for path in (frames_dir, source_gt_dir, target_gt_dir):
+        path.mkdir(parents=True, exist_ok=True)
+
+    frames: list[dict[str, Any]] = []
+    resolution: tuple[int, int] | None = None
+    try:
+        for frame_id, motion_path in enumerate(motion_files):
+            ok, rgb = capture.read()
+            motion_bgr = cv2.imread(str(motion_path), cv2.IMREAD_COLOR)
+            if not ok or motion_bgr is None:
+                raise ValueError(f"Could not decode HOI4D frame {frame_id}")
+            if rgb.shape[:2] != motion_bgr.shape[:2]:
+                raise ValueError(f"HOI4D RGB and mask shapes disagree at frame {frame_id}")
+            current_resolution = (rgb.shape[1], rgb.shape[0])
+            if resolution is None:
+                resolution = current_resolution
+            elif resolution != current_resolution:
+                raise ValueError("HOI4D RGB resolution must be constant")
+            name = f"{frame_id:06d}"
+            if not cv2.imwrite(str(frames_dir / f"{name}.jpg"), rgb):
+                raise OSError(f"Could not write imported RGB frame {name}")
+            motion_rgb = cv2.cvtColor(motion_bgr, cv2.COLOR_BGR2RGB)
+            for labels, destination in (
+                (source_labels, source_gt_dir),
+                (target_labels, target_gt_dir),
+            ):
+                binary = decode_hoi4d_motion_mask(motion_rgb, labels)
+                if not cv2.imwrite(str(destination / f"{name}.png"), binary.astype(np.uint8) * 255):
+                    raise OSError(f"Could not write imported mask {name}")
+            frames.append(
+                {
+                    "frame_id": frame_id,
+                    "source_frame_id": int(motion_path.stem),
+                    "timestamp_s": frame_id / native_fps,
+                    "rgb": f"frames/{name}.jpg",
+                }
+            )
+    finally:
+        capture.release()
+
+    assert resolution is not None
+    manifest = {
+        "schema_version": 1,
+        "source_video": str(source_video.resolve()),
+        "source_frame_count": source_frame_count,
+        "resolution": {"width": resolution[0], "height": resolution[1]},
+        "native_fps": native_fps,
+        "sample_fps": native_fps,
+        "frame_count": len(frames),
+        "frames": frames,
+        "dataset": {
+            "name": "HOI4D",
+            "sequence": str(rgb_sequence_dir.resolve()),
+            "annotation_sequence": str(annotation_sequence_dir.resolve()),
+            "ground_truth": "official 2D motion segmentation",
+            "source_labels": source_labels,
+            "target_labels": target_labels,
+            "has_depth": False,
+        },
+    }
+    (output_dir / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
+    return manifest
