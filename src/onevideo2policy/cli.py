@@ -5,9 +5,17 @@ import json
 from pathlib import Path
 
 from onevideo2policy.config import load_config
+from onevideo2policy.video.cotracker_adapter import CoTracker3Adapter
 from onevideo2policy.video.manifest import validate_manifest
+from onevideo2policy.video.perception import (
+    load_manifest_rgb,
+    load_prompt_file,
+    run_perception,
+    save_perception_artifacts,
+)
 from onevideo2policy.video.point_sampling import sample_mask_points
 from onevideo2policy.video.preprocessing import prepare_video
+from onevideo2policy.video.sam2_adapter import Sam2VideoAdapter
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +40,19 @@ def build_parser() -> argparse.ArgumentParser:
     points.add_argument("--seed", default=42, type=int)
     points.add_argument("--border", default=0, type=int)
     points.add_argument("--output", required=True, type=Path)
+
+    perception = subparsers.add_parser(
+        "run-perception", help="Run SAM2 followed by deterministic CoTracker3 queries"
+    )
+    perception.add_argument("manifest", type=Path)
+    perception.add_argument("--prompts", required=True, type=Path)
+    perception.add_argument("--output", required=True, type=Path)
+    perception.add_argument("--sam-model", default="facebook/sam2.1-hiera-small")
+    perception.add_argument("--cotracker-checkpoint", required=True, type=Path)
+    perception.add_argument("--device", default="cuda")
+    perception.add_argument("--points", default=32, type=int)
+    perception.add_argument("--seed", default=42, type=int)
+    perception.add_argument("--border", default=4, type=int)
     return parser
 
 
@@ -53,6 +74,35 @@ def main() -> None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         np.save(args.output, sampled)
         print(f"Saved {len(sampled)} points to {args.output}")
+    elif args.command == "run-perception":
+        if not args.cotracker_checkpoint.is_file():
+            raise FileNotFoundError(args.cotracker_checkpoint)
+        frames = load_manifest_rgb(args.manifest)
+        prompts = load_prompt_file(args.prompts)
+        segmenter = Sam2VideoAdapter.from_hugging_face(args.sam_model, device=args.device)
+        tracker = CoTracker3Adapter.from_checkpoint(
+            args.cotracker_checkpoint, device=args.device
+        )
+        results = run_perception(
+            frames,
+            args.manifest.parent / "frames",
+            prompts,
+            segmenter,
+            tracker,
+            point_count=args.points,
+            seed=args.seed,
+            border=args.border,
+        )
+        save_perception_artifacts(results, args.output)
+        summary = {
+            name: {
+                "frames": len(result.masks),
+                "points": len(result.seed_points_xy),
+                "track_shape": list(result.tracks_xy.shape),
+            }
+            for name, result in results.items()
+        }
+        print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
