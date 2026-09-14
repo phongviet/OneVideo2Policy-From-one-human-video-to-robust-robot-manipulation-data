@@ -130,6 +130,11 @@ and retain their official motion masks as ground truth. Use this only after chec
 that both source and destination are separately labeled; see the
 [HOI4D integration guide](hoi4d-integration.md).
 
+The retained HOI4D ball-to-bowl fixture has passed this intake check. Its config is
+[`../configs/hoi4d_ball_to_bowl.yaml`](../configs/hoi4d_ball_to_bowl.yaml), and the
+selection rationale and limitations are recorded in the
+[data audit](data-audits/hoi4d-ball-to-bowl.md).
+
 Suggested output:
 
 ```text

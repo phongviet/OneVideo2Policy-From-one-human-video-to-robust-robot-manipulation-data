@@ -1,0 +1,39 @@
+project:
+  name: onevideo2policy-hoi4d-ball-to-bowl
+  seed: 42
+
+task:
+  name: place
+  source_object: ball
+  target_object: bowl
+  rigid_objects_only: true
+  interaction_distance_m: 0.03
+  stationary_speed_m_s: 0.01
+  success:
+    max_xy_error_m: 0.03
+    max_height_error_m: 0.02
+
+video:
+  input: data/raw/sources/hoi4d/HOI4D_release/ZY20210800001/H1/C7/N14/S280/s04/T5/align_rgb/image.mp4
+  output_dir: data/interim/hoi4d_ball_to_bowl
+  sample_fps: 15.0
+  expected_duration_s: [19.0, 21.0]
+  monocular_rgb_only: true
+  capture: hoi4d_egocentric_rgb
+
+tracking:
+  initial_selection: official_motion_masks
+  segmenter: sam2
+  sam2_model: facebook/sam2.1-hiera-small
+  sam2_code_revision: 2b90b9f5ceec907a1c18123530e92e794ad901a4
+  point_tracker: cotracker3
+  cotracker3_checkpoint: weights/cotracker3/scaled_offline.pth
+  cotracker3_code_revision: 82e02e8029753ad4ef13cf06be7f4fc5facdda4d
+  min_visible_points: 12
+  evaluation_frames: 30
+
+gates:
+  min_mask_iou: 0.70
+  min_track_survival: 0.80
+  max_reprojection_error_px: 5.0
+  max_translation_jitter_m: 0.02
