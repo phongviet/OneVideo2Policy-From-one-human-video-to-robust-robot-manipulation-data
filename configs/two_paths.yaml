@@ -1,0 +1,51 @@
+project:
+  name: onevideo2policy-two-path
+  seed: 42
+
+task:
+  name: place
+  source_object: ball
+  target_object: bowl
+  rigid_objects_only: true
+  success:
+    max_xy_error_m: 0.03
+    max_height_error_m: 0.02
+
+video:
+  input: data/interim/hoi4d_ball_to_bowl_gate/manifest.json
+  sample_fps: 5.0
+
+tracking:
+  segmenter: sam2
+  point_tracker: cotracker3
+  masks: data/interim/hoi4d_ball_to_bowl_gate/masks
+
+paths:
+  local:
+    reconstruction: measured_primitives
+    geometry: planar_mask_centroid_proxy
+    robot_model: bounded_point_robot
+    policy: ridge_behavior_cloning
+    target_diameter_m: 0.18
+    target_height_m: 0.05
+    source_radius_m: 0.03
+    initial_separation_m: 0.25
+    lift_height_m: 0.12
+    randomization_m: 0.06
+    train_episodes: 250
+    eval_episodes: 100
+    steps: 48
+    min_success_rate: 0.80
+  faithful:
+    reconstruction: microsoft/TRELLIS-image-large
+    geometry: facebook/VGGT-1B
+    simulator: robosuite
+    policy: diffusion_policy
+    keyframes: 12
+    min_vram_gb: 16
+    recommended_vram_gb: 24
+    status: ready_for_external_compute
+
+gates:
+  min_mask_iou: 0.70
+  min_track_survival: 0.80

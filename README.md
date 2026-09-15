@@ -69,9 +69,9 @@ stable.
 
 ## Project status
 
-The repository is an early research scaffold. It already includes the model-agnostic
-foundation needed to make the first experiments reproducible; it does **not** yet
-claim an end-to-end result.
+The repository now includes a runnable local end-to-end systems baseline and a
+portable high-fidelity run contract. It does **not** yet claim a paper-faithful
+TRELLIS/VGGT, image-policy, or sim-to-real result.
 
 | Component | Status | Evidence / next deliverable |
 |---|:---:|---|
@@ -82,9 +82,11 @@ claim an end-to-end result.
 | Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
 | TRELLIS and VGGT adapters | 🟡 | Blocked by 6 GB VRAM; official TRELLIS needs 16 GB |
+| Local end-to-end baseline | ✅ | 250 demos; 100/100 held-out proxy rollouts |
+| Faithful run bundle | ✅ | Hashed TRELLIS/VGGT inputs ready for 16 GB+ host |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
-| Synthetic robot demonstrations | ⬜ | Starts after tracking Gate B |
-| Diffusion Policy benchmark | ⬜ | Starts after generation Gate C |
+| Synthetic demonstrations | 🟡 | Local state proxy passes; Robosuite path pending |
+| Policy benchmark | 🟡 | Local BC passes; image Diffusion Policy pending |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 
@@ -188,6 +190,22 @@ uv run ov2p validate-manifest data/interim/place_demo/manifest.json
 The commands write numbered RGB frames and validate a versioned `manifest.json`
 containing original frame IDs, timestamps, and aligned RGB/depth paths. Raw and
 generated datasets are ignored by Git.
+
+### Run the local end-to-end baseline
+
+After perception artifacts exist, the CPU-safe path exercises geometry, trajectory
+recovery, randomized demonstration generation, policy fitting, and rollout gating:
+
+```bash
+uv run ov2p run-local-e2e \
+  --config configs/two_paths.yaml \
+  --manifest data/interim/hoi4d_ball_to_bowl_gate/manifest.json \
+  --masks data/interim/hoi4d_ball_to_bowl_gate/masks \
+  --output results/local_e2e/hoi4d_ball_to_bowl
+```
+
+See the [two-path execution guide](docs/two-path-execution.md) for the exact claim
+boundary and the portable faithful-path bundle.
 
 After producing a binary source-object mask, seed tracking points reproducibly:
 
