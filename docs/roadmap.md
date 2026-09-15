@@ -2,6 +2,10 @@
 
 ## Current milestone: one video to relative trajectory
 
+The CPU-safe systems baseline is complete through generation and held-out policy
+rollouts. Paper-faithful Gate A remains pending on the external-compute path; see
+[`two-path-execution.md`](two-path-execution.md).
+
 1. Record one clean 10–20 second monocular Place demonstration.
 2. Sample frames and manually select source and target in frame zero.
 3. Integrate SAM2 and CoTracker3 adapters; annotate 30 evaluation frames.
@@ -43,4 +47,3 @@ The policy learns the in-distribution Place task before robustness experiments.
 Full or geometry-only 3D augmentation improves robustness over ordinary 2D
 augmentation under at least one controlled shift. A negative result is retained and
 analyzed rather than hidden.
-

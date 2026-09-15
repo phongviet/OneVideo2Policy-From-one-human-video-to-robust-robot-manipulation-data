@@ -10,6 +10,7 @@ from onevideo2policy.evaluation.perception_gate import (
     evaluate_ground_truth_directories,
     prepare_annotation_workspace,
 )
+from onevideo2policy.pipeline import prepare_faithful_bundle, run_local_end_to_end
 from onevideo2policy.reconstruction.crops import (
     export_rgba_crops,
     load_video_frame,
@@ -130,6 +131,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Use the manifest's original source-frame ID at native video resolution",
     )
 
+    local_e2e = subparsers.add_parser(
+        "run-local-e2e", help="Run the CPU-safe measured-primitive Place baseline"
+    )
+    local_e2e.add_argument("--config", required=True, type=Path)
+    local_e2e.add_argument("--manifest", required=True, type=Path)
+    local_e2e.add_argument("--masks", required=True, type=Path)
+    local_e2e.add_argument("--output", required=True, type=Path)
+
+    faithful = subparsers.add_parser(
+        "prepare-faithful-run", help="Bundle hashed TRELLIS/VGGT inputs for a GPU host"
+    )
+    faithful.add_argument("--config", required=True, type=Path)
+    faithful.add_argument("--manifest", required=True, type=Path)
+    faithful.add_argument("--crops", required=True, type=Path)
+    faithful.add_argument("--output", required=True, type=Path)
+
     hoi4d = subparsers.add_parser(
         "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
     )
@@ -210,9 +227,7 @@ def main() -> None:
         if not 0 <= args.frame < len(frames):
             raise ValueError("Crop frame is outside the manifest")
         object_names = sorted(path.name for path in args.masks.iterdir() if path.is_dir())
-        masks = load_mask_directories(
-            args.masks, object_names, expected_frame_count=len(frames)
-        )
+        masks = load_mask_directories(args.masks, object_names, expected_frame_count=len(frames))
         rgb = frames[args.frame]
         frame_masks = {name: values[args.frame] for name, values in masks.items()}
         source_frame_id = None
@@ -234,6 +249,19 @@ def main() -> None:
                 json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
             )
         print(json.dumps(manifest, indent=2))
+    elif args.command == "run-local-e2e":
+        config = load_config(args.config)
+        with args.manifest.open(encoding="utf-8") as stream:
+            frame_count = len(json.load(stream)["frames"])
+        masks = load_mask_directories(
+            args.masks, ["source", "target"], expected_frame_count=frame_count
+        )
+        report = run_local_end_to_end(masks["source"], masks["target"], args.output, config=config)
+        print(json.dumps(report, indent=2))
+    elif args.command == "prepare-faithful-run":
+        config = load_config(args.config)
+        spec = prepare_faithful_bundle(args.manifest, args.crops, args.output, config=config)
+        print(json.dumps(spec, indent=2))
     elif args.command == "import-hoi4d":
         if args.annotations is not None:
             manifest = import_hoi4d_rgb_video(
@@ -261,9 +289,7 @@ def main() -> None:
             raise FileNotFoundError(args.cotracker_checkpoint)
         frames = load_manifest_rgb(args.manifest)
         prompts = load_prompt_file(args.prompts)
-        tracker = CoTracker3Adapter.from_checkpoint(
-            args.cotracker_checkpoint, device=args.device
-        )
+        tracker = CoTracker3Adapter.from_checkpoint(args.cotracker_checkpoint, device=args.device)
         if args.command == "run-perception":
             segmenter = Sam2VideoAdapter.from_hugging_face(args.sam_model, device=args.device)
             results = run_perception(
@@ -304,9 +330,7 @@ def main() -> None:
                 "frames": len(result.masks),
                 "points_per_window": int(result.seed_points_xy.shape[-2]),
                 "reseed_frames": (
-                    result.reseed_frames.tolist()
-                    if result.reseed_frames is not None
-                    else []
+                    result.reseed_frames.tolist() if result.reseed_frames is not None else []
                 ),
                 "track_shape": list(result.tracks_xy.shape),
             }

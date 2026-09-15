@@ -16,6 +16,28 @@ REQUIRED_PATHS = (
     ("gates", "min_mask_iou"),
 )
 
+LOCAL_PATH_KEYS = (
+    "target_diameter_m",
+    "target_height_m",
+    "source_radius_m",
+    "lift_height_m",
+    "randomization_m",
+    "train_episodes",
+    "eval_episodes",
+    "steps",
+    "min_success_rate",
+)
+
+FAITHFUL_PATH_KEYS = (
+    "reconstruction",
+    "geometry",
+    "simulator",
+    "policy",
+    "keyframes",
+    "min_vram_gb",
+    "recommended_vram_gb",
+)
+
 
 def load_config(path: str | Path) -> dict[str, Any]:
     path = Path(path)
@@ -41,3 +63,21 @@ def validate_config(config: dict[str, Any]) -> None:
     iou = config["gates"]["min_mask_iou"]
     if not isinstance(iou, (int, float)) or not 0 <= iou <= 1:
         raise ValueError("gates.min_mask_iou must be between 0 and 1")
+
+    paths = config.get("paths")
+    if paths is not None:
+        if not isinstance(paths, dict):
+            raise ValueError("paths must be a mapping")
+        for name, keys in (("local", LOCAL_PATH_KEYS), ("faithful", FAITHFUL_PATH_KEYS)):
+            section = paths.get(name)
+            if not isinstance(section, dict):
+                raise ValueError(f"paths.{name} must be a mapping")
+            missing_keys = [key for key in keys if key not in section]
+            if missing_keys:
+                raise ValueError(
+                    f"paths.{name} is missing required values: {', '.join(missing_keys)}"
+                )
+        if not 0 <= float(paths["local"]["min_success_rate"]) <= 1:
+            raise ValueError("paths.local.min_success_rate must be between 0 and 1")
+        if int(paths["faithful"]["recommended_vram_gb"]) < int(paths["faithful"]["min_vram_gb"]):
+            raise ValueError("faithful recommended VRAM must be at least its minimum")
