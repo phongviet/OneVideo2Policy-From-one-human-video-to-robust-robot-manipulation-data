@@ -11,10 +11,13 @@ def prepare_video(
     output_dir: str | Path,
     sample_fps: float,
     depth_dir: str | Path | None = None,
+    max_width: int | None = None,
 ) -> dict[str, Any]:
     """Extract RGB frames at a fixed rate and write an aligned data manifest."""
     if sample_fps <= 0:
         raise ValueError("sample_fps must be positive")
+    if max_width is not None and max_width <= 0:
+        raise ValueError("max_width must be positive")
     try:
         import cv2
     except ImportError as exc:  # pragma: no cover - depends on optional extra
@@ -42,6 +45,13 @@ def prepare_video(
     source_frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    source_resolution = {"width": width, "height": height}
+    if max_width is not None and width > max_width:
+        if depth_dir is not None:
+            capture.release()
+            raise ValueError("max_width cannot be used with aligned depth frames")
+        height = max(1, round(height * max_width / width))
+        width = max_width
 
     step_s = 1.0 / sample_fps
     next_sample_s = 0.0
@@ -54,6 +64,8 @@ def prepare_video(
         timestamp_s = source_index / native_fps
         if timestamp_s + 1e-9 >= next_sample_s:
             frame_name = f"{len(frames):06d}.jpg"
+            if frame.shape[1] != width:
+                frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
             if not cv2.imwrite(str(frames_dir / frame_name), frame):
                 capture.release()
                 raise OSError(f"Failed to write {frames_dir / frame_name}")
@@ -79,6 +91,7 @@ def prepare_video(
         "source_video": str(video_path.resolve()),
         "source_frame_count": source_frame_count,
         "resolution": {"width": width, "height": height},
+        "source_resolution": source_resolution,
         "native_fps": native_fps,
         "sample_fps": sample_fps,
         "frame_count": len(frames),

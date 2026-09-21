@@ -25,3 +25,13 @@ def test_two_path_config_requires_both_paths() -> None:
 
     with pytest.raises(ValueError, match="paths.faithful"):
         validate_config(config)
+
+
+def test_real_place_config_requires_case_dimensions() -> None:
+    config = load_config(
+        Path(__file__).parents[1] / "configs" / "real_place_img_6256_local_smoke.yaml"
+    )
+    del config["paths"]["local"]["target_width_m"]
+
+    with pytest.raises(ValueError, match="paths.local.target_width_m"):
+        validate_config(config)

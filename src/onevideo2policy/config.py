@@ -79,5 +79,20 @@ def validate_config(config: dict[str, Any]) -> None:
                 )
         if not 0 <= float(paths["local"]["min_success_rate"]) <= 1:
             raise ValueError("paths.local.min_success_rate must be between 0 and 1")
+        local = paths["local"]
+        if local.get("camera_compensation", "none") not in ("none", "background_affine"):
+            raise ValueError("paths.local.camera_compensation is unsupported")
+        source_primitive = local.get("source_primitive", "uv_sphere")
+        target_primitive = local.get("target_primitive", "open_bowl")
+        if source_primitive not in ("uv_sphere", "cylinder"):
+            raise ValueError("paths.local.source_primitive is unsupported")
+        if target_primitive not in ("open_bowl", "rectangular_tray"):
+            raise ValueError("paths.local.target_primitive is unsupported")
+        required_dimensions = (["source_height_m"] if source_primitive == "cylinder" else []) + (
+            ["target_length_m", "target_width_m"] if target_primitive == "rectangular_tray" else []
+        )
+        for key in required_dimensions:
+            if key not in local or not isinstance(local[key], (int, float)) or local[key] <= 0:
+                raise ValueError(f"paths.local.{key} must be positive")
         if int(paths["faithful"]["recommended_vram_gb"]) < int(paths["faithful"]["min_vram_gb"]):
             raise ValueError("faithful recommended VRAM must be at least its minimum")

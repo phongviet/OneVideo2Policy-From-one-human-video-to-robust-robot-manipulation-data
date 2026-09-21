@@ -74,7 +74,7 @@ def prepare_faithful_bundle(
     spec: dict[str, Any] = {
         "schema_version": 1,
         "path": "faithful",
-        "status": "ready_for_external_compute",
+        "status": faithful.get("status", "ready_for_external_compute"),
         "models": {
             "object_reconstruction": faithful["reconstruction"],
             "scene_geometry": faithful["geometry"],
@@ -117,6 +117,58 @@ def _centroids(masks: NDArray[np.bool_]) -> NDArray[np.float64]:
     return centers
 
 
+def estimate_camera_transforms(frames: NDArray[np.uint8]) -> NDArray[np.float64]:
+    """Map each frame into frame-zero coordinates using static background features."""
+    try:
+        import cv2
+    except ImportError as exc:  # pragma: no cover - optional video extra
+        raise RuntimeError("Camera compensation requires: uv sync --extra video") from exc
+    frames = np.asarray(frames)
+    if frames.ndim != 4 or frames.shape[-1] != 3 or len(frames) < 2:
+        raise ValueError("frames must have shape [T,H,W,3] with at least two frames")
+    height, width = frames.shape[1:3]
+    static_region = np.zeros((height, width), dtype=np.uint8)
+    static_region[: max(1, round(height * 0.32))] = 255
+    orb = cv2.ORB_create(nfeatures=2500)
+    reference_gray = cv2.cvtColor(frames[0], cv2.COLOR_BGR2GRAY)
+    reference_keys, reference_descriptors = orb.detectAndCompute(reference_gray, static_region)
+    if reference_descriptors is None or len(reference_keys) < 20:
+        raise ValueError("Insufficient background features in reference frame")
+    matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    transforms = np.repeat(np.eye(3, dtype=np.float64)[None], len(frames), axis=0)
+    for frame_idx in range(1, len(frames)):
+        gray = cv2.cvtColor(frames[frame_idx], cv2.COLOR_BGR2GRAY)
+        keys, descriptors = orb.detectAndCompute(gray, static_region)
+        if descriptors is None:
+            raise ValueError(f"Insufficient background features in frame {frame_idx}")
+        matches = [
+            match
+            for match in matcher.match(descriptors, reference_descriptors)
+            if match.distance < 65
+        ]
+        if len(matches) < 20:
+            raise ValueError(f"Insufficient background matches in frame {frame_idx}")
+        matches.sort(key=lambda match: match.distance)
+        current = np.float32([keys[match.queryIdx].pt for match in matches[:500]])
+        reference = np.float32([reference_keys[match.trainIdx].pt for match in matches[:500]])
+        affine, inliers = cv2.estimateAffinePartial2D(
+            current, reference, method=cv2.RANSAC, ransacReprojThreshold=3.0
+        )
+        if affine is None or inliers is None or int(inliers.sum()) < 15:
+            raise ValueError(f"Unstable background alignment in frame {frame_idx}")
+        transforms[frame_idx, :2] = affine
+    return transforms
+
+
+def _transform_points(
+    points: NDArray[np.float64], transforms: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    if transforms.shape != (len(points), 3, 3):
+        raise ValueError("camera transforms must have shape [T,3,3]")
+    homogeneous = np.column_stack((points, np.ones(len(points))))
+    return np.einsum("tij,tj->ti", transforms, homogeneous)[:, :2]
+
+
 def recover_planar_proxy(
     source_masks: NDArray[np.bool_],
     target_masks: NDArray[np.bool_],
@@ -124,6 +176,7 @@ def recover_planar_proxy(
     target_diameter_m: float,
     lift_height_m: float,
     initial_separation_m: float | None = None,
+    camera_transforms: NDArray[np.float64] | None = None,
 ) -> dict[str, NDArray[np.float64] | float]:
     """Recover a metric planar proxy trajectory from relative mask centroids.
 
@@ -138,6 +191,22 @@ def recover_planar_proxy(
         raise ValueError("source and target masks must have matching shapes")
     source_xy = _centroids(source_masks)
     target_xy = _centroids(target_masks)
+    if camera_transforms is not None:
+        source_xy = _transform_points(source_xy, camera_transforms)
+        target_xy = _transform_points(target_xy, camera_transforms)
+        target_areas = np.count_nonzero(target_masks, axis=(1, 2))
+        well_observed = target_areas >= 0.75 * np.max(target_areas)
+        reliable_frames = np.flatnonzero(well_observed)
+        frame_ids = np.arange(len(target_xy))
+        target_for_relative = np.column_stack(
+            [
+                np.interp(frame_ids, reliable_frames, target_xy[reliable_frames, axis])
+                for axis in range(2)
+            ]
+        )
+    else:
+        well_observed = np.ones(len(target_xy), dtype=bool)
+        target_for_relative = target_xy
     diameters = []
     for mask in target_masks:
         ys, xs = np.nonzero(mask)
@@ -147,7 +216,7 @@ def recover_planar_proxy(
     if initial_separation_m is not None:
         if initial_separation_m <= 0:
             raise ValueError("initial separation must be positive")
-        initial_pixel_separation = float(np.linalg.norm(source_xy[0] - target_xy[0]))
+        initial_pixel_separation = float(np.linalg.norm(source_xy[0] - target_for_relative[0]))
         if initial_pixel_separation == 0:
             raise ValueError("initial source and target centroids must differ")
         metres_per_pixel = initial_separation_m / initial_pixel_separation
@@ -155,7 +224,8 @@ def recover_planar_proxy(
     else:
         metres_per_pixel = target_diameter_m / pixel_diameter
         scale_anchor = "configured_target_diameter"
-    relative_xy = (source_xy - target_xy) * metres_per_pixel
+    relative_pixels = source_xy - target_for_relative
+    relative_xy = relative_pixels * metres_per_pixel
     relative_xy[:, 1] *= -1
     progress = np.linspace(0.0, 1.0, len(source_masks))
     z = lift_height_m * np.sin(np.pi * progress) ** 2
@@ -165,7 +235,106 @@ def recover_planar_proxy(
         "target_xyz_m": np.zeros_like(xyz),
         "metres_per_pixel": metres_per_pixel,
         "scale_anchor": scale_anchor,
+        "source_xy_stabilized_px": source_xy,
+        "target_xy_stabilized_px": target_xy,
+        "target_xy_used_px": target_for_relative,
+        "target_centroid_reliable": well_observed,
+        "relative_xy_px": relative_pixels,
     }
+
+
+def evaluate_mask_placement(
+    source_masks: NDArray[np.bool_], target_masks: NDArray[np.bool_], *, final_frames: int = 5
+) -> dict[str, Any]:
+    """Check whether the source center enters the visible target footprint."""
+    import cv2
+
+    if source_masks.shape != target_masks.shape or final_frames <= 0:
+        raise ValueError("mask shapes must match and final_frames must be positive")
+    source_centers = _centroids(np.asarray(source_masks, dtype=bool))
+    inside = []
+    for center, mask in zip(source_centers, target_masks, strict=True):
+        contours, _ = cv2.findContours(
+            mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+        if not contours:
+            inside.append(False)
+            continue
+        hull = cv2.convexHull(max(contours, key=cv2.contourArea))
+        inside.append(cv2.pointPolygonTest(hull, tuple(center), False) >= 0)
+    tail = inside[-min(final_frames, len(inside)) :]
+    return {
+        "initial_outside": not inside[0],
+        "final_inside_count": int(sum(tail)),
+        "final_window_frames": len(tail),
+        "observed_place": bool(not inside[0] and all(tail)),
+    }
+
+
+def save_relative_trajectory_plot(
+    relative_xy_px: NDArray[np.float64], output_path: str | Path
+) -> Path:
+    """Render a target-centered, pixel-space source path for visual inspection."""
+    import cv2
+
+    points = np.asarray(relative_xy_px, dtype=np.float64)
+    if points.ndim != 2 or points.shape[1] != 2 or not np.isfinite(points).all():
+        raise ValueError("relative trajectory must be finite [T,2] points")
+    width, height, margin = 800, 600, 70
+    canvas = np.full((height, width, 3), (250, 250, 250), dtype=np.uint8)
+    all_points = np.vstack((points, np.zeros((1, 2))))
+    low, high = all_points.min(axis=0), all_points.max(axis=0)
+    span = np.maximum(high - low, 1)
+    scale = min((width - 2 * margin) / span[0], (height - 2 * margin) / span[1])
+    center = (low + high) / 2
+
+    def pixel(xy: NDArray[np.float64]) -> tuple[int, int]:
+        return tuple(np.round((xy - center) * scale + [width / 2, height / 2]).astype(int))
+
+    origin = pixel(np.zeros(2))
+    cv2.drawMarker(canvas, origin, (0, 0, 0), cv2.MARKER_CROSS, 22, 2)
+    cv2.putText(
+        canvas,
+        "target origin",
+        (origin[0] + 12, origin[1] - 12),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.6,
+        (0, 0, 0),
+        2,
+    )
+    for frame in range(1, len(points)):
+        fraction = frame / max(len(points) - 1, 1)
+        color = (int(220 * fraction), 0, int(220 * (1 - fraction)))
+        cv2.line(canvas, pixel(points[frame - 1]), pixel(points[frame]), color, 3)
+    for label, point, color in (
+        ("start", points[0], (0, 0, 180)),
+        ("end", points[-1], (180, 0, 0)),
+    ):
+        location = pixel(point)
+        cv2.circle(canvas, location, 7, color, -1)
+        cv2.putText(
+            canvas,
+            label,
+            (location[0] + 10, location[1] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            color,
+            2,
+        )
+    cv2.putText(
+        canvas,
+        "Source relative to moving target (pixels)",
+        (20, 32),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.7,
+        (40, 40, 40),
+        2,
+    )
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if not cv2.imwrite(str(output), canvas):
+        raise OSError(f"Could not write {output}")
+    return output
 
 
 def _write_obj(
@@ -211,6 +380,73 @@ def write_sphere_obj(
     for segment in range(segments):
         nxt = (segment + 1) % segments
         faces.append([2, last_ring + nxt, last_ring + segment])
+    output = Path(path)
+    _write_obj(output, vertices, faces)
+    return output
+
+
+def write_cylinder_obj(
+    path: str | Path, *, radius_m: float, height_m: float, segments: int = 32
+) -> Path:
+    """Write a closed round-container proxy with its base on z=0."""
+    if radius_m <= 0 or height_m <= 0 or segments < 3:
+        raise ValueError("invalid cylinder dimensions")
+    vertices = [(0.0, 0.0, 0.0), (0.0, 0.0, height_m)]
+    for z in (0.0, height_m):
+        for index in range(segments):
+            angle = 2 * np.pi * index / segments
+            vertices.append((radius_m * np.cos(angle), radius_m * np.sin(angle), z))
+    faces = []
+    for index in range(segments):
+        nxt = (index + 1) % segments
+        bottom_a, bottom_b = 3 + index, 3 + nxt
+        top_a, top_b = 3 + segments + index, 3 + segments + nxt
+        faces.extend(
+            ([1, bottom_b, bottom_a], [2, top_a, top_b], [bottom_a, bottom_b, top_b, top_a])
+        )
+    output = Path(path)
+    _write_obj(output, vertices, faces)
+    return output
+
+
+def write_rectangular_tray_obj(
+    path: str | Path,
+    *,
+    length_m: float,
+    width_m: float,
+    height_m: float,
+    wall_m: float = 0.003,
+) -> Path:
+    """Write a thin flat case with four low rim walls as a visual proxy."""
+    if min(length_m, width_m, height_m, wall_m) <= 0 or 2 * wall_m >= min(length_m, width_m):
+        raise ValueError("invalid rectangular tray dimensions")
+    floor = min(height_m / 3, wall_m)
+    vertices: list[tuple[float, float, float]] = []
+    faces: list[list[int]] = []
+
+    def append_box(x0: float, x1: float, y0: float, y1: float, z0: float, z1: float) -> None:
+        start = len(vertices) + 1
+        vertices.extend((x, y, z) for z in (z0, z1) for y in (y0, y1) for x in (x0, x1))
+        faces.extend(
+            [
+                [start + index for index in face]
+                for face in (
+                    (0, 2, 3, 1),
+                    (4, 5, 7, 6),
+                    (0, 1, 5, 4),
+                    (2, 6, 7, 3),
+                    (0, 4, 6, 2),
+                    (1, 3, 7, 5),
+                )
+            ]
+        )
+
+    half_length, half_width = length_m / 2, width_m / 2
+    append_box(-half_length, half_length, -half_width, half_width, 0, floor)
+    append_box(-half_length, half_length, -half_width, -half_width + wall_m, floor, height_m)
+    append_box(-half_length, half_length, half_width - wall_m, half_width, floor, height_m)
+    append_box(-half_length, -half_length + wall_m, -half_width, half_width, floor, height_m)
+    append_box(half_length - wall_m, half_length, -half_width, half_width, floor, height_m)
     output = Path(path)
     _write_obj(output, vertices, faces)
     return output
@@ -465,11 +701,21 @@ def run_local_end_to_end(
     output_dir: str | Path,
     *,
     config: dict[str, Any],
+    frames: NDArray[np.uint8] | None = None,
 ) -> dict[str, Any]:
     """Run the CPU-safe local systems baseline and persist every stage artifact."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     local = config["paths"]["local"]
+    compensation = local.get("camera_compensation", "none")
+    if compensation == "background_affine":
+        if frames is None or len(frames) != len(source_masks):
+            raise ValueError("background_affine requires one RGB frame per mask")
+        transforms = estimate_camera_transforms(frames)
+    elif compensation == "none":
+        transforms = None
+    else:
+        raise ValueError(f"Unsupported camera compensation: {compensation}")
     proxy = recover_planar_proxy(
         source_masks,
         target_masks,
@@ -478,16 +724,43 @@ def run_local_end_to_end(
         initial_separation_m=(
             float(local["initial_separation_m"]) if "initial_separation_m" in local else None
         ),
+        camera_transforms=transforms,
     )
     xyz = np.asarray(proxy["source_xyz_m"])
     initial_offset = xyz[0]
     np.savez_compressed(output_dir / "proxy_trajectory.npz", **proxy)
-    write_sphere_obj(output_dir / "assets" / "source.obj", radius_m=float(local["source_radius_m"]))
-    write_bowl_obj(
-        output_dir / "assets" / "target.obj",
-        outer_radius_m=float(local["target_diameter_m"]) / 2,
-        height_m=float(local["target_height_m"]),
-    )
+    save_relative_trajectory_plot(proxy["relative_xy_px"], output_dir / "relative_trajectory.png")
+    if transforms is not None:
+        np.save(output_dir / "camera_transforms.npy", transforms)
+    source_primitive = local.get("source_primitive", "uv_sphere")
+    target_primitive = local.get("target_primitive", "open_bowl")
+    if source_primitive == "cylinder":
+        write_cylinder_obj(
+            output_dir / "assets" / "source.obj",
+            radius_m=float(local["source_radius_m"]),
+            height_m=float(local["source_height_m"]),
+        )
+    elif source_primitive == "uv_sphere":
+        write_sphere_obj(
+            output_dir / "assets" / "source.obj", radius_m=float(local["source_radius_m"])
+        )
+    else:
+        raise ValueError(f"Unsupported source primitive: {source_primitive}")
+    if target_primitive == "rectangular_tray":
+        write_rectangular_tray_obj(
+            output_dir / "assets" / "target.obj",
+            length_m=float(local["target_length_m"]),
+            width_m=float(local["target_width_m"]),
+            height_m=float(local["target_height_m"]),
+        )
+    elif target_primitive == "open_bowl":
+        write_bowl_obj(
+            output_dir / "assets" / "target.obj",
+            outer_radius_m=float(local["target_diameter_m"]) / 2,
+            height_m=float(local["target_height_m"]),
+        )
+    else:
+        raise ValueError(f"Unsupported target primitive: {target_primitive}")
     observations, actions = generate_local_demonstrations(
         initial_offset,
         episodes=int(local["train_episodes"]),
@@ -535,12 +808,19 @@ def run_local_end_to_end(
             "supported": "artifact-compatible end-to-end execution on local hardware",
             "unsupported": "paper-faithful 3D reconstruction or sim-to-real robustness",
         },
-        "geometry": {"source": "uv_sphere", "target": "open_bowl"},
+        "geometry": {"source": source_primitive, "target": target_primitive},
         "trajectory": {
             "method": "configured-scale planar mask-centroid proxy",
             "frames": len(xyz),
             "metres_per_pixel": proxy["metres_per_pixel"],
             "scale_anchor": proxy["scale_anchor"],
+            "camera_compensation": compensation,
+            "target_centroid_interpolated_frames": int(
+                np.count_nonzero(~proxy["target_centroid_reliable"])
+            ),
+            "relative_start_xy_px": proxy["relative_xy_px"][0].tolist(),
+            "relative_end_xy_px": proxy["relative_xy_px"][-1].tolist(),
+            "placement_evidence": evaluate_mask_placement(source_masks, target_masks),
         },
         "dataset": {
             "episodes": int(local["train_episodes"]),

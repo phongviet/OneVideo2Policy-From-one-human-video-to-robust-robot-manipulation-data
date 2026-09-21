@@ -36,6 +36,14 @@ The local path proves that every repository stage can execute and exchange artif
 It does not establish single-view reconstruction quality, robot-arm feasibility,
 image-policy robustness, or sim-to-real transfer.
 
+The real `IMG_6256.MOV` local run uses a separate
+[`camera-compensated smoke config`](../configs/real_place_img_6256_local_smoke.yaml)
+and [capture audit](data-audits/real-place-img-6255-6256.md). It tracks source
+motion relative to the imaged target, interpolates target centroids only when
+occluded, checks final Place containment, and exports cylinder/tray visual
+proxies. Its dimensions are provisional; its synthetic rollout success is not
+a measured robot result.
+
 ## Prepare the faithful path
 
 ```bash

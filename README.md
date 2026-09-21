@@ -8,7 +8,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-Ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
-[![Tests](https://img.shields.io/badge/tests-19%20passing-2EA44F)](#testing)
+[![Tests](https://img.shields.io/badge/tests-47%20passing-2EA44F)](#testing)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-early%20research%20prototype-orange)](#project-status)
 
@@ -85,8 +85,8 @@ TRELLIS/VGGT, image-policy, or sim-to-real result.
 | Local end-to-end baseline | ✅ | 250 demos; 100/100 held-out proxy rollouts |
 | Faithful run bundle | ✅ | Hashed TRELLIS/VGGT inputs ready for 16 GB+ host |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
-| Synthetic demonstrations | 🟡 | Local state proxy passes; Robosuite path pending |
-| Policy benchmark | 🟡 | Local BC passes; image Diffusion Policy pending |
+| Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |
+| Policy benchmark | ✅ | Seven local variants evaluated; learned-policy gate fails |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 
@@ -189,7 +189,9 @@ uv run ov2p validate-manifest data/interim/place_demo/manifest.json
 
 The commands write numbered RGB frames and validate a versioned `manifest.json`
 containing original frame IDs, timestamps, and aligned RGB/depth paths. Raw and
-generated datasets are ignored by Git.
+generated datasets are ignored by Git. For large RGB-only clips on a small GPU,
+`--max-width 960` downsamples extracted frames while preserving the original
+video and recording both resolutions in the manifest.
 
 ### Run the local end-to-end baseline
 
@@ -205,7 +207,13 @@ uv run ov2p run-local-e2e \
 ```
 
 See the [two-path execution guide](docs/two-path-execution.md) for the exact claim
-boundary and the portable faithful-path bundle.
+boundary and the portable faithful-path bundle. The real `IMG_6256.MOV` local
+run and its camera-compensated, target-relative trajectory are documented in the
+[capture audit](docs/data-audits/real-place-img-6255-6256.md). The
+[local handoff](docs/real-place-handoff.md) records the verified transfer package
+and the remaining independent annotation and scene measurements. The
+[local model benchmarks](docs/local-model-benchmarks.md) record measured 6 GB GPU
+alternatives and their current limits.
 
 After producing a binary source-object mask, seed tracking points reproducibly:
 
@@ -241,6 +249,37 @@ documented in [`docs/perception-models.md`](docs/perception-models.md).
 
 The RGB-D import path for HOI4D's official motion masks is documented in
 [`docs/hoi4d-integration.md`](docs/hoi4d-integration.md).
+
+### Diagnose the robosuite image policy
+
+The local diagnostic path records two camera views, OSC pose actions, next-step
+absolute joint targets, task phases, object and end-effector trajectories, and
+expert recovery states:
+
+```bash
+MUJOCO_GL=egl .venv/bin/python scripts/generate_robosuite_demos.py \
+  --output results/simulation/robosuite_can_100_dual_recovery \
+  --episodes 100 --max-attempts 250 --max-steps 220 \
+  --action-limit 0.8 --recovery-probability 0.03
+
+.venv/bin/python scripts/train_diagnostic_policies.py \
+  --data results/simulation/robosuite_can_100_dual_recovery/demonstrations.npz \
+  --output results/policy/robosuite_controls_100
+
+MUJOCO_GL=egl .venv/bin/python scripts/evaluate_diagnostic_policies.py \
+  --checkpoint results/policy/robosuite_controls_100/state.pt \
+  --output results/diagnostics/state_100_heldout_20 \
+  --episodes 20 --max-steps 220 --seed 31415
+```
+
+The training script compares privileged state control, oracle phase-conditioned
+vision, dual-view action chunking, compact diffusion, and closed-loop absolute-joint
+chunk prediction. It uses phase-balanced sampling plus independent photometric
+and camera perturbations. Closed-loop evaluation stores full robot, object, and
+action trajectories for failure-phase analysis. See the
+[robosuite diagnostic report](docs/robosuite-policy-diagnostics.md) for measured
+results and the [Video2Robo gap audit](docs/video2robo-gap-audit.md) for the claim
+boundary.
 
 ## Research gates
 

@@ -1,0 +1,60 @@
+# Systems smoke test only. Scale values are unmeasured assumptions, not evidence.
+project:
+  name: real-place-img-6256-local-smoke
+  seed: 42
+
+task:
+  name: place
+  source_object: round_container
+  target_object: blue_case
+  rigid_objects_only: true
+  success:
+    max_xy_error_m: 0.03
+    max_height_error_m: 0.02
+
+video:
+  input: data/interim/real_place_img_6256/manifest.json
+  sample_fps: 5.0
+
+tracking:
+  segmenter: sam2
+  point_tracker: cotracker3
+  min_visible_points: 12
+  masks: data/interim/real_place_img_6256_perception/masks
+
+paths:
+  local:
+    reconstruction: provisional_primitives
+    geometry: camera_stabilized_planar_proxy
+    camera_compensation: background_affine
+    source_primitive: cylinder
+    target_primitive: rectangular_tray
+    robot_model: bounded_point_robot
+    policy: ridge_behavior_cloning
+    # Replace all four scene quantities with actual measurements before metric use.
+    target_diameter_m: 0.18
+    target_length_m: 0.18
+    target_width_m: 0.10
+    target_height_m: 0.012
+    source_radius_m: 0.03
+    source_height_m: 0.025
+    initial_separation_m: 0.25
+    lift_height_m: 0.12
+    randomization_m: 0.06
+    train_episodes: 250
+    eval_episodes: 100
+    steps: 48
+    min_success_rate: 0.80
+  faithful:
+    reconstruction: microsoft/TRELLIS-image-large
+    geometry: facebook/VGGT-1B
+    simulator: robosuite
+    policy: diffusion_policy
+    keyframes: 12
+    min_vram_gb: 16
+    recommended_vram_gb: 24
+    status: blocked_by_independent_gate_and_gpu
+
+gates:
+  min_mask_iou: 0.70
+  min_track_survival: 0.80

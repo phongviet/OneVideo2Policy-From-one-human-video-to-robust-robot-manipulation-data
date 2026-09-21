@@ -47,6 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--output", required=True, type=Path)
     prepare.add_argument("--fps", required=True, type=float)
     prepare.add_argument("--depth-dir", type=Path)
+    prepare.add_argument("--max-width", type=int, help="Downsample wide RGB video for inference")
 
     manifest = subparsers.add_parser("validate-manifest", help="Validate an RGB/RGB-D manifest")
     manifest.add_argument("manifest", type=Path)
@@ -170,7 +171,7 @@ def main() -> None:
         config = load_config(args.config)
         print(f"Valid configuration: {config['project']['name']}")
     elif args.command == "prepare-video":
-        manifest = prepare_video(args.video, args.output, args.fps, args.depth_dir)
+        manifest = prepare_video(args.video, args.output, args.fps, args.depth_dir, args.max_width)
         print(json.dumps({"manifest": str(args.output / "manifest.json"), **manifest}, indent=2))
     elif args.command == "validate-manifest":
         print(json.dumps(validate_manifest(args.manifest), indent=2))
@@ -256,7 +257,14 @@ def main() -> None:
         masks = load_mask_directories(
             args.masks, ["source", "target"], expected_frame_count=frame_count
         )
-        report = run_local_end_to_end(masks["source"], masks["target"], args.output, config=config)
+        frames = (
+            load_manifest_rgb(args.manifest)
+            if config["paths"]["local"].get("camera_compensation") == "background_affine"
+            else None
+        )
+        report = run_local_end_to_end(
+            masks["source"], masks["target"], args.output, config=config, frames=frames
+        )
         print(json.dumps(report, indent=2))
     elif args.command == "prepare-faithful-run":
         config = load_config(args.config)

@@ -6,6 +6,30 @@ import pytest
 
 from onevideo2policy.video.manifest import validate_manifest
 from onevideo2policy.video.point_sampling import sample_mask_points
+from onevideo2policy.video.preprocessing import prepare_video
+
+
+def test_prepare_video_downsamples_rgb_and_records_source_resolution(tmp_path: Path) -> None:
+    cv2 = pytest.importorskip("cv2")
+    video_path = tmp_path / "source.avi"
+    writer = cv2.VideoWriter(str(video_path), cv2.VideoWriter_fourcc(*"MJPG"), 10, (80, 60))
+    assert writer.isOpened()
+    for index in range(10):
+        writer.write(np.full((60, 80, 3), index * 10, dtype=np.uint8))
+    writer.release()
+
+    manifest = prepare_video(video_path, tmp_path / "prepared", 5, max_width=40)
+
+    assert manifest["resolution"] == {"width": 40, "height": 30}
+    assert manifest["source_resolution"] == {"width": 80, "height": 60}
+    assert manifest["frame_count"] == 5
+    assert cv2.imread(str(tmp_path / "prepared/frames/000000.jpg")).shape[:2] == (30, 40)
+    assert validate_manifest(tmp_path / "prepared/manifest.json")["frame_count"] == 5
+
+
+def test_prepare_video_rejects_invalid_max_width(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="max_width"):
+        prepare_video(tmp_path / "missing.mp4", tmp_path / "out", 5, max_width=0)
 
 
 def test_validate_rgbd_manifest(tmp_path: Path) -> None:

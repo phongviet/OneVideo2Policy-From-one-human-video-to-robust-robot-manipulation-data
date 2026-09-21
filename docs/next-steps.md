@@ -2,6 +2,36 @@
 
 ## Immediate objective
 
+**Real-video update (2026-09-19):** `IMG_6256.MOV` now has a validated 57-frame
+manifest, complete SAM2/CoTracker3 artifacts, an inspected overlay, native
+first-frame crops, and 30-frame assisted working masks. The local systems smoke
+test now has background-aligned target-relative motion, an occlusion-tolerant
+target trajectory, a Place containment check, and cylinder/tray assets. Faithful
+input-bundle preparation also completes. See the
+[capture audit](data-audits/real-place-img-6255-6256.md). The formal gate still
+requires a blind annotator; measured scene dimensions and a steadier capture are
+needed before treating metric motion or 3D results as evidence. The prior UniHand
+and HOI4D fixtures remain unchanged.
+
+**Prediction-blind AI check (2026-09-21):** A separate agent annotated the 30
+selected real-video frames using raw JPGs only. SAM2.1 Small passes the numeric
+gate against these AI masks (source/target mean IoU 0.800/0.968); Tiny fails
+on the source (0.465 IoU). The annotation hashes and provenance are recorded in
+`results/perception/real_place_img_6256_blind/annotation-provenance-ai.json`.
+The defined formal gate still requires human-drawn independent masks.
+
+**Local geometry and simulation update (2026-09-21):** The full 57-frame depth
+and motion audit is saved as explicitly uncalibrated evidence. It does not
+support metric dimensions without physical measurements or camera calibration.
+The corrected robosuite study produced 100 successful built-in can-to-bin
+demonstrations (18,071 samples), two camera views, absolute joint targets, and
+370 recovery corrections. Seven learned configurations were tested. The
+privileged state policy reached 8/20 held-out successes; every image policy
+scored zero, including phase-conditioned, action-chunked, diffusion, and
+absolute-joint variants. Continue to use the scripted controller. The next
+learned-policy experiment needs a pretrained spatial encoder or explicit object
+keypoints; a larger GPU alone does not address the measured failure.
+
 Produce a measured, inspectable perception artifact from one real Place demonstration:
 
 ```text

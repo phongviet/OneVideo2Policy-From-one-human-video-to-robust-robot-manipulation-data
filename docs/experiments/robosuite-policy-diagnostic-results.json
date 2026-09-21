@@ -1,0 +1,226 @@
+{
+  "status": "complete",
+  "collection": {
+    "successful_episodes": 100,
+    "attempts": 100,
+    "samples": 18071,
+    "recovery_samples": 370,
+    "cameras": [
+      "agentview 84x84 RGB",
+      "frontview 84x84 RGB"
+    ],
+    "stored_action_representations": [
+      "OSC_POSE delta with gripper",
+      "next-step absolute joint positions with gripper"
+    ]
+  },
+  "training": {
+    "state": {
+      "status": "trained",
+      "kind": "state",
+      "parameters": 82439,
+      "best_validation_mae": 0.027601473033428192,
+      "best_epoch": 20,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": false,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": false,
+      "loss": "huber",
+      "elapsed_seconds": 2.2415920900020865
+    },
+    "phase": {
+      "status": "trained",
+      "kind": "phase",
+      "parameters": 335111,
+      "best_validation_mae": 0.01978924311697483,
+      "best_epoch": 20,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": false,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": true,
+      "loss": "huber",
+      "elapsed_seconds": 35.66130869799963
+    },
+    "chunk": {
+      "status": "trained",
+      "kind": "chunk",
+      "parameters": 639768,
+      "best_validation_mae": 0.03750721737742424,
+      "best_epoch": 19,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": true,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": true,
+      "loss": "huber",
+      "elapsed_seconds": 71.55914653500076
+    },
+    "diffusion": {
+      "status": "trained",
+      "kind": "diffusion",
+      "parameters": 944152,
+      "best_validation_mae": 0.060777660459280014,
+      "best_epoch": 1,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": true,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": true,
+      "loss": "diffusion_noise_mse",
+      "elapsed_seconds": 71.19297756600281
+    },
+    "absolute_chunk": {
+      "status": "trained",
+      "kind": "absolute_chunk",
+      "parameters": 642848,
+      "best_validation_mae": 0.02683621644973755,
+      "best_epoch": 19,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": true,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": true,
+      "loss": "huber",
+      "elapsed_seconds": 72.03455285599921
+    }
+  },
+  "evaluations": [
+    {
+      "path": "results/diagnostics/state_100_heldout_20/report.json",
+      "policy_kind": "state",
+      "episodes": 20,
+      "successes": 8,
+      "success_rate": 0.4,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 5,
+        "1": 4,
+        "3": 10,
+        "4": 1
+      },
+      "wilson_95_interval": [
+        0.21880653237281705,
+        0.6134184992377469
+      ]
+    },
+    {
+      "path": "results/diagnostics/phase_100_heldout/report.json",
+      "policy_kind": "phase",
+      "episodes": 5,
+      "successes": 0,
+      "success_rate": 0.0,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 5
+      },
+      "wilson_95_interval": [
+        0.0,
+        0.43448246478317476
+      ]
+    },
+    {
+      "path": "results/diagnostics/chunk_huber_100_heldout/report.json",
+      "policy_kind": "chunk",
+      "episodes": 5,
+      "successes": 0,
+      "success_rate": 0.0,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 5
+      },
+      "wilson_95_interval": [
+        0.0,
+        0.43448246478317476
+      ]
+    },
+    {
+      "path": "results/diagnostics/diffusion_100_heldout/report.json",
+      "policy_kind": "diffusion",
+      "episodes": 5,
+      "successes": 0,
+      "success_rate": 0.0,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 5
+      },
+      "wilson_95_interval": [
+        0.0,
+        0.43448246478317476
+      ]
+    },
+    {
+      "path": "results/diagnostics/absolute_chunk_100_heldout/report.json",
+      "policy_kind": "absolute_chunk",
+      "episodes": 5,
+      "successes": 0,
+      "success_rate": 0.0,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 5
+      },
+      "wilson_95_interval": [
+        0.0,
+        0.43448246478317476
+      ]
+    },
+    {
+      "path": "results/diagnostics/chunk_l1_100_heldout/report.json",
+      "policy_kind": "chunk",
+      "episodes": 3,
+      "successes": 0,
+      "success_rate": 0.0,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 3
+      },
+      "wilson_95_interval": [
+        5.551115123125783e-17,
+        0.5614970317550454
+      ]
+    },
+    {
+      "path": "results/diagnostics/chunk_mse_100_heldout/report.json",
+      "policy_kind": "chunk",
+      "episodes": 3,
+      "successes": 0,
+      "success_rate": 0.0,
+      "training_initial_positions": false,
+      "terminal_phase_counts": {
+        "0": 3
+      },
+      "wilson_95_interval": [
+        5.551115123125783e-17,
+        0.5614970317550454
+      ]
+    }
+  ],
+  "best_closed_loop": {
+    "path": "results/diagnostics/state_100_heldout_20/report.json",
+    "policy_kind": "state",
+    "episodes": 20,
+    "successes": 8,
+    "success_rate": 0.4,
+    "training_initial_positions": false,
+    "terminal_phase_counts": {
+      "0": 5,
+      "1": 4,
+      "3": 10,
+      "4": 1
+    }
+  },
+  "decision": "fail learned-policy gate; retain scripted expert",
+  "experiment_date": "2026-09-21",
+  "gate": {
+    "metric": "held-out closed-loop success",
+    "threshold": 0.8,
+    "passed": false
+  },
+  "interpretation": [
+    "The privileged state policy is the only learned policy with nonzero held-out success (8/20).",
+    "Every RGB policy failed to leave the approach phase under the evaluation phase monitor.",
+    "Offline validation error did not predict closed-loop success.",
+    "The scripted OSC pose expert remains the selected local controller."
+  ]
+}
