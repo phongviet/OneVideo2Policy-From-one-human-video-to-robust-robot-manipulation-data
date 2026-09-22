@@ -17,7 +17,10 @@ from robosuite_policy_models import (  # noqa: E402
     ChunkImagePolicy,
     DiffusionChunkPolicy,
     PhaseImagePolicy,
+    PhaseStatePolicy,
+    SpatialPhasePolicy,
     StatePolicy,
+    VisualWaypointPolicy,
     diffusion_schedule,
 )
 
@@ -36,6 +39,7 @@ def image_tensor(
     *,
     dual_camera: bool,
     augment: bool,
+    geometric_augment: bool = True,
 ) -> torch.Tensor:
     arrays = [images[ids]]
     if dual_camera:
@@ -48,19 +52,20 @@ def image_tensor(
         scale = torch.empty((len(ids), 1, 1, 1), device=device).uniform_(0.7, 1.3)
         shift = torch.empty((len(ids), 1, 1, 1), device=device).uniform_(-0.15, 0.15)
         image = (image * scale + shift + torch.randn_like(image) * 0.02).clamp(0, 1)
-        angle = torch.empty(len(ids), device=device).uniform_(-3, 3) * torch.pi / 180
-        translation = torch.empty((len(ids), 2), device=device).uniform_(-0.05, 0.05)
-        cosine, sine = torch.cos(angle), torch.sin(angle)
-        transform = torch.zeros((len(ids), 2, 3), device=device)
-        transform[:, 0, 0] = cosine
-        transform[:, 0, 1] = -sine
-        transform[:, 1, 0] = sine
-        transform[:, 1, 1] = cosine
-        transform[:, :, 2] = translation
-        grid = torch.nn.functional.affine_grid(transform, image.shape, align_corners=False)
-        image = torch.nn.functional.grid_sample(
-            image, grid, mode="bilinear", padding_mode="border", align_corners=False
-        )
+        if geometric_augment:
+            angle = torch.empty(len(ids), device=device).uniform_(-3, 3) * torch.pi / 180
+            translation = torch.empty((len(ids), 2), device=device).uniform_(-0.05, 0.05)
+            cosine, sine = torch.cos(angle), torch.sin(angle)
+            transform = torch.zeros((len(ids), 2, 3), device=device)
+            transform[:, 0, 0] = cosine
+            transform[:, 0, 1] = -sine
+            transform[:, 1, 0] = sine
+            transform[:, 1, 1] = cosine
+            transform[:, :, 2] = translation
+            grid = torch.nn.functional.affine_grid(transform, image.shape, align_corners=False)
+            image = torch.nn.functional.grid_sample(
+                image, grid, mode="bilinear", padding_mode="border", align_corners=False
+            )
     return image
 
 
@@ -78,7 +83,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--models", default="state,phase,chunk,diffusion,absolute_chunk")
+    parser.add_argument(
+        "--models",
+        default=(
+            "state,phase_state,visual_waypoint,spatial_phase,phase,chunk,diffusion,absolute_chunk"
+        ),
+    )
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--horizon", type=int, default=8)
@@ -103,6 +113,8 @@ def main() -> None:
     actions = data["actions"].astype(np.float32)
     p_mean, p_std = normalize(proprio, train_ids)
     s_mean, s_std = normalize(state, train_ids)
+    o_mean, o_std = normalize(objects, train_ids)
+    c_mean, c_std = normalize(data["can_positions"].astype(np.float32), train_ids)
     has_dual = "images_front" in data
     chunks = chunk_indices(ends, args.horizon)
     requested = [name.strip() for name in args.models.split(",") if name.strip()]
@@ -115,6 +127,17 @@ def main() -> None:
         if name == "state":
             model = StatePolicy(state.shape[1], actions.shape[1]).to(device)
             target_array = actions
+        elif name == "phase_state":
+            model = PhaseStatePolicy(state.shape[1], actions.shape[1]).to(device)
+            target_array = actions
+        elif name == "spatial_phase":
+            model = SpatialPhasePolicy(
+                proprio.shape[1], objects.shape[1], actions.shape[1], 6 if has_dual else 3
+            ).to(device)
+            target_array = actions
+        elif name == "visual_waypoint":
+            model = VisualWaypointPolicy(6 if has_dual else 3).to(device)
+            target_array = data["can_positions"].astype(np.float32)
         elif name == "phase":
             model = PhaseImagePolicy(proprio.shape[1], actions.shape[1], 3).to(device)
             target_array = actions
@@ -153,10 +176,38 @@ def main() -> None:
             sampled = np.random.choice(train_ids, len(train_ids), replace=True, p=weights)
             losses = []
             for ids in np.array_split(sampled, int(np.ceil(len(sampled) / args.batch_size))):
+                object_loss = None
                 if name == "state":
                     inputs = torch.from_numpy((state[ids] - s_mean) / s_std).to(device)
                     prediction = model(inputs)
                     target = torch.from_numpy(target_array[ids]).to(device)
+                elif name == "phase_state":
+                    inputs = torch.from_numpy((state[ids] - s_mean) / s_std).to(device)
+                    phase = torch.from_numpy(phases[ids]).to(device)
+                    prediction = model(inputs, phase)
+                    target = torch.from_numpy(target_array[ids]).to(device)
+                elif name == "spatial_phase":
+                    rgb = image_tensor(
+                        images, images_front, ids, device, dual_camera=has_dual, augment=True
+                    )
+                    prop = torch.from_numpy((proprio[ids] - p_mean) / p_std).to(device)
+                    phase = torch.from_numpy(phases[ids]).to(device)
+                    prediction, predicted_object = model(rgb, prop, phase)
+                    target = torch.from_numpy(target_array[ids]).to(device)
+                    object_target = torch.from_numpy((objects[ids] - o_mean) / o_std).to(device)
+                    object_loss = torch.nn.functional.mse_loss(predicted_object, object_target)
+                elif name == "visual_waypoint":
+                    rgb = image_tensor(
+                        images,
+                        images_front,
+                        ids,
+                        device,
+                        dual_camera=has_dual,
+                        augment=True,
+                        geometric_augment=False,
+                    )
+                    prediction = model(rgb)
+                    target = torch.from_numpy((target_array[ids] - c_mean) / c_std).to(device)
                 elif name == "phase":
                     rgb = image_tensor(
                         images, images_front, ids, device, dual_camera=False, augment=True
@@ -192,6 +243,8 @@ def main() -> None:
                     loss = torch.nn.functional.l1_loss(prediction, target)
                 else:
                     loss = torch.nn.functional.huber_loss(prediction, target)
+                if object_loss is not None:
+                    loss = loss + 0.1 * object_loss
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -204,6 +257,33 @@ def main() -> None:
                         inputs = torch.from_numpy((state[ids] - s_mean) / s_std).to(device)
                         prediction = model(inputs)
                         target = target_array[ids]
+                    elif name == "phase_state":
+                        inputs = torch.from_numpy((state[ids] - s_mean) / s_std).to(device)
+                        prediction = model(inputs, torch.from_numpy(phases[ids]).to(device))
+                        target = target_array[ids]
+                    elif name == "spatial_phase":
+                        rgb = image_tensor(
+                            images,
+                            images_front,
+                            ids,
+                            device,
+                            dual_camera=has_dual,
+                            augment=False,
+                        )
+                        prop = torch.from_numpy((proprio[ids] - p_mean) / p_std).to(device)
+                        prediction, _ = model(rgb, prop, torch.from_numpy(phases[ids]).to(device))
+                        target = target_array[ids]
+                    elif name == "visual_waypoint":
+                        rgb = image_tensor(
+                            images,
+                            images_front,
+                            ids,
+                            device,
+                            dual_camera=has_dual,
+                            augment=False,
+                        )
+                        prediction = model(rgb)
+                        target = (target_array[ids] - c_mean) / c_std
                     elif name == "phase":
                         rgb = image_tensor(
                             images,
@@ -272,6 +352,11 @@ def main() -> None:
             "proprio_std": p_std,
             "state_mean": s_mean,
             "state_std": s_std,
+            "object_dim": objects.shape[1],
+            "object_mean": o_mean,
+            "object_std": o_std,
+            "can_position_mean": c_mean,
+            "can_position_std": c_std,
         }
         torch.save(checkpoint, args.output / f"{name}.pt")
         report = {
@@ -283,10 +368,36 @@ def main() -> None:
             "train_episodes": split,
             "validation_episodes": len(ends) - split,
             "dual_camera": (
-                has_dual if name in ("chunk", "diffusion", "absolute_chunk") else False
+                has_dual
+                if name
+                in (
+                    "visual_waypoint",
+                    "spatial_phase",
+                    "chunk",
+                    "diffusion",
+                    "absolute_chunk",
+                )
+                else False
             ),
             "phase_balanced_sampling": True,
-            "photometric_augmentation": name != "state",
+            "photometric_augmentation": name
+            in (
+                "visual_waypoint",
+                "spatial_phase",
+                "phase",
+                "chunk",
+                "diffusion",
+                "absolute_chunk",
+            ),
+            "geometric_augmentation": name
+            in ("spatial_phase", "phase", "chunk", "diffusion", "absolute_chunk"),
+            "validation_metric": (
+                "normalized_can_position_mae"
+                if name == "visual_waypoint"
+                else "diffusion_denoising_mae"
+                if name == "diffusion"
+                else "action_mae"
+            ),
             "loss": "diffusion_noise_mse" if name == "diffusion" else args.loss,
             "elapsed_seconds": time.perf_counter() - started,
         }

@@ -51,11 +51,13 @@ variants were also trained for 10 epochs.
 | Dual-view absolute-joint chunker, Huber | 642,848 | MAE 0.0268 | 0/5 |
 | Dual-view OSC action chunker, L1 | 639,768 | MAE 0.0408 | 0/3 |
 | Dual-view OSC action chunker, MSE | 639,768 | MAE 0.0461 | 0/3 |
+| Phase-aware privileged state MLP | 84,487 | MAE 0.0111 | 1/5 |
+| Coordinate-aware end-to-end vision | 2,697,845 | MAE 0.0111 | 0/5 |
 
 The state result has a 95% Wilson interval of approximately 22% to 61%. The
 image-policy sample sizes only establish clear failure in this setup; 0/5 has an
-upper 95% Wilson bound of approximately 43%. Every image candidate remained in
-approach phase for every evaluated episode. The absolute-joint candidate was
+upper 95% Wilson bound of approximately 43%. Every direct-action image candidate
+in this batch remained in approach phase for every evaluated episode. The absolute-joint candidate was
 run with robosuite's absolute `JOINT_POSITION` controller, so its result is a
 real closed-loop test rather than an offline-only comparison.
 
@@ -74,17 +76,38 @@ Offline MAE ranks the oracle phase model best, yet that model scores 0/5 while
 the higher-error state model scores 8/20. Checkpoint selection must continue to
 use closed-loop success.
 
+## Successful visual waypoint policy
+
+The follow-up separates visual localization from low-level action generation.
+A 2.61-million-parameter coordinate-aware encoder predicts the can's metric xyz
+position from both 84×84 camera views. Training uses photometric augmentation
+without synthetic image translations or rotations, because those transforms
+moved image evidence while keeping world-coordinate labels fixed. The controller
+updates the predicted waypoint during approach and takes a median over the five
+most recent estimates, then follows the validated phase controller.
+
+On the held-out 20 episodes, the visual estimator has approximately 1.0 cm mean
+Euclidean error on initial frames. Closed-loop evaluation achieves **19/20
+successes (95%)**, passing the 80% gate. Median final xy error to the bin center
+is 1.83 cm. The 95% Wilson interval for the success rate is approximately 76% to
+99%; more rollouts are needed for a tight population estimate.
+
+This result fixes the local learned-vision control path. It is a hybrid policy:
+object localization is learned, while Cartesian waypoint tracking, phase timing,
+and the target-bin location are specified by the task controller. The end-to-end
+networks that directly regress low-level actions remain failed baselines.
+
 ## Decision and next experiment
 
-The 80% held-out success gate fails. The scripted OSC pose expert remains the
-selected local controller, and the current learned policies should not be sent
-to a physical robot or larger GPU unchanged.
+The local 80% held-out success gate passes at 95% for the learned visual waypoint
+policy. This replaces the fully scripted expert as the selected local perception
+and control configuration for the built-in robosuite task.
 
-The next model experiment should replace the compact CNN with a pretrained
-spatial visual encoder or explicit object keypoints, preserve spatial feature
-maps through the action head, and evaluate the privileged state policy on more
-seeds as the attainable local control reference. The filmed-scene path still
-requires measured geometry or camera calibration before sim-to-real claims.
+The remaining local failure is one missed grasp caused by a waypoint outlier.
+Further work should add uncertainty estimates and more held-out seeds. The
+filmed-scene path still requires measured geometry or camera calibration,
+real-camera training data, and physical safety validation before sim-to-real
+claims or robot execution.
 
 The tracked machine-readable result is
 [`experiments/robosuite-policy-diagnostic-results.json`](experiments/robosuite-policy-diagnostic-results.json).

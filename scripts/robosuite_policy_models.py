@@ -39,6 +39,102 @@ class StatePolicy(torch.nn.Module):
         return self.network(state)
 
 
+class PhaseStatePolicy(torch.nn.Module):
+    """Privileged control ceiling with the expert phase made explicit."""
+
+    def __init__(self, state_dim: int, action_dim: int) -> None:
+        super().__init__()
+        self.network = torch.nn.Sequential(
+            torch.nn.Linear(state_dim + 8, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, action_dim),
+            torch.nn.Tanh(),
+        )
+
+    def forward(self, state: torch.Tensor, phase: torch.Tensor) -> torch.Tensor:
+        one_hot = torch.nn.functional.one_hot(phase.long(), num_classes=8).float()
+        return self.network(torch.cat((state, one_hot), dim=-1))
+
+
+class SpatialVisionEncoder(torch.nn.Module):
+    """Coordinate-aware encoder that retains a 6x6 spatial feature map."""
+
+    def __init__(self, channels: int) -> None:
+        super().__init__()
+        self.network = torch.nn.Sequential(
+            torch.nn.Conv2d(channels + 2, 32, 5, stride=2, padding=2),
+            torch.nn.SiLU(),
+            torch.nn.Conv2d(32, 64, 3, stride=2, padding=1),
+            torch.nn.SiLU(),
+            torch.nn.Conv2d(64, 128, 3, stride=2, padding=1),
+            torch.nn.SiLU(),
+            torch.nn.Conv2d(128, 128, 3, stride=2, padding=1),
+            torch.nn.SiLU(),
+            torch.nn.Flatten(),
+        )
+
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
+        batch, _, height, width = image.shape
+        y = torch.linspace(-1, 1, height, device=image.device, dtype=image.dtype)
+        x = torch.linspace(-1, 1, width, device=image.device, dtype=image.dtype)
+        yy, xx = torch.meshgrid(y, x, indexing="ij")
+        coordinates = torch.stack((xx, yy)).expand(batch, -1, -1, -1)
+        return self.network(torch.cat((image, coordinates), dim=1))
+
+
+class SpatialPhasePolicy(torch.nn.Module):
+    """Predict normalized object state from pixels before phase-aware control."""
+
+    def __init__(
+        self,
+        proprio_dim: int,
+        object_dim: int,
+        action_dim: int,
+        image_channels: int = 6,
+    ) -> None:
+        super().__init__()
+        self.vision = SpatialVisionEncoder(image_channels)
+        self.object_head = torch.nn.Sequential(
+            torch.nn.Linear(128 * 6 * 6, 512),
+            torch.nn.SiLU(),
+            torch.nn.Linear(512, object_dim),
+        )
+        self.control = torch.nn.Sequential(
+            torch.nn.Linear(proprio_dim + object_dim + 8, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, action_dim),
+            torch.nn.Tanh(),
+        )
+
+    def forward(
+        self, image: torch.Tensor, proprio: torch.Tensor, phase: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        object_state = self.object_head(self.vision(image))
+        one_hot = torch.nn.functional.one_hot(phase.long(), num_classes=8).float()
+        action = self.control(torch.cat((proprio, object_state, one_hot), dim=-1))
+        return action, object_state
+
+
+class VisualWaypointPolicy(torch.nn.Module):
+    """Estimate the source object's metric position from two RGB views."""
+
+    def __init__(self, image_channels: int = 6) -> None:
+        super().__init__()
+        self.vision = SpatialVisionEncoder(image_channels)
+        self.head = torch.nn.Sequential(
+            torch.nn.Linear(128 * 6 * 6, 512),
+            torch.nn.SiLU(),
+            torch.nn.Linear(512, 3),
+        )
+
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
+        return self.head(self.vision(image))
+
+
 class PhaseImagePolicy(torch.nn.Module):
     def __init__(self, proprio_dim: int, action_dim: int, image_channels: int = 3) -> None:
         super().__init__()

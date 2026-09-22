@@ -26,11 +26,11 @@ support metric dimensions without physical measurements or camera calibration.
 The corrected robosuite study produced 100 successful built-in can-to-bin
 demonstrations (18,071 samples), two camera views, absolute joint targets, and
 370 recovery corrections. Seven learned configurations were tested. The
-privileged state policy reached 8/20 held-out successes; every image policy
-scored zero, including phase-conditioned, action-chunked, diffusion, and
-absolute-joint variants. Continue to use the scripted controller. The next
-learned-policy experiment needs a pretrained spatial encoder or explicit object
-keypoints; a larger GPU alone does not address the measured failure.
+privileged state policy reached 8/20 held-out successes; the direct image-to-action
+models scored zero. A follow-up coordinate-aware dual-view waypoint estimator
+with temporal feedback reached 19/20 held-out successes and passes the local 80%
+gate. It uses learned object localization with the validated phase controller.
+The remaining work is real-scene calibration and transfer validation.
 
 Produce a measured, inspectable perception artifact from one real Place demonstration:
 

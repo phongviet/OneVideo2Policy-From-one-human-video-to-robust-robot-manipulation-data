@@ -21,7 +21,10 @@ from robosuite_policy_models import (  # noqa: E402
     ChunkImagePolicy,
     DiffusionChunkPolicy,
     PhaseImagePolicy,
+    PhaseStatePolicy,
+    SpatialPhasePolicy,
     StatePolicy,
+    VisualWaypointPolicy,
     sample_diffusion_actions,
 )
 
@@ -53,6 +56,17 @@ def make_model(checkpoint: dict, device: str) -> torch.nn.Module:
     kind = checkpoint["kind"]
     if kind == "state":
         model = StatePolicy(checkpoint["state_dim"], checkpoint["action_dim"])
+    elif kind == "phase_state":
+        model = PhaseStatePolicy(checkpoint["state_dim"], checkpoint["action_dim"])
+    elif kind == "spatial_phase":
+        model = SpatialPhasePolicy(
+            checkpoint["proprio_dim"],
+            checkpoint["object_dim"],
+            checkpoint["action_dim"],
+            6 if checkpoint["dual_camera"] else 3,
+        )
+    elif kind == "visual_waypoint":
+        model = VisualWaypointPolicy(6 if checkpoint["dual_camera"] else 3)
     elif kind == "phase":
         model = PhaseImagePolicy(checkpoint["proprio_dim"], checkpoint["action_dim"], 3)
     elif kind in ("chunk", "absolute_chunk"):
@@ -161,7 +175,21 @@ def main() -> None:
             if positions is not None:
                 obs = set_can_position(env, positions[episode % len(positions)])
             initial_can = obs["Can_pos"].copy()
-            grasp_xy = initial_can[:2].copy()
+            if checkpoint["kind"] == "visual_waypoint":
+                with torch.inference_mode():
+                    predicted_can = (
+                        model(image_tensor(obs, checkpoint["dual_camera"], device))[0].cpu().numpy()
+                        * checkpoint["can_position_std"]
+                        + checkpoint["can_position_mean"]
+                    )
+                initial_predicted_can = predicted_can.copy()
+                grasp_xy = predicted_can[:2]
+                waypoint_history = [predicted_can.copy()]
+            else:
+                predicted_can = None
+                initial_predicted_can = None
+                grasp_xy = initial_can[:2].copy()
+                waypoint_history = []
             target = env.target_bin_placements[env.object_id].copy()
             phase, hold, queue = 0, 0, []
             success = False
@@ -174,6 +202,38 @@ def main() -> None:
                         state = (state - checkpoint["state_mean"]) / checkpoint["state_std"]
                         action = model(torch.from_numpy(state).to(device).unsqueeze(0))[0]
                         action = action.cpu().numpy()
+                    elif checkpoint["kind"] == "phase_state":
+                        state = np.r_[prop, obs["object-state"]].astype(np.float32)
+                        state = (state - checkpoint["state_mean"]) / checkpoint["state_std"]
+                        action = model(
+                            torch.from_numpy(state).to(device).unsqueeze(0),
+                            torch.tensor([phase], device=device),
+                        )[0]
+                        action = action.cpu().numpy()
+                    elif checkpoint["kind"] == "spatial_phase":
+                        normalized = (prop - checkpoint["proprio_mean"]) / checkpoint["proprio_std"]
+                        action, _ = model(
+                            image_tensor(obs, checkpoint["dual_camera"], device),
+                            torch.from_numpy(normalized).to(device).unsqueeze(0),
+                            torch.tensor([phase], device=device),
+                        )
+                        action = action[0].cpu().numpy()
+                    elif checkpoint["kind"] == "visual_waypoint":
+                        if phase in (0, 1):
+                            current_prediction = (
+                                model(image_tensor(obs, checkpoint["dual_camera"], device))[0]
+                                .cpu()
+                                .numpy()
+                                * checkpoint["can_position_std"]
+                                + checkpoint["can_position_mean"]
+                            )
+                            waypoint_history.append(current_prediction)
+                            waypoint_history = waypoint_history[-5:]
+                            predicted_can = np.median(waypoint_history, axis=0)
+                            grasp_xy = predicted_can[:2]
+                        goal, gripper = phase_goal(phase, eef, grasp_xy, target)
+                        translation = np.clip((goal - eef) / 0.05, -0.8, 0.8)
+                        action = np.r_[translation, np.zeros(3), gripper]
                     elif checkpoint["kind"] == "phase":
                         normalized = (prop - checkpoint["proprio_mean"]) / checkpoint["proprio_std"]
                         action = (
@@ -246,6 +306,14 @@ def main() -> None:
                     "steps": step + 1,
                     "resets_to_workspace": resets,
                     "initial_can_position": initial_can.tolist(),
+                    "initial_predicted_can_position": (
+                        initial_predicted_can.tolist()
+                        if initial_predicted_can is not None
+                        else None
+                    ),
+                    "final_approach_can_prediction": (
+                        predicted_can.tolist() if predicted_can is not None else None
+                    ),
                     "final_can_position": obs["Can_pos"].tolist(),
                     "terminal_phase": phase,
                     "final_xy_error_to_bin_center": float(
@@ -269,6 +337,11 @@ def main() -> None:
     report = {
         "status": "closed_loop_evaluation",
         "policy_kind": checkpoint["kind"],
+        "control_strategy": (
+            "learned dual-view waypoint with temporal median and scripted phase controller"
+            if checkpoint["kind"] == "visual_waypoint"
+            else "learned low-level action policy"
+        ),
         "episodes": args.episodes,
         "successes": successes,
         "success_rate": successes / args.episodes,

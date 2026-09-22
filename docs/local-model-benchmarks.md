@@ -17,7 +17,7 @@ robot policy for the filmed task.
 | Collision geometry | Existing measured primitives once dimensions are supplied | Both learned models invent unseen surfaces. Current primitive dimensions are assumptions, not measurements. |
 | Simulator | robosuite 1.5.1, MuJoCo 3.3.7, EGL, Panda, 84×84 camera | A headless 100-step PickPlace run completed at 16.6 steps/s. This is a throughput smoke test only. |
 | Current proxy policy | Ridge behavior cloning | 100/100 successes on each of three held-out proxy rollout seeds. Small MLPs failed to grasp despite lower one-step action errors. |
-| Image policy benchmark | Phase, chunked, diffusion, and absolute-joint models with one or two 84×84 views | All image variants failed held-out closed-loop evaluation after training on 100 demonstrations. Keep the scripted OSC pose expert for local data generation. |
+| Image policy benchmark | Direct action models plus learned dual-view waypoint estimation | Direct action variants fail; the temporal visual waypoint policy passes 19/20 held-out rollouts. |
 
 ## Measured comparisons
 
@@ -120,15 +120,17 @@ Seven local configurations were evaluated after episode-level training splits.
 The privileged robot-plus-object state MLP achieved 8/20 held-out successes
 (40%). Phase-conditioned vision, Huber action chunks, compact diffusion, and
 absolute-joint chunks each achieved 0/5. L1 and MSE action-chunk controls each
-achieved 0/3. Every image candidate remained in the approach phase. Offline MAE
+achieved 0/3. Every direct-action image candidate remained in the approach phase. Offline MAE
 therefore remains a poor selection metric: the phase model had the lowest OSC
 validation MAE, while only the privileged state model had nonzero success.
 
-The selected local configuration continues to use the scripted OSC pose expert.
-The compact image encoder is the measured bottleneck after increasing data,
-adding recovery samples and per-frame augmentation, using two views, changing
-losses, adding temporal chunks, and testing absolute joint targets. The next
-policy should use a pretrained spatial encoder or explicit object keypoints.
+The selected local configuration now uses a coordinate-aware dual-view network
+to predict the can waypoint and the scripted phase controller for low-level
+tracking. Label-preserving photometric training and a five-estimate temporal
+median reduce held-out initial localization error to about 1.0 cm. This policy
+achieves 19/20 held-out successes (95%), compared with 0/5 for the coordinate-aware
+end-to-end action model. The remaining failure is a missed grasp from a visual
+waypoint outlier.
 The full table and tracked summary are in
 [`robosuite-policy-diagnostics.md`](robosuite-policy-diagnostics.md) and
 [`experiments/robosuite-policy-diagnostic-results.json`](experiments/robosuite-policy-diagnostic-results.json).

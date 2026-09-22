@@ -86,7 +86,7 @@ TRELLIS/VGGT, image-policy, or sim-to-real result.
 | Faithful run bundle | ✅ | Hashed TRELLIS/VGGT inputs ready for 16 GB+ host |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |
-| Policy benchmark | ✅ | Seven local variants evaluated; learned-policy gate fails |
+| Policy benchmark | ✅ | Learned visual waypoint policy passes 19/20 held-out rollouts |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 
@@ -266,9 +266,14 @@ MUJOCO_GL=egl .venv/bin/python scripts/generate_robosuite_demos.py \
   --data results/simulation/robosuite_can_100_dual_recovery/demonstrations.npz \
   --output results/policy/robosuite_controls_100
 
+.venv/bin/python scripts/train_diagnostic_policies.py \
+  --data results/simulation/robosuite_can_100_dual_recovery/demonstrations.npz \
+  --output results/policy/robosuite_visual_waypoint_100 \
+  --models visual_waypoint --epochs 50 --batch-size 256 --loss mse
+
 MUJOCO_GL=egl .venv/bin/python scripts/evaluate_diagnostic_policies.py \
-  --checkpoint results/policy/robosuite_controls_100/state.pt \
-  --output results/diagnostics/state_100_heldout_20 \
+  --checkpoint results/policy/robosuite_visual_waypoint_100/visual_waypoint.pt \
+  --output results/diagnostics/visual_waypoint_temporal_100_heldout_20 \
   --episodes 20 --max-steps 220 --seed 31415
 ```
 
@@ -276,7 +281,9 @@ The training script compares privileged state control, oracle phase-conditioned
 vision, dual-view action chunking, compact diffusion, and closed-loop absolute-joint
 chunk prediction. It uses phase-balanced sampling plus independent photometric
 and camera perturbations. Closed-loop evaluation stores full robot, object, and
-action trajectories for failure-phase analysis. See the
+action trajectories for failure-phase analysis. The selected local policy uses
+coordinate-aware dual-view waypoint estimation with temporal feedback and passes
+19/20 held-out rollouts. See the
 [robosuite diagnostic report](docs/robosuite-policy-diagnostics.md) for measured
 results and the [Video2Robo gap audit](docs/video2robo-gap-audit.md) for the claim
 boundary.

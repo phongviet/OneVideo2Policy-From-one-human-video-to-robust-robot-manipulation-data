@@ -86,11 +86,17 @@ unavailable training implementation and 3DGS scene variation remain material
 reproduction gaps. The full local table is in
 [`robosuite-policy-diagnostics.md`](robosuite-policy-diagnostics.md).
 
+A subsequent hybrid policy addresses that bottleneck with coordinate-aware
+dual-view waypoint estimation and temporal visual feedback. It achieves 19/20
+held-out successes while retaining the validated phase controller. Direct
+image-to-action policies remain unsuccessful, so this is a local learned-vision
+control result rather than a reproduction of Video2Robo's Diffusion Policy.
+
 ## Decision
 
-The baseline 0/10 and expanded image-policy failures do not reproduce
-Video2Robo because its released description still lacks an executable training
-implementation and the local experiment lacks its 3DGS scene distribution. The
-next credible local experiment is a pretrained spatial encoder or explicit
-object-keypoint policy, evaluated by held-out closed-loop success. Running the
-existing compact CNN on a larger GPU would not address the measured bottleneck.
+The baseline 0/10 and expanded direct-action failures do not reproduce Video2Robo
+because its released description still lacks an executable training implementation
+and the local experiment lacks its 3DGS scene distribution. The learned visual
+waypoint configuration fixes the built-in robosuite task and passes its local
+gate. Real-scene calibration, rendering variation, and physical evaluation are
+still required for the project-level claim.

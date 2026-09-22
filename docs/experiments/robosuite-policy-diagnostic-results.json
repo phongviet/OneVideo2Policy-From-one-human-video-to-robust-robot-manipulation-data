@@ -84,6 +84,54 @@
       "photometric_augmentation": true,
       "loss": "huber",
       "elapsed_seconds": 72.03455285599921
+    },
+    "phase_state": {
+      "status": "trained",
+      "kind": "phase_state",
+      "parameters": 84487,
+      "best_validation_mae": 0.0111466683447361,
+      "best_epoch": 30,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": false,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": false,
+      "loss": "huber",
+      "elapsed_seconds": 3.763686083999346,
+      "geometric_augmentation": false,
+      "validation_metric": "action_mae"
+    },
+    "spatial_phase": {
+      "status": "trained",
+      "kind": "spatial_phase",
+      "parameters": 2697845,
+      "best_validation_mae": 0.01108624693006277,
+      "best_epoch": 30,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": true,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": true,
+      "loss": "huber",
+      "elapsed_seconds": 125.50441695100017,
+      "geometric_augmentation": true,
+      "validation_metric": "action_mae"
+    },
+    "visual_waypoint": {
+      "status": "trained",
+      "kind": "visual_waypoint",
+      "parameters": 2607715,
+      "best_validation_mae": 0.03435096517205238,
+      "best_epoch": 45,
+      "train_episodes": 80,
+      "validation_episodes": 20,
+      "dual_camera": true,
+      "phase_balanced_sampling": true,
+      "photometric_augmentation": true,
+      "loss": "mse",
+      "elapsed_seconds": 203.514069775003,
+      "geometric_augmentation": false,
+      "validation_metric": "normalized_can_position_mae"
     }
   },
   "evaluations": [
@@ -194,33 +242,111 @@
         5.551115123125783e-17,
         0.5614970317550454
       ]
+    },
+    {
+      "label": "phase-aware privileged state",
+      "path": "results/diagnostics/phase_state_100_heldout_5/report.json",
+      "policy_kind": "phase_state",
+      "episodes": 5,
+      "successes": 1,
+      "success_rate": 0.2,
+      "median_final_xy_error_to_bin_center": 0.10672968672725346,
+      "terminal_phase_counts": {
+        "3": 4,
+        "6": 1
+      },
+      "wilson_95_interval": [
+        0.03622410863243014,
+        0.6244653702374747
+      ]
+    },
+    {
+      "label": "coordinate-aware end-to-end vision",
+      "path": "results/diagnostics/spatial_phase_100_heldout_5/report.json",
+      "policy_kind": "spatial_phase",
+      "episodes": 5,
+      "successes": 0,
+      "success_rate": 0.0,
+      "median_final_xy_error_to_bin_center": 0.5142576478336492,
+      "terminal_phase_counts": {
+        "0": 3,
+        "1": 1,
+        "3": 1
+      },
+      "wilson_95_interval": [
+        0.0,
+        0.43448246478317476
+      ]
+    },
+    {
+      "label": "dual-view temporal visual waypoint",
+      "path": "results/diagnostics/visual_waypoint_temporal_100_heldout_20/report.json",
+      "policy_kind": "visual_waypoint",
+      "episodes": 20,
+      "successes": 19,
+      "success_rate": 0.95,
+      "median_final_xy_error_to_bin_center": 0.018332452391824162,
+      "terminal_phase_counts": {
+        "4": 1,
+        "5": 1,
+        "6": 6,
+        "7": 11,
+        "8": 1
+      },
+      "wilson_95_interval": [
+        0.763868806553258,
+        0.9911185511992047
+      ]
     }
   ],
   "best_closed_loop": {
-    "path": "results/diagnostics/state_100_heldout_20/report.json",
-    "policy_kind": "state",
+    "label": "dual-view temporal visual waypoint",
+    "path": "results/diagnostics/visual_waypoint_temporal_100_heldout_20/report.json",
+    "policy_kind": "visual_waypoint",
     "episodes": 20,
-    "successes": 8,
-    "success_rate": 0.4,
-    "training_initial_positions": false,
+    "successes": 19,
+    "success_rate": 0.95,
+    "median_final_xy_error_to_bin_center": 0.018332452391824162,
     "terminal_phase_counts": {
-      "0": 5,
-      "1": 4,
-      "3": 10,
-      "4": 1
-    }
+      "4": 1,
+      "5": 1,
+      "6": 6,
+      "7": 11,
+      "8": 1
+    },
+    "wilson_95_interval": [
+      0.763868806553258,
+      0.9911185511992047
+    ]
   },
-  "decision": "fail learned-policy gate; retain scripted expert",
-  "experiment_date": "2026-09-21",
+  "decision": "pass local learned-vision gate with hybrid waypoint controller",
+  "experiment_date": "2026-09-22",
   "gate": {
     "metric": "held-out closed-loop success",
     "threshold": 0.8,
-    "passed": false
+    "observed": 0.95,
+    "passed": true
   },
   "interpretation": [
-    "The privileged state policy is the only learned policy with nonzero held-out success (8/20).",
-    "Every RGB policy failed to leave the approach phase under the evaluation phase monitor.",
-    "Offline validation error did not predict closed-loop success.",
-    "The scripted OSC pose expert remains the selected local controller."
-  ]
+    "Raw learned low-level action policies remain below the closed-loop gate.",
+    "A coordinate-aware dual-view model localizes the can to about 1 cm mean error on held-out initial frames.",
+    "Temporal median updates during approach remove transient localization outliers.",
+    "The learned visual waypoint plus scripted phase controller succeeds in 19/20 held-out episodes (95%).",
+    "This passes the local robosuite gate but does not establish real-video or physical-robot transfer."
+  ],
+  "visual_waypoint_offline": {
+    "held_out_all_frames_can_position_mae_xyz_m": [
+      0.00358461,
+      0.00392106,
+      0.00295435
+    ],
+    "held_out_all_frames_mean_euclidean_error_m": 0.00713847,
+    "held_out_initial_frames_mae_xyz_m": [
+      0.00572996,
+      0.00462223,
+      0.00464453
+    ],
+    "held_out_initial_frames_mean_euclidean_error_m": 0.0099611,
+    "held_out_initial_frames_p95_euclidean_error_m": 0.01796269
+  }
 }
