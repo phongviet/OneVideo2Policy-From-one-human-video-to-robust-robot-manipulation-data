@@ -115,3 +115,19 @@
 - Policy decision: retain the temporal dual-view waypoint model plus phase controller,
   which passed 19/20 prior held-out robosuite rollouts.
 - Artifacts: `results/model_benchmarks/hoi4d_ball_to_bowl/` (Git-ignored).
+
+## Metric RGB-D Gaussian scene initialization
+
+- Date / commit: 2026-09-24 / pending
+- Input: HOI4D source frame 89, aligned uint16 millimetre depth, camera intrinsics,
+  and passing ball/bowl masks. Frame 86 was rejected because ball pixels had no valid
+  sensor depth.
+- Representation: 18,420 explicit metric 3D Gaussians with anisotropic scale,
+  quaternion rotation, opacity, RGB color, and static/source/target labels.
+- Renderer: projected 3D covariance and front-to-back alpha compositing at 640×360.
+- Metrics: 73.0% alpha coverage over valid sensor depth and 24.18 dB same-view PSNR.
+- Contract checks: a 3 cm camera translation renders a novel view; a 5 cm rigid
+  source transform moves only the labeled ball Gaussians.
+- Result: Gaussian representation and rendering stage pass their local artifact
+  contract. Multiframe fitting, transient removal, and robot compositing remain.
+- Artifacts: `results/gaussian_scene/hoi4d_ball_to_bowl_frame89/` (Git-ignored).

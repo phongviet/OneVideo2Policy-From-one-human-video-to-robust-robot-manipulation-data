@@ -48,6 +48,9 @@ paths:
     geometry: depth-anything/Depth-Anything-V2-Metric-Hypersim-Small
     geometry_input_size: 518
     metric_scale_reference: hoi4d_aligned_rgbd
+    gaussian_scene: metric_rgbd_initialized_3d_gaussians
+    gaussian_stride: 3
+    gaussian_reference_frame: 89
     simulator: robosuite
     policy: visual_waypoint_temporal
     keyframes: 12

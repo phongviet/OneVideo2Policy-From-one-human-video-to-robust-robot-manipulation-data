@@ -45,6 +45,13 @@ reconstruction:
   collision_geometry: measured_primitives
   status: completed_local_models
 
+generation:
+  representation: metric_rgbd_initialized_3d_gaussians
+  reference_source_frame: 89
+  gaussian_stride: 3
+  renderer: anisotropic_alpha_compositing
+  status: reference_and_novel_view_rendered
+
 gates:
   min_mask_iou: 0.70
   min_track_survival: 0.80

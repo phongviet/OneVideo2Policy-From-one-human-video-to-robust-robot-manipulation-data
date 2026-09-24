@@ -10,6 +10,11 @@ from onevideo2policy.evaluation.perception_gate import (
     evaluate_ground_truth_directories,
     prepare_annotation_workspace,
 )
+from onevideo2policy.generation.gaussian_scene import (
+    initialize_gaussians_from_rgbd,
+    render_gaussians,
+    transform_label,
+)
 from onevideo2policy.pipeline import prepare_model_bundle, run_local_end_to_end
 from onevideo2policy.reconstruction.crops import (
     export_rgba_crops,
@@ -148,6 +153,18 @@ def build_parser() -> argparse.ArgumentParser:
     model_run.add_argument("--crops", required=True, type=Path)
     model_run.add_argument("--output", required=True, type=Path)
 
+    gaussian_scene = subparsers.add_parser(
+        "build-gaussian-scene", help="Initialize and render a metric 3D Gaussian scene from RGB-D"
+    )
+    gaussian_scene.add_argument("--rgb", required=True, type=Path)
+    gaussian_scene.add_argument("--depth", required=True, type=Path)
+    gaussian_scene.add_argument("--camera-info", required=True, type=Path)
+    gaussian_scene.add_argument("--source-mask", type=Path)
+    gaussian_scene.add_argument("--target-mask", type=Path)
+    gaussian_scene.add_argument("--output", required=True, type=Path)
+    gaussian_scene.add_argument("--max-width", default=640, type=int)
+    gaussian_scene.add_argument("--stride", default=3, type=int)
+
     hoi4d = subparsers.add_parser(
         "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
     )
@@ -270,6 +287,119 @@ def main() -> None:
         config = load_config(args.config)
         spec = prepare_model_bundle(args.manifest, args.crops, args.output, config=config)
         print(json.dumps(spec, indent=2))
+    elif args.command == "build-gaussian-scene":
+        import cv2
+        import numpy as np
+
+        rgb_bgr = cv2.imread(str(args.rgb), cv2.IMREAD_COLOR)
+        depth_mm = cv2.imread(str(args.depth), cv2.IMREAD_UNCHANGED)
+        if rgb_bgr is None or depth_mm is None:
+            raise FileNotFoundError("RGB or depth input could not be decoded")
+        if rgb_bgr.shape[:2] != depth_mm.shape:
+            raise ValueError("RGB and depth dimensions must match")
+        with args.camera_info.open(encoding="utf-8") as stream:
+            camera_info = json.load(stream)
+        calibration = camera_info["crop_intrinsic"]
+        intrinsics = np.array(
+            [
+                [calibration["fx"], 0, calibration["cx"]],
+                [0, calibration["fy"], calibration["cy"]],
+                [0, 0, 1],
+            ],
+            dtype=np.float64,
+        )
+        original_height, original_width = depth_mm.shape
+        scale = min(1.0, args.max_width / original_width)
+        width, height = round(original_width * scale), round(original_height * scale)
+        rgb_bgr = cv2.resize(rgb_bgr, (width, height), interpolation=cv2.INTER_AREA)
+        depth_m = cv2.resize(
+            depth_mm.astype(np.float32) / 1000.0,
+            (width, height),
+            interpolation=cv2.INTER_NEAREST,
+        )
+        intrinsics[:2] *= scale
+
+        def load_mask(path: Path | None) -> np.ndarray | None:
+            if path is None:
+                return None
+            mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+            if mask is None:
+                raise FileNotFoundError(path)
+            return cv2.resize(mask, (width, height), interpolation=cv2.INTER_NEAREST) > 0
+
+        scene = initialize_gaussians_from_rgbd(
+            cv2.cvtColor(rgb_bgr, cv2.COLOR_BGR2RGB),
+            depth_m,
+            intrinsics,
+            source_mask=load_mask(args.source_mask),
+            target_mask=load_mask(args.target_mask),
+            stride=args.stride,
+        )
+        args.output.mkdir(parents=True, exist_ok=True)
+        scene.save(args.output / "scene.npz")
+        rendered, rendered_depth, alpha = render_gaussians(
+            scene, intrinsics, np.eye(4), width=width, height=height
+        )
+        cv2.imwrite(
+            str(args.output / "reference-render.png"),
+            cv2.cvtColor((rendered * 255).astype(np.uint8), cv2.COLOR_RGB2BGR),
+        )
+        cv2.imwrite(str(args.output / "alpha.png"), (alpha * 255).astype(np.uint8))
+        valid_depth = rendered_depth > 0
+        depth_visual = np.zeros_like(rendered_depth, dtype=np.uint8)
+        if np.any(valid_depth):
+            low, high = np.percentile(rendered_depth[valid_depth], [2, 98])
+            depth_visual[valid_depth] = np.clip(
+                (rendered_depth[valid_depth] - low) / max(high - low, 1e-6) * 255, 0, 255
+            )
+        cv2.imwrite(str(args.output / "depth.png"), depth_visual)
+        novel_camera = np.eye(4)
+        novel_camera[0, 3] = -0.03
+        novel_render, _, _ = render_gaussians(
+            scene, intrinsics, novel_camera, width=width, height=height
+        )
+        cv2.imwrite(
+            str(args.output / "novel-view-3cm.png"),
+            cv2.cvtColor((novel_render * 255).astype(np.uint8), cv2.COLOR_RGB2BGR),
+        )
+        source_transform = np.eye(4)
+        source_transform[0, 3] = 0.05
+        moved_scene = transform_label(scene, 1, source_transform)
+        moved_render, _, _ = render_gaussians(
+            moved_scene, intrinsics, np.eye(4), width=width, height=height
+        )
+        cv2.imwrite(
+            str(args.output / "source-shift-5cm.png"),
+            cv2.cvtColor((moved_render * 255).astype(np.uint8), cv2.COLOR_RGB2BGR),
+        )
+        reference = cv2.cvtColor(rgb_bgr, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+        evaluated = alpha > 0.5
+        mse = float(np.mean((rendered[evaluated] - reference[evaluated]) ** 2))
+        report = {
+            "schema_version": 1,
+            "representation": "metric RGB-D initialized anisotropic 3D Gaussians",
+            "gaussian_count": len(scene.means_m),
+            "resolution": {"width": width, "height": height},
+            "stride": args.stride,
+            "label_counts": {
+                "static": int(np.count_nonzero(scene.labels == 0)),
+                "source": int(np.count_nonzero(scene.labels == 1)),
+                "target": int(np.count_nonzero(scene.labels == 2)),
+            },
+            "reference_render": {
+                "coverage_alpha_gt_0_5": float(np.mean(evaluated)),
+                "mse": mse,
+                "psnr_db": float(-10 * np.log10(max(mse, 1e-12))),
+            },
+            "verification_renders": {
+                "novel_camera_translation_m": [-0.03, 0.0, 0.0],
+                "source_translation_m": [0.05, 0.0, 0.0],
+            },
+        }
+        (args.output / "report.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+        print(json.dumps(report, indent=2))
     elif args.command == "import-hoi4d":
         if args.annotations is not None:
             manifest = import_hoi4d_rgb_video(

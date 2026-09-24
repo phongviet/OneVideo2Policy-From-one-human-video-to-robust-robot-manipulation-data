@@ -96,6 +96,8 @@ def prepare_model_bundle(
             "reconstruction/source.glb",
             "reconstruction/target.glb",
             "geometry/predictions.npz",
+            "generation/gaussian_scene.npz",
+            "generation/gaussian_demonstrations.npz",
             "simulation/demonstrations.npz",
             "policy/checkpoint",
             "report.json",

@@ -24,11 +24,13 @@ Those failures are contained by using measured geometry for physics.
    planar proxy.
 2. **Task-specific simulator:** replace robosuite's built-in can and bin with the
    measured ball and bowl assets, then retarget the demonstrated trajectory.
-3. **Policy transfer:** generate successful ball-to-bowl Panda demonstrations and
+3. **Gaussian demonstration rendering:** extend the verified labeled RGB-D Gaussian
+   scene to multiframe fitting, remove transient hand pixels, and composite the robot.
+4. **Policy transfer:** generate successful ball-to-bowl Panda demonstrations and
    retrain the selected temporal waypoint model on those observations.
-4. **Controlled evaluation:** measure success across object pose, camera, background,
+5. **Controlled evaluation:** measure success across object pose, camera, background,
    and lighting shifts with confidence intervals and failure categories.
-5. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
+6. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
 ## Immediate command

@@ -86,6 +86,7 @@ physical robot success, or sim-to-real transfer.
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
+| RGB-D Gaussian scene | 🟡 | 18,420 labeled Gaussians; 24.18 dB reference render; multiframe fitting pending |
 | Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |
 | Policy benchmark | ✅ | Learned visual waypoint policy passes 19/20 held-out rollouts |
 
@@ -214,7 +215,8 @@ run and its camera-compensated, target-relative trajectory are documented in the
 [local handoff](docs/real-place-handoff.md) records the verified transfer package
 and the remaining independent annotation and scene measurements. The
 [local model benchmarks](docs/local-model-benchmarks.md) record measured 6 GB GPU
-alternatives and their current limits.
+alternatives and their current limits. The [Gaussian splatting stage](docs/gaussian-splatting.md) records the
+metric RGB-D initialization, renderer contract, and remaining multiframe work.
 
 After producing a binary source-object mask, seed tracking points reproducibly:
 
