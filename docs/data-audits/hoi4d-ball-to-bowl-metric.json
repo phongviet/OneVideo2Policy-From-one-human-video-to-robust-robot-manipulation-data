@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "dataset": "HOI4D",
+  "sequence": "ZY20210800001/H1/C7/N14/S280/s04/T5",
+  "verified_at": "2026-09-24",
+  "archive": {
+    "name": "ZY20210800001_H1_C7_N14_S280_s04_T5.tar.gz",
+    "sha256": "26d77fcd8e27d4c0091eaf3d71309681f0f96da61c0dadb419f22f36c4a5c7b1"
+  },
+  "alignment": {
+    "frame_count": 300,
+    "width": 1920,
+    "height": 1080,
+    "depth_unit_m": 0.001,
+    "rgb_identity_checked_frames": [0, 86, 299]
+  },
+  "camera": {
+    "fx": 1060.2955322265625,
+    "fy": 1061.5068359375,
+    "cx": 971.5210571289062,
+    "cy": 523.2619018554688,
+    "extrinsic_frame_count": 300
+  },
+  "source": {
+    "label": "ball",
+    "motion_mask_label": 3,
+    "diameter_m": 0.03832122209971702,
+    "radius_m": 0.01916061104985851,
+    "diameter_q10_m": 0.03774113,
+    "diameter_q90_m": 0.04131262,
+    "accepted_sphere_fit_frames": 51,
+    "first_mask_frame": 82,
+    "first_depth_measurable_frame": 87
+  },
+  "target": {
+    "label": "bowl",
+    "motion_mask_label": 1,
+    "length_m": 0.09917675411659067,
+    "width_m": 0.09912303650179259,
+    "height_m": 0.05693338151487156,
+    "pose_frame_count": 300
+  },
+  "separation": {
+    "frame": 87,
+    "time_s": 5.8,
+    "action_phase": "carry",
+    "center_to_center_m": 0.579754419595432,
+    "is_frame_zero": false,
+    "limitation": "The source enters from outside the image while already carried."
+  }
+}

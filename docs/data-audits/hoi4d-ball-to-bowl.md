@@ -2,11 +2,10 @@
 
 ## Decision
 
-**Accepted as the metric dataset candidate and as an RGB-only perception and
-mask-evaluation fixture.** It contains a real two-object placement action with
-official masks for both the moving ball and the destination bowl. The retained
-local subset is RGB-only; restoring this sequence's official aligned depth and
-camera parameters upgrades it to a complete metric reference.
+**Accepted as a calibrated metric carry-and-place fixture and as a perception
+fixture.** It contains a real two-object placement action with official masks for
+both the moving ball and the destination bowl. The local subset now includes raw
+aligned depth, intrinsics, and per-frame extrinsics.
 
 | Field | Value |
 | --- | --- |
@@ -21,7 +20,8 @@ camera parameters upgrades it to a complete metric reference.
 | Target-mask coverage | 300/300 frames |
 | Target dimensions | 9.9177 cm long × 9.9123 cm wide × 5.6933 cm high |
 | Target pose coverage | 300/300 frames, metric camera coordinates |
-| Depth | Not retained: the downloaded depth archive was an incomplete shard |
+| Depth | 300 aligned raw 16-bit PNGs retained; integer unit is 1 mm |
+| Camera calibration | 300 extrinsics plus `fx=1060.2955`, `fy=1061.5068`, `cx=971.5211`, `cy=523.2619` |
 
 The GPU gate view uses original frames 86–299, sampled at 5 FPS and resized to
 640×360. This yields 72 aligned frames over 14.2 seconds. Frame 86 has the largest
@@ -39,24 +39,32 @@ from the aligned metric depth:
 
 | Required field | Sequence source | Status in retained subset |
 | --- | --- | --- |
-| Source ball diameter and height | Robust 3D extent of official ball mask back-projected through aligned depth | Requires official depth and camera parameters |
+| Source ball diameter and height | Robust sphere fit to official ball mask back-projected through aligned depth | Available: 0.0383212 m median diameter; 10th–90th percentile 0.0377411–0.0413126 m |
 | Target length, width, and height | `objpose/*.json` `dimensions` | Available: 0.0991768 m × 0.0991230 m × 0.0569334 m |
-| Initial source-target center separation | Distance between the masked ball 3D centroid and annotated bowl center in the first usable rest frame | Requires official depth and camera parameters |
-| Camera calibration | Official Camera Parameters package; per-frame trajectory is stored as an Open3D `output.log` in the 3D scene package | Requires official camera/3D scene files |
+| Initial source-target center separation | Distance between fitted ball center and annotated bowl center | First measurable value is 0.579754 m at frame 87; the frame-zero ball is outside the view |
+| Camera calibration | Official camera intrinsics plus the calibrated sequence package's per-frame extrinsics | Available for all 300 frames |
 | Metric target trajectory | `objpose/*.json` `center`, `rotation`, and `dimensions` | Available for all 300 frames |
 
 The bowl's frame-0 center is `(-0.114057, 0.026107, 0.861622)` m in the
 annotation camera frame. Its dimensions are constant across all 300 object-pose
 files. The ball is a motion-segmentation object rather than the category object,
-so HOI4D does not give it a direct `objpose` entry. Its metric center and size must
-be computed from its official mask and aligned depth. This is still measured
-RGB-D geometry; it is not a monocular scale estimate.
+so HOI4D does not give it a direct `objpose` entry. Its metric center and size are
+computed from its official mask and aligned depth. The median fitted diameter is
+3.832 cm over 51 accepted frames. The 10th–90th percentile range is 3.774–4.131 cm.
 
-To complete the local metric bundle, fetch **Depth Video** and **Camera
-Parameters** from the official HOI4D project page and retain only this sequence.
-Fetch the corresponding 3D scene files as well if the per-frame world-camera
-trajectory is needed. The existing RGB, action, masks, and object-pose annotations
-do not need to be downloaded again.
+The ball first has a motion mask at frame 82 and first has usable masked depth at
+frame 87. It enters from outside the image while already being carried. Therefore
+the sequence does **not** contain a true initial rest-state separation. The retained
+0.579754 m value is explicitly the first measurable carry-state separation and
+must not be described as frame-zero ground truth.
+
+The metric bundle was completed on 2026-09-24 from the exact-sequence archive
+`ZY20210800001_H1_C7_N14_S280_s04_T5.tar.gz` and the official Camera Parameters
+package. The archive SHA-256 is
+`26d77fcd8e27d4c0091eaf3d71309681f0f96da61c0dadb419f22f36c4a5c7b1`.
+All 300 raw depth frames are 1920×1080. Decoded RGB frames 0, 86, and 299 match
+the existing official video pixel-for-pixel, and the standalone official intrinsic
+matrix matches the sequence calibration exactly.
 
 ## Storage decision
 
@@ -67,12 +75,11 @@ combined retained footprint under 1 GB and below the 20 GB budget.
 
 ## Use and limits
 
-The retained fixture is appropriate for SAM2/CoTracker evaluation using
-independently provided mask ground truth. Until its depth and camera packages are
-restored, it is not a metric geometry benchmark. The complete official sequence
-is suitable for metric pipeline diagnosis, but remains egocentric and differs
-from the fixed phone-camera deployment view. Keep the real Place demonstration
-as the final policy target.
+The fixture is appropriate for SAM2/CoTracker evaluation and calibrated metric
+pipeline diagnosis. Its absent initial ball view prevents evaluating recovery of
+the complete action from frame zero. It also remains egocentric and differs from
+the fixed phone-camera deployment view. Keep the real Place demonstration as the
+final policy target.
 
 ## Perception gate result
 

@@ -27,10 +27,12 @@ uv run ov2p run-local-e2e \
 ```
 
 The output contains primitive OBJ assets, the recovered proxy trajectory, randomized
-demonstrations, fitted policy weights, and a gate report. The retained HOI4D fixture
-uses a provisional configured initial separation of 0.25 m because the dataset does
-not provide that scene measurement. Replace it with the measured value from the real
-recording before interpreting metric trajectory errors.
+demonstrations, fitted policy weights, and a gate report. Its HOI4D primitives now use
+the downloaded RGB-D sequence: a 3.832 cm fitted ball diameter, a 9.915 cm annotated
+bowl diameter, and a 5.693 cm annotated bowl height. The 0.580 m scale anchor is the
+first depth-measurable ball-to-bowl separation at source frame 87. The ball starts
+outside the camera view, so this anchor describes the observed carry rather than the
+unseen frame-zero state.
 
 The local path proves that every repository stage can execute and exchange artifacts.
 It does not establish single-view reconstruction quality, robot-arm feasibility,

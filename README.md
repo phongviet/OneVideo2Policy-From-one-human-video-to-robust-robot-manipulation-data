@@ -83,7 +83,7 @@ TRELLIS/VGGT, image-policy, or sim-to-real result.
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
 | Real-scene metric geometry | 🟡 | Planar xy scale anchored by the measured 3 cm source diameter; calibrated 3D still pending |
 | TRELLIS and VGGT adapters | 🟡 | Blocked by 6 GB VRAM; official TRELLIS needs 16 GB |
-| Local end-to-end baseline | ✅ | 250 demos; 100/100 held-out proxy rollouts |
+| Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Faithful run bundle | ✅ | Hashed TRELLIS/VGGT inputs ready for 16 GB+ host |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |

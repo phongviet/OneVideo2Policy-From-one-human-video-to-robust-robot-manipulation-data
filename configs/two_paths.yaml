@@ -26,10 +26,15 @@ paths:
     geometry: planar_mask_centroid_proxy
     robot_model: bounded_point_robot
     policy: ridge_behavior_cloning
-    target_diameter_m: 0.18
-    target_height_m: 0.05
-    source_radius_m: 0.03
-    initial_separation_m: 0.25
+    # HOI4D metric sequence audit: target values are direct object-pose
+    # annotations. Source radius is the median robust RGB-D sphere fit.
+    target_diameter_m: 0.09914989530909113
+    target_height_m: 0.05693338151487156
+    source_diameter_m: 0.03832122209971702
+    source_radius_m: 0.01916061104985851
+    # First depth-measurable source frame (87), during carry. The source begins
+    # outside the camera view, so this is not a frame-zero separation.
+    initial_separation_m: 0.579754419595432
     lift_height_m: 0.12
     randomization_m: 0.06
     train_episodes: 250

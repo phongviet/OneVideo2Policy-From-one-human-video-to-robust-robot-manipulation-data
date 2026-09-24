@@ -76,22 +76,25 @@
   (Git-ignored) and `docs/reconstruction-readiness.md`.
 - Next action: use a 16 GB+ CUDA host and record the planned close real Place demo.
 
-## Local end-to-end systems baseline
+## Metric-calibrated local end-to-end systems baseline
 
-- Date / commit: 2026-09-16 / pending
+- Date / commit: 2026-09-24 / pending
 - Hypothesis: Artifact-compatible local substitutes can exercise every downstream
   stage without weakening the claim boundary for the faithful path.
 - Configuration: `configs/two_paths.yaml`
 - Input video and object pair: passing HOI4D ball → bowl perception artifacts.
-- Changed variable: measured primitives, configured-scale planar motion, bounded
-  point-robot dynamics, and ridge behavior cloning replace heavyweight backends.
+- Changed variable: downloaded aligned depth and camera calibration replaced the
+  provisional 6 cm ball, 18 cm bowl, and 0.25 m scale anchor with a fitted 3.832 cm
+  ball, annotated 9.915 cm bowl, and 0.580 m first-measurable carry separation.
 - Fixed variables: frozen masks, task success tolerance, seed 42, and Place semantics.
 - Metrics: 72-frame proxy trajectory; 250 randomized demonstrations; 12,000 valid
-  action samples; 100/100 held-out proxy rollouts successful; runtime about 1 second.
+  action samples; 81/100 held-out proxy rollouts successful; 0.81 success versus
+  the frozen 0.80 gate; runtime about 1 second.
 - Result: local generation and learning gates pass.
 - Gate decision: **Pass for the systems baseline only.** This is not faithful Gate A
   or evidence of image-policy or sim-to-real robustness.
 - Artifacts: `results/local_e2e/hoi4d_ball_to_bowl/` and
   `results/faithful_bundle/hoi4d_ball_to_bowl/` (Git-ignored).
-- Next action: replace the provisional 0.25 m scale anchor with the real measured
-  recording, then execute the faithful bundle on a 16–24 GB GPU.
+- Next action: retain this run as the calibrated dataset diagnostic, obtain a true
+  initial separation from a fully visible fixed-camera recording, then execute the
+  faithful bundle on a 16–24 GB GPU.
