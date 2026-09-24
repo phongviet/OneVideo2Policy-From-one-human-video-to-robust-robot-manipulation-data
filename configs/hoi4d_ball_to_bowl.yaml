@@ -50,7 +50,10 @@ generation:
   reference_source_frame: 89
   gaussian_stride: 3
   renderer: anisotropic_alpha_compositing
-  status: reference_and_novel_view_rendered
+  fusion_frames: [1, 12, 24, 36, 48, 60, 71]
+  voxel_size_m: 0.01
+  min_static_observations: 2
+  status: multiview_metric_scene_rendered
 
 gates:
   min_mask_iou: 0.70

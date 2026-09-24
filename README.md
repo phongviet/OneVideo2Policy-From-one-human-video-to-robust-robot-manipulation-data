@@ -86,7 +86,7 @@ physical robot success, or sim-to-real transfer.
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
-| RGB-D Gaussian scene | 🟡 | 18,420 labeled Gaussians; 24.18 dB reference render; multiframe fitting pending |
+| RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; 20.68 dB held-out render; optimization and robot composition pending |
 | Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |
 | Policy benchmark | ✅ | Learned visual waypoint policy passes 19/20 held-out rollouts |
 

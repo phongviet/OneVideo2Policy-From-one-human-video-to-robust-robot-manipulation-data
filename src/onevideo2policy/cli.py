@@ -16,6 +16,7 @@ from onevideo2policy.generation.gaussian_scene import (
     transform_label,
 )
 from onevideo2policy.pipeline import prepare_model_bundle, run_local_end_to_end
+from onevideo2policy.pose_tracking.rgbd_odometry import estimate_rgbd_trajectory
 from onevideo2policy.reconstruction.crops import (
     export_rgba_crops,
     load_video_frame,
@@ -164,6 +165,15 @@ def build_parser() -> argparse.ArgumentParser:
     gaussian_scene.add_argument("--output", required=True, type=Path)
     gaussian_scene.add_argument("--max-width", default=640, type=int)
     gaussian_scene.add_argument("--stride", default=3, type=int)
+
+    rgbd_trajectory = subparsers.add_parser(
+        "estimate-rgbd-trajectory", help="Estimate a metric camera trajectory with RGB-D PnP"
+    )
+    rgbd_trajectory.add_argument("--manifest", required=True, type=Path)
+    rgbd_trajectory.add_argument("--depth-dir", required=True, type=Path)
+    rgbd_trajectory.add_argument("--camera-info", required=True, type=Path)
+    rgbd_trajectory.add_argument("--masks", required=True, type=Path)
+    rgbd_trajectory.add_argument("--output", required=True, type=Path)
 
     hoi4d = subparsers.add_parser(
         "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
@@ -400,6 +410,104 @@ def main() -> None:
             json.dumps(report, indent=2) + "\n", encoding="utf-8"
         )
         print(json.dumps(report, indent=2))
+    elif args.command == "estimate-rgbd-trajectory":
+        import cv2
+        import numpy as np
+
+        with args.manifest.open(encoding="utf-8") as stream:
+            manifest_data = json.load(stream)
+        with args.camera_info.open(encoding="utf-8") as stream:
+            camera_info = json.load(stream)
+        width = int(manifest_data["resolution"]["width"])
+        height = int(manifest_data["resolution"]["height"])
+        calibration = camera_info["crop_intrinsic"]
+        first_source_id = int(manifest_data["frames"][0]["source_frame_id"])
+        first_raw_depth = cv2.imread(
+            str(args.depth_dir / f"{first_source_id:05d}.png"), cv2.IMREAD_UNCHANGED
+        )
+        if first_raw_depth is None:
+            raise FileNotFoundError("first sensor depth frame")
+        scale_x, scale_y = width / first_raw_depth.shape[1], height / first_raw_depth.shape[0]
+        intrinsics = np.array(
+            [
+                [calibration["fx"] * scale_x, 0, calibration["cx"] * scale_x],
+                [0, calibration["fy"] * scale_y, calibration["cy"] * scale_y],
+                [0, 0, 1],
+            ],
+            dtype=np.float64,
+        )
+        rgb_frames = []
+        depth_frames = []
+        exclusions = []
+        source_frame_ids = []
+        for frame in manifest_data["frames"]:
+            rgb_path = Path(frame["rgb"])
+            if not rgb_path.is_absolute():
+                rgb_path = args.manifest.parent / rgb_path
+            rgb_bgr = cv2.imread(str(rgb_path), cv2.IMREAD_COLOR)
+            if rgb_bgr is None:
+                raise FileNotFoundError(rgb_path)
+            source_id = int(frame["source_frame_id"])
+            raw_depth = cv2.imread(
+                str(args.depth_dir / f"{source_id:05d}.png"), cv2.IMREAD_UNCHANGED
+            )
+            if raw_depth is None:
+                raise FileNotFoundError(args.depth_dir / f"{source_id:05d}.png")
+            frame_id = int(frame["frame_id"])
+            masks = []
+            for name in ("source", "target"):
+                mask = cv2.imread(
+                    str(args.masks / name / f"{frame_id:06d}.png"), cv2.IMREAD_GRAYSCALE
+                )
+                if mask is None:
+                    raise FileNotFoundError(args.masks / name / f"{frame_id:06d}.png")
+                masks.append(mask > 0)
+            rgb_frames.append(cv2.cvtColor(rgb_bgr, cv2.COLOR_BGR2RGB))
+            depth_frames.append(
+                cv2.resize(
+                    raw_depth.astype(np.float32) / 1000.0,
+                    (width, height),
+                    interpolation=cv2.INTER_NEAREST,
+                )
+            )
+            exclusions.append(masks[0] | masks[1])
+            source_frame_ids.append(source_id)
+        world_to_camera, steps = estimate_rgbd_trajectory(
+            rgb_frames, depth_frames, intrinsics, exclusion_masks=exclusions
+        )
+        camera_to_world = np.linalg.inv(world_to_camera)
+        positions = camera_to_world[:, :3, 3]
+        step_distances = np.linalg.norm(np.diff(positions, axis=0), axis=1)
+        args.output.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            args.output / "camera-trajectory.npz",
+            schema_version=np.asarray(1),
+            world_to_camera=world_to_camera,
+            camera_to_world=camera_to_world,
+            intrinsics=intrinsics,
+            source_frame_ids=np.asarray(source_frame_ids),
+        )
+        report = {
+            "schema_version": 1,
+            "method": "ORB RGB-D PnP with dynamic object mask exclusion",
+            "units": "metres",
+            "frame_count": len(rgb_frames),
+            "path_length_m": float(np.sum(step_distances)),
+            "start_to_end_m": float(np.linalg.norm(positions[-1] - positions[0])),
+            "median_step_translation_m": float(np.median(step_distances)),
+            "median_inlier_ratio": float(np.median([step["inlier_ratio"] for step in steps])),
+            "median_reprojection_error_px": float(
+                np.median([step["median_reprojection_error_px"] for step in steps])
+            ),
+            "median_depth_residual_m": float(
+                np.median([step["median_depth_residual_m"] for step in steps])
+            ),
+            "steps": steps,
+        }
+        (args.output / "report.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+        print(json.dumps({key: value for key, value in report.items() if key != "steps"}, indent=2))
     elif args.command == "import-hoi4d":
         if args.annotations is not None:
             manifest = import_hoi4d_rgb_video(

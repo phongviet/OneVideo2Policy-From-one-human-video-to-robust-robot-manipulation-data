@@ -51,16 +51,37 @@ Measured result:
 The output contains `scene.npz`, a reference render, alpha and depth images, a novel
 camera view, an independently moved source render, and `report.json`.
 
+## Metric camera trajectory and multiview fusion
+
+The arbitrary-scale supplied camera poses were replaced with RGB-D PnP odometry over
+all 72 sampled frames. Dynamic source and target masks are excluded from feature
+matching. The recovered path is 0.649 m long with 0.202 m start-to-end displacement,
+91.5% median inlier ratio, 0.75 px median reprojection error, and 2.1 mm median
+matched-depth residual.
+
+Seven keyframes are transformed into the metric world frame and fused at 1 cm voxel
+resolution. Static voxels require observations from at least two frames; movable ball
+and bowl Gaussians come only from reference frame 1 to avoid motion smearing.
+
+| Multiview metric | Value |
+|---|---:|
+| Fused Gaussian count | 7,007 |
+| Static/source/target count | 6,954 / 9 / 44 |
+| Held-out frame | 30 |
+| Held-out evaluated coverage | 67.0% |
+| Held-out PSNR | 20.68 dB |
+
+The trajectory command is `ov2p estimate-rgbd-trajectory`. Multiview fusion is
+reproduced by `scripts/fuse_hoi4d_gaussians.py`.
+
 ## Remaining Gaussian work
 
-1. Fuse multiple RGB-D frames in a common metric camera frame and remove duplicate
-   or inconsistent Gaussians.
-2. Optimize Gaussian means, covariance, opacity, and color against held-out views.
-3. Remove the hand and other transient pixels from the static scene.
-4. Transform source Gaussians with the recovered 6D object trajectory.
-5. Composite the simulated robot with correct depth ordering and shadows.
-6. Render synchronized RGB, robot state, and action sequences for the four required
+1. Optimize Gaussian means, covariance, opacity, and color against held-out views.
+2. Remove the hand and other transient pixels from the static scene.
+3. Transform source Gaussians with the recovered 6D object trajectory.
+4. Composite the simulated robot with correct depth ordering and shadows.
+5. Render synchronized RGB, robot state, and action sequences for the four required
    policy ablations.
 
-The present artifact proves representation, semantic motion, and rendering contracts.
-It is not yet a trained multiview 3DGS or a Gaussian robot-demonstration dataset.
+The present artifact proves metric multiview fusion, semantic motion, and rendering
+contracts. It is not yet an optimized 3DGS or a Gaussian robot-demonstration dataset.

@@ -131,3 +131,20 @@
 - Result: Gaussian representation and rendering stage pass their local artifact
   contract. Multiframe fitting, transient removal, and robot compositing remain.
 - Artifacts: `results/gaussian_scene/hoi4d_ball_to_bowl_frame89/` (Git-ignored).
+
+## Metric RGB-D odometry and Gaussian fusion
+
+- Date / commit: 2026-09-24 / pending
+- Camera method: consecutive ORB matching and RGB-D PnP with source/target masks
+  excluded, followed by metric transform accumulation across all 72 frames.
+- Camera metrics: 0.649 m path length, 0.202 m start-to-end displacement, 91.5%
+  median inlier ratio, 0.75 px median reprojection error, and 2.1 mm median depth
+  residual at matched pixels.
+- Gaussian fusion: frames 1, 12, 24, 36, 48, 60, and 71; 1 cm voxels; at least two
+  distinct-frame observations per static voxel; movable groups retained from frame 1.
+- Fused result: 7,007 Gaussians, 67.0% evaluated held-out coverage, and 20.68 dB PSNR
+  on unseen frame 30 outside source and target masks.
+- Gate decision: metric camera trajectory and multiview Gaussian artifact pass. Object
+  6D motion, transient hand removal, Gaussian optimization, and robot composition remain.
+- Artifacts: `results/geometry/hoi4d_ball_to_bowl/rgbd_odometry/` and
+  `results/gaussian_scene/hoi4d_ball_to_bowl_fused/` (Git-ignored).

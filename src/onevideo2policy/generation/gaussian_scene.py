@@ -126,9 +126,9 @@ def initialize_gaussians_from_rgbd(
         if target_mask.shape != depth_m.shape:
             raise ValueError("target mask shape must match depth")
         target_values = target_mask[sampled_y[valid], sampled_x[valid]]
-        if np.any(target_values & (labels == 1)):
-            raise ValueError("source and target masks overlap at sampled pixels")
-        labels[target_values] = 2
+        # The placed source can project inside the target mask. Visible source pixels
+        # retain priority because their measured depth occludes the target surface.
+        labels[target_values & (labels == 0)] = 2
     scene = GaussianScene(
         means_m=means,
         log_scales_m=np.log(scales),
@@ -163,6 +163,87 @@ def transform_label(
     result = replace(scene, means_m=means, rotations_wxyz=rotations)
     result.validate()
     return result
+
+
+def transform_scene(scene: GaussianScene, transform: NDArray[np.floating]) -> GaussianScene:
+    result = scene
+    for label in np.unique(scene.labels):
+        result = transform_label(result, int(label), transform)
+    return result
+
+
+def fuse_gaussian_scenes(
+    scenes: list[GaussianScene],
+    camera_to_world: NDArray[np.floating],
+    *,
+    reference_index: int,
+    voxel_size_m: float = 0.01,
+    min_static_observations: int = 2,
+) -> GaussianScene:
+    """Fuse static Gaussians across views and retain movable groups from one view."""
+    camera_to_world = np.asarray(camera_to_world, dtype=np.float64)
+    if len(scenes) < 2 or camera_to_world.shape != (len(scenes), 4, 4):
+        raise ValueError("scenes and camera poses must contain at least two matching views")
+    if not 0 <= reference_index < len(scenes):
+        raise ValueError("reference index is outside the scene list")
+    if voxel_size_m <= 0 or min_static_observations <= 0:
+        raise ValueError("voxel size and minimum observations must be positive")
+    transformed = [
+        transform_scene(scene, camera_to_world[index]) for index, scene in enumerate(scenes)
+    ]
+    static_means = []
+    static_scales = []
+    static_rotations = []
+    static_opacities = []
+    static_colors = []
+    frame_ids = []
+    for frame_id, scene in enumerate(transformed):
+        selected = scene.labels == 0
+        static_means.append(scene.means_m[selected])
+        static_scales.append(scene.log_scales_m[selected])
+        static_rotations.append(scene.rotations_wxyz[selected])
+        static_opacities.append(scene.opacities[selected])
+        static_colors.append(scene.colors_rgb[selected])
+        frame_ids.append(np.full(np.count_nonzero(selected), frame_id, dtype=np.int32))
+    means = np.concatenate(static_means)
+    log_scales = np.concatenate(static_scales)
+    rotations = np.concatenate(static_rotations)
+    opacities = np.concatenate(static_opacities)
+    colors = np.concatenate(static_colors)
+    frames = np.concatenate(frame_ids)
+    voxels = np.floor(means / voxel_size_m).astype(np.int64)
+    _, first_indices, inverse = np.unique(voxels, axis=0, return_inverse=True, return_index=True)
+    voxel_count = int(inverse.max()) + 1
+    observation_pairs = np.unique(np.column_stack((inverse, frames)), axis=0)
+    support = np.bincount(observation_pairs[:, 0], minlength=voxel_count)
+    keep_voxel = support >= min_static_observations
+    counts = np.bincount(inverse, minlength=voxel_count).astype(np.float64)
+
+    def mean_by_voxel(values: NDArray[np.floating]) -> NDArray[np.float64]:
+        output = np.zeros((voxel_count,) + values.shape[1:], dtype=np.float64)
+        np.add.at(output, inverse, values)
+        return output / counts.reshape((-1,) + (1,) * (values.ndim - 1))
+
+    fused_means = mean_by_voxel(means)[keep_voxel].astype(np.float32)
+    fused_scales = mean_by_voxel(log_scales)[keep_voxel].astype(np.float32)
+    fused_opacities = mean_by_voxel(opacities)[keep_voxel].astype(np.float32)
+    fused_colors = mean_by_voxel(colors)[keep_voxel].astype(np.float32)
+    fused_rotations = rotations[first_indices[keep_voxel]].astype(np.float32)
+
+    reference = transformed[reference_index]
+    movable = reference.labels != 0
+    fused = GaussianScene(
+        means_m=np.concatenate((fused_means, reference.means_m[movable])),
+        log_scales_m=np.concatenate((fused_scales, reference.log_scales_m[movable])),
+        rotations_wxyz=np.concatenate((fused_rotations, reference.rotations_wxyz[movable])),
+        opacities=np.concatenate((fused_opacities, reference.opacities[movable])),
+        colors_rgb=np.concatenate((fused_colors, reference.colors_rgb[movable])),
+        labels=np.concatenate(
+            (np.zeros(len(fused_means), dtype=np.uint8), reference.labels[movable])
+        ),
+    )
+    fused.validate()
+    return fused
 
 
 def _rotation_matrix_to_quaternion(rotation: NDArray[np.floating]) -> NDArray[np.float32]:

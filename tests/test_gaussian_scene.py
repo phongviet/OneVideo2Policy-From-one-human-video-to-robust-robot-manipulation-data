@@ -4,6 +4,7 @@ import numpy as np
 
 from onevideo2policy.generation.gaussian_scene import (
     GaussianScene,
+    fuse_gaussian_scenes,
     initialize_gaussians_from_rgbd,
     render_gaussians,
     transform_label,
@@ -50,3 +51,29 @@ def test_object_gaussian_group_can_be_moved() -> None:
     selected = scene.labels == 1
     assert np.allclose(moved.means_m[selected, 0], scene.means_m[selected, 0] + 0.1)
     assert np.array_equal(moved.means_m[~selected], scene.means_m[~selected])
+
+
+def test_multiview_fusion_filters_single_view_static_points() -> None:
+    rgb, depth, intrinsics, source = _fixture()
+    first = initialize_gaussians_from_rgbd(rgb, depth, intrinsics, source_mask=source, stride=4)
+    second = initialize_gaussians_from_rgbd(rgb, depth, intrinsics, source_mask=source, stride=4)
+    # Add one transient static Gaussian to only the second observation.
+    second = GaussianScene(
+        means_m=np.vstack((second.means_m, [4.0, 4.0, 4.0])).astype(np.float32),
+        log_scales_m=np.vstack((second.log_scales_m, second.log_scales_m[0])),
+        rotations_wxyz=np.vstack((second.rotations_wxyz, second.rotations_wxyz[0])),
+        opacities=np.append(second.opacities, 0.9).astype(np.float32),
+        colors_rgb=np.vstack((second.colors_rgb, [1.0, 0.0, 0.0])).astype(np.float32),
+        labels=np.append(second.labels, 0).astype(np.uint8),
+    )
+
+    fused = fuse_gaussian_scenes(
+        [first, second],
+        np.repeat(np.eye(4)[None], 2, axis=0),
+        reference_index=0,
+        voxel_size_m=0.02,
+        min_static_observations=2,
+    )
+
+    assert not np.any(np.all(np.isclose(fused.means_m, [4, 4, 4]), axis=1))
+    assert np.count_nonzero(fused.labels == 1) == np.count_nonzero(first.labels == 1)

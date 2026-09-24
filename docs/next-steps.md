@@ -19,13 +19,13 @@ Those failures are contained by using measured geometry for physics.
 
 ## Work remaining
 
-1. **Calibrated 6D trajectory:** recover camera and object poses from HOI4D RGB-D,
-   report reprojection error and translation jitter, and compare against the current
-   planar proxy.
+1. **Calibrated object trajectory:** metric RGB-D camera odometry now covers all 72
+   frames. Recover the ball's 6D poses, report reprojection error and translation
+   jitter, and compare against the current planar proxy.
 2. **Task-specific simulator:** replace robosuite's built-in can and bin with the
    measured ball and bowl assets, then retarget the demonstrated trajectory.
-3. **Gaussian demonstration rendering:** extend the verified labeled RGB-D Gaussian
-   scene to multiframe fitting, remove transient hand pixels, and composite the robot.
+3. **Gaussian demonstration rendering:** optimize the fused seven-keyframe metric
+   scene, remove transient hand pixels, and composite the robot.
 4. **Policy transfer:** generate successful ball-to-bowl Panda demonstrations and
    retrain the selected temporal waypoint model on those observations.
 5. **Controlled evaluation:** measure success across object pose, camera, background,

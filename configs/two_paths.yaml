@@ -51,6 +51,8 @@ paths:
     gaussian_scene: metric_rgbd_initialized_3d_gaussians
     gaussian_stride: 3
     gaussian_reference_frame: 89
+    gaussian_fusion_frames: [1, 12, 24, 36, 48, 60, 71]
+    gaussian_voxel_size_m: 0.01
     simulator: robosuite
     policy: visual_waypoint_temporal
     keyframes: 12
