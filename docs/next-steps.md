@@ -35,13 +35,20 @@ and half-light data. It passes 97/100 total rollouts: 20/20 nominal, 19/20 camer
 
 ## Work remaining
 
-1. **Metric Gaussian robot rendering:** optimize the fused seven-keyframe scene,
+1. **Measured reconstruction gate:** obtain measured dimensions for a nonsymmetric
+   object and compare them with a close multiview reconstruction. The retained
+   Record3D sequence supplies calibrated RGB-D views but no authoritative object
+   dimensions.
+2. **Metric Gaussian robot rendering:** optimize the fused seven-keyframe scene,
    remove transient hand pixels, and calibrate the simulated robot camera into the
    HOI4D scene. Appearance-only robot composition is complete.
-2. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
+3. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
-Both remaining items require external evidence absent from this workspace. Metric
+The correspondence-sensitive rotation ablation is complete on the asymmetric
+`EM1-0406` action camera: 0.70 px median held-out error versus 34.89 px without
+tracked correspondences. The remaining items require external evidence absent from
+this workspace. Metric
 robot insertion needs shared robot/HOI4D camera correspondences or a new calibrated
 capture. Physical validation needs access to the robot, camera calibration, workspace
 measurements, and an operator-approved safety envelope. The existing video cannot

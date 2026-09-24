@@ -86,7 +86,7 @@ physical robot success, or sim-to-real transfer.
 | TripoSR and Depth Anything V2 Small | ✅ | Both run on 6 GB; HOI4D mesh and sensor-depth diagnostics recorded |
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
-| 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
+| Rotation tracking ablation | ✅ | 13-frame asymmetric-object test; held-out error falls 34.89 px → 0.70 px |
 | RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; Panda foreground composite and 5/5 policy rollouts pass; metric camera registration and optimization pending |
 | Task-specific simulator | ✅ | Measured 3.83 cm ball and 9.91 cm bowl; oracle controller passes 3/3 randomized rollouts |
 | Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
@@ -228,6 +228,20 @@ uv run ov2p sample-points source_mask.npy \
   --count 32 --seed 42 --border 4 \
   --output data/interim/place_demo/source_points.npy
 ```
+
+Run the asymmetric-object rotation ablation directly from the retained Record3D
+archive:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/ablate_record3d_rotation.py
+```
+
+This uses the action camera in `EM1-0406`, whose rectangular body and offset lens
+make rotation observable. The tracked similarity fit recovers a median −41.7° image
+plane rotation and reduces median error on 82 held-out correspondences from 34.89 px
+for mask-only pose fitting to 0.70 px. See the
+[tracked report](docs/experiments/em1-0406-rotation-ablation.json) and
+[visual audit](docs/assets/em1-0406-rotation-ablation.png).
 
 ## Repository structure
 

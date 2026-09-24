@@ -259,3 +259,22 @@
   row scoring below one-demo is not a monotonic data-scaling claim because both are
   far outside their training appearance and the one-demo row has one chance success.
 - Artifacts: `results/evaluation/ablation_*_combined20/` (Git-ignored).
+
+## Asymmetric-object correspondence ablation
+
+- Date / commit: 2026-09-25 / pending
+- Source: CaryxAI Everyday Manipulation 3D `EM1-0406.r3d`, 392 Record3D RGB-D
+  frames with intrinsics and camera poses.
+- Object: rectangular action camera with an offset circular lens; unlike the HOI4D
+  ball, its image-plane rotation is observable.
+- Protocol: frame 0 is the reference; frames 330–390 at stride 5 form 13 fully
+  visible post-placement evaluations. SIFT/RANSAC verifies matches, two thirds fit
+  a similarity pose, and every third spatially sorted match is held out.
+- Ablation: mask-only centroid/area/principal-axis fitting has 34.89 px median held-out
+  error (95% bootstrap CI 34.25–36.11). Correspondence-constrained fitting has
+  0.70 px median error (0.57–0.91), a 98.0% reduction over 82 held-out points.
+- Motion: median recovered image-plane rotation is −41.7°.
+- Gate decision: **Pass for correspondence-sensitive observable rotation.** The test
+  does not claim full SE(3) accuracy.
+- Artifacts: `docs/experiments/em1-0406-rotation-ablation.json` and
+  `docs/assets/em1-0406-rotation-ablation.png`.

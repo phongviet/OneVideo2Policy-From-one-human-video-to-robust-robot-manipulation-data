@@ -33,13 +33,15 @@ against measured geometry. Current TripoSR HOI4D meshes are too flat for physics
 This needs a new close multi-view capture; the released sequence has insufficient
 object detail for a faithful learned mesh.
 
-### Gate B — motion quality
+### Gate B — motion quality (passed for observable image-plane rotation)
 
-Camera and spherical-object translation now pass their metric artifact checks. Quantify
-the effect of the 20-frame interpolated occlusion interval and ablate the tracked-point
-loss on a nonsymmetric object where rotation is observable.
-The current ball is rotationally symmetric, so that rotation ablation requires a
-nonsymmetric-object sequence rather than another computation on the same frames.
+Camera and spherical-object translation pass their metric artifact checks. The retained
+Record3D `EM1-0406` sequence supplies a nonsymmetric action camera with a rectangular
+body and offset lens. Across 13 fully visible post-placement frames, a correspondence
+constrained similarity fit reduces median error on 82 held-out points from 34.89 px
+for mask-only pose fitting to 0.70 px, a 98.0% reduction. The recovered median image
+plane rotation is −41.7°. This closes the tracked-point rotation ablation; full SE(3)
+object-pose accuracy remains outside this 2D test.
 
 ### Gate C — task transfer (passed locally)
 

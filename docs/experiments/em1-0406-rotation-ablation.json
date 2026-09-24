@@ -1,0 +1,193 @@
+{
+  "experiment": "EM1-0406 nonsymmetric-object correspondence ablation",
+  "source_archive": "data/raw/sources/EM1-0406.r3d",
+  "archive_sha256": "f7121089e77fb01dbb93df8c5a73ace092f45b6eb65f8a8179dada62bcbade80",
+  "reference_frame": 0,
+  "evaluation_frames": [
+    330,
+    335,
+    340,
+    345,
+    350,
+    355,
+    360,
+    365,
+    370,
+    375,
+    380,
+    385,
+    390
+  ],
+  "method": {
+    "without_track_loss": "dark-object mask centroid, area, and principal axis",
+    "with_track_loss": "SIFT correspondences and RANSAC 2D similarity",
+    "held_out_protocol": "every third verified match after spatial sorting",
+    "rois_xyxy": {
+      "reference": [
+        520,
+        1300,
+        850,
+        1600
+      ],
+      "placed": [
+        500,
+        900,
+        850,
+        1250
+      ]
+    }
+  },
+  "summary": {
+    "frames": 13,
+    "held_out_correspondences": 82,
+    "mask_only_median_error_px": 34.89489242954004,
+    "mask_only_median_95ci_px": [
+      34.25230925776714,
+      36.1119199909635
+    ],
+    "tracked_median_error_px": 0.6995133350947296,
+    "tracked_median_95ci_px": [
+      0.5661615869561217,
+      0.9057392889105078
+    ],
+    "median_error_reduction_percent": 97.99537042130967,
+    "median_tracked_rotation_deg": -41.66702594637504
+  },
+  "frames": [
+    {
+      "frame_id": 330,
+      "verified_correspondences": 17,
+      "fit_correspondences": 11,
+      "held_out_correspondences": 6,
+      "mask_only_rotation_deg": -54.24984749985869,
+      "tracked_rotation_deg": -41.25083834054256,
+      "mask_only_median_held_out_error_px": 35.572503561849814,
+      "tracked_median_held_out_error_px": 0.34301895026767837
+    },
+    {
+      "frame_id": 335,
+      "verified_correspondences": 18,
+      "fit_correspondences": 12,
+      "held_out_correspondences": 6,
+      "mask_only_rotation_deg": -54.56332357524102,
+      "tracked_rotation_deg": -42.36611884777759,
+      "mask_only_median_held_out_error_px": 36.10375210793539,
+      "tracked_median_held_out_error_px": 0.5771237798742096
+    },
+    {
+      "frame_id": 340,
+      "verified_correspondences": 20,
+      "fit_correspondences": 13,
+      "held_out_correspondences": 7,
+      "mask_only_rotation_deg": -54.46063996077247,
+      "tracked_rotation_deg": -41.66702594637504,
+      "mask_only_median_held_out_error_px": 35.99669843331595,
+      "tracked_median_held_out_error_px": 0.5841253986218851
+    },
+    {
+      "frame_id": 345,
+      "verified_correspondences": 15,
+      "fit_correspondences": 10,
+      "held_out_correspondences": 5,
+      "mask_only_rotation_deg": -54.10319313850717,
+      "tracked_rotation_deg": -43.87059503298993,
+      "mask_only_median_held_out_error_px": 35.18003615946034,
+      "tracked_median_held_out_error_px": 1.616829543373147
+    },
+    {
+      "frame_id": 350,
+      "verified_correspondences": 21,
+      "fit_correspondences": 14,
+      "held_out_correspondences": 7,
+      "mask_only_rotation_deg": -53.8203907787792,
+      "tracked_rotation_deg": -41.41627440786544,
+      "mask_only_median_held_out_error_px": 36.657558029809096,
+      "tracked_median_held_out_error_px": 0.423798111976012
+    },
+    {
+      "frame_id": 355,
+      "verified_correspondences": 25,
+      "fit_correspondences": 16,
+      "held_out_correspondences": 9,
+      "mask_only_rotation_deg": -53.97861199567466,
+      "tracked_rotation_deg": -42.33381077115244,
+      "mask_only_median_held_out_error_px": 34.66634004847649,
+      "tracked_median_held_out_error_px": 0.6892333990777137
+    },
+    {
+      "frame_id": 360,
+      "verified_correspondences": 24,
+      "fit_correspondences": 16,
+      "held_out_correspondences": 8,
+      "mask_only_rotation_deg": -53.90302715282167,
+      "tracked_rotation_deg": -43.663838104037175,
+      "mask_only_median_held_out_error_px": 34.64350824316819,
+      "tracked_median_held_out_error_px": 1.1034097288676419
+    },
+    {
+      "frame_id": 365,
+      "verified_correspondences": 20,
+      "fit_correspondences": 13,
+      "held_out_correspondences": 7,
+      "mask_only_rotation_deg": -50.29076266900895,
+      "tracked_rotation_deg": -40.831529278733,
+      "mask_only_median_held_out_error_px": 36.06356433148582,
+      "tracked_median_held_out_error_px": 0.45807410480547556
+    },
+    {
+      "frame_id": 370,
+      "verified_correspondences": 15,
+      "fit_correspondences": 10,
+      "held_out_correspondences": 5,
+      "mask_only_rotation_deg": -50.126011134742306,
+      "tracked_rotation_deg": -38.87456605135716,
+      "mask_only_median_held_out_error_px": 33.67232439978473,
+      "tracked_median_held_out_error_px": 1.3943670042216205
+    },
+    {
+      "frame_id": 375,
+      "verified_correspondences": 8,
+      "fit_correspondences": 5,
+      "held_out_correspondences": 3,
+      "mask_only_rotation_deg": -52.65351079223334,
+      "tracked_rotation_deg": -48.12623124180358,
+      "mask_only_median_held_out_error_px": 32.48732487767289,
+      "tracked_median_held_out_error_px": 2.4881291091167714
+    },
+    {
+      "frame_id": 380,
+      "verified_correspondences": 8,
+      "fit_correspondences": 5,
+      "held_out_correspondences": 3,
+      "mask_only_rotation_deg": -54.46715768186533,
+      "tracked_rotation_deg": -41.5765392089959,
+      "mask_only_median_held_out_error_px": 34.141256943051935,
+      "tracked_median_held_out_error_px": 1.1112846618502754
+    },
+    {
+      "frame_id": 385,
+      "verified_correspondences": 28,
+      "fit_correspondences": 18,
+      "held_out_correspondences": 10,
+      "mask_only_rotation_deg": -55.15242146045797,
+      "tracked_rotation_deg": -43.183899366858405,
+      "mask_only_median_held_out_error_px": 33.99719535241334,
+      "tracked_median_held_out_error_px": 0.5807332074567924
+    },
+    {
+      "frame_id": 390,
+      "verified_correspondences": 18,
+      "fit_correspondences": 12,
+      "held_out_correspondences": 6,
+      "mask_only_rotation_deg": -54.19641267756211,
+      "tracked_rotation_deg": -41.43604604599634,
+      "mask_only_median_held_out_error_px": 35.3186254620327,
+      "tracked_median_held_out_error_px": 0.6620511781859644
+    }
+  ],
+  "limitations": [
+    "This is an image-plane rotation ablation, not a full SE(3) object-pose benchmark.",
+    "ROIs and the dark-object threshold were fixed after visual audit of this sequence.",
+    "Full-set RANSAC rejects descriptor mismatches before the deterministic fit/test split."
+  ]
+}
