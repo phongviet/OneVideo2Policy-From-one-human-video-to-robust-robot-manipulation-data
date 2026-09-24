@@ -1,4 +1,5 @@
-# Systems smoke test only. Scale values are unmeasured assumptions, not evidence.
+# Systems baseline. Planar xy scale uses the measured 3 cm source diameter;
+# remaining dimensions and vertical motion are provisional.
 project:
   name: real-place-img-6256-local-smoke
   seed: 42
@@ -31,14 +32,15 @@ paths:
     target_primitive: rectangular_tray
     robot_model: bounded_point_robot
     policy: ridge_behavior_cloning
-    # Replace all four scene quantities with actual measurements before metric use.
+    # Measured 2026-09-24: source diameter 3 cm, so radius is 1.5 cm.
+    source_diameter_m: 0.03
+    source_radius_m: 0.015
+    # Replace the remaining scene quantities with actual measurements before metric use.
     target_diameter_m: 0.18
     target_length_m: 0.18
     target_width_m: 0.10
     target_height_m: 0.012
-    source_radius_m: 0.03
     source_height_m: 0.025
-    initial_separation_m: 0.25
     lift_height_m: 0.12
     randomization_m: 0.06
     train_episodes: 250

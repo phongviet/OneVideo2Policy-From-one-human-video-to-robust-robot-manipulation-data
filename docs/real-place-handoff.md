@@ -61,11 +61,15 @@ not produce a research result without that work.
    gate remains pending. The prior assisted agreement, 0.749 source and 0.934
    target mean IoU, is not a valid independent gate result.
 
-2. **Physical measurements.** Record the source diameter and height, tray length,
-   width, and height, and initial source-to-target center separation in centimeters.
+2. **Physical measurements.** The source diameter is now measured at **3 cm**
+   (1.5 cm radius) and recorded in
+   [`real_place_img_6256_measurements.json`](../configs/real_place_img_6256_measurements.json).
+   Record the source height, tray length, width, and height, and initial
+   source-to-target center separation in centimeters.
    Record camera intrinsics or phone model if available. The values in
-   `configs/real_place_img_6256_local_smoke.yaml` are placeholders, so its metric
-   trajectory and primitive sizes must not be interpreted as measured quantities.
+   `configs/real_place_img_6256_local_smoke.yaml` remain placeholders except for
+   source diameter and radius. Planar xy scale now uses the measured diameter;
+   vertical motion and the remaining primitive dimensions remain provisional.
 
    The completed local audit at
    `results/geometry/real_place_img_6256/audit/report.json` records why this is a

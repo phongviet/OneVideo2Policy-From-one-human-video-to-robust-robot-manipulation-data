@@ -18,9 +18,9 @@ planar trajectory and makes the take weaker than a locked-tripod capture.
 The source is roughly 200 px across in the native first frame, below the preferred
 250–300 px reconstruction crop. This is a usable systems/perception take, **not**
 yet evidence that paper-faithful single-view 3D reconstruction will pass Gate A.
-It has no metric scene measurements or depth. The source and target dimensions,
-initial separation, and camera calibration must be measured before interpreting
-metric local-path outputs.
+The source diameter was measured later at **3 cm**. Source height, target
+dimensions, initial separation, and camera calibration remain unknown. The
+diameter anchors planar xy scale, but it is insufficient for calibrated 3D motion.
 
 ## Reproducible intake and provisional perception
 
@@ -77,8 +77,9 @@ target-centroid frames with heavy occlusion. The largest correction versus raw
 per-frame centroids is ~44 px. The source center starts outside the target and
 is inside its footprint for all five final frames. Its primitive assets are a
 round cylinder and shallow rectangular tray, matching object *types* but not
-measured dimensions. All metric scene values remain assumptions, so this is a
-wiring and pixel-space Place check, not a physical policy result.
+fully measured dimensions. Source radius is now measured at 1.5 cm and anchors
+the planar proxy scale; source height, target geometry, and vertical motion remain
+assumptions. This is still a systems Place check rather than a physical policy result.
 
 ```bash
 uv run ov2p run-local-e2e \
@@ -92,3 +93,16 @@ The run writes `relative_trajectory.png`, `camera_transforms.npy`, primitive
 OBJ files, a proxy rollout, and `report.json`. A hashed 12-keyframe faithful
 input bundle is staged at `results/faithful_bundle/real_place_img_6256/`, with
 its status marked blocked by the independent gate and 16 GB+ GPU requirement.
+
+## Measured-diameter update
+
+The 3 cm source diameter replaces the earlier 6 cm placeholder diameter. The
+regenerated source cylinder has extents 3.0 × 3.0 × 2.5 cm; only its diameter is
+measured. The first-frame 95-pixel source footprint gives a planar scale of
+0.3158 mm/pixel. Under the background-stabilized planar approximation, the
+initial source-to-target centroid offset is 10.96 cm and the final offset is
+1.79 cm. These are scale-anchored planar estimates, not calibrated 3D positions.
+
+The rerun remains structurally healthy: 250 generated proxy episodes, 12,000
+samples, and 100/100 proxy policy successes. Its artifacts are under
+`results/local_e2e/real_place_img_6256_measured_diameter/`.

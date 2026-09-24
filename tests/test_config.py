@@ -35,3 +35,13 @@ def test_real_place_config_requires_case_dimensions() -> None:
 
     with pytest.raises(ValueError, match="paths.local.target_width_m"):
         validate_config(config)
+
+
+def test_real_place_source_diameter_matches_radius() -> None:
+    config = load_config(
+        Path(__file__).parents[1] / "configs" / "real_place_img_6256_local_smoke.yaml"
+    )
+    config["paths"]["local"]["source_radius_m"] = 0.03
+
+    with pytest.raises(ValueError, match="diameter must equal twice its radius"):
+        validate_config(config)

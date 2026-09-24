@@ -175,13 +175,14 @@ def recover_planar_proxy(
     *,
     target_diameter_m: float,
     lift_height_m: float,
+    source_diameter_m: float | None = None,
     initial_separation_m: float | None = None,
     camera_transforms: NDArray[np.float64] | None = None,
 ) -> dict[str, NDArray[np.float64] | float]:
     """Recover a metric planar proxy trajectory from relative mask centroids.
 
     This local baseline intentionally does not claim monocular 6D reconstruction.
-    Scale comes from a measured target diameter and height is a conservative Place arc.
+    Scale comes from an available measured scene dimension. Height is a conservative Place arc.
     """
     if target_diameter_m <= 0 or lift_height_m <= 0:
         raise ValueError("target diameter and lift height must be positive")
@@ -207,12 +208,12 @@ def recover_planar_proxy(
     else:
         well_observed = np.ones(len(target_xy), dtype=bool)
         target_for_relative = target_xy
-    diameters = []
+    target_diameters = []
     for mask in target_masks:
         ys, xs = np.nonzero(mask)
         if len(xs):
-            diameters.append(max(float(np.ptp(xs) + 1), float(np.ptp(ys) + 1)))
-    pixel_diameter = float(np.median(diameters))
+            target_diameters.append(max(float(np.ptp(xs) + 1), float(np.ptp(ys) + 1)))
+    target_pixel_diameter = float(np.median(target_diameters))
     if initial_separation_m is not None:
         if initial_separation_m <= 0:
             raise ValueError("initial separation must be positive")
@@ -221,9 +222,21 @@ def recover_planar_proxy(
             raise ValueError("initial source and target centroids must differ")
         metres_per_pixel = initial_separation_m / initial_pixel_separation
         scale_anchor = "configured_initial_separation"
+        scale_anchor_pixels = initial_pixel_separation
+    elif source_diameter_m is not None:
+        if source_diameter_m <= 0:
+            raise ValueError("source diameter must be positive")
+        ys, xs = np.nonzero(source_masks[0])
+        if not len(xs):
+            raise ValueError("first source mask must be visible for source-diameter scaling")
+        source_pixel_diameter = max(float(np.ptp(xs) + 1), float(np.ptp(ys) + 1))
+        metres_per_pixel = source_diameter_m / source_pixel_diameter
+        scale_anchor = "measured_source_diameter"
+        scale_anchor_pixels = source_pixel_diameter
     else:
-        metres_per_pixel = target_diameter_m / pixel_diameter
+        metres_per_pixel = target_diameter_m / target_pixel_diameter
         scale_anchor = "configured_target_diameter"
+        scale_anchor_pixels = target_pixel_diameter
     relative_pixels = source_xy - target_for_relative
     relative_xy = relative_pixels * metres_per_pixel
     relative_xy[:, 1] *= -1
@@ -235,6 +248,7 @@ def recover_planar_proxy(
         "target_xyz_m": np.zeros_like(xyz),
         "metres_per_pixel": metres_per_pixel,
         "scale_anchor": scale_anchor,
+        "scale_anchor_pixels": scale_anchor_pixels,
         "source_xy_stabilized_px": source_xy,
         "target_xy_stabilized_px": target_xy,
         "target_xy_used_px": target_for_relative,
@@ -721,6 +735,9 @@ def run_local_end_to_end(
         target_masks,
         target_diameter_m=float(local["target_diameter_m"]),
         lift_height_m=float(local["lift_height_m"]),
+        source_diameter_m=(
+            float(local["source_diameter_m"]) if "source_diameter_m" in local else None
+        ),
         initial_separation_m=(
             float(local["initial_separation_m"]) if "initial_separation_m" in local else None
         ),

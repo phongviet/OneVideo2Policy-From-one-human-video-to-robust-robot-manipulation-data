@@ -14,7 +14,7 @@ robot policy for the filmed task.
 | Tracking | Existing CoTracker3 offline | Already completed 57 frames; source/target track survival 0.986/0.921 with Small masks. |
 | Depth | Depth Anything V2 Metric Hypersim Small, input size 518 | 0.165 s/frame and 415 MiB PyTorch peak allocation. More stable target depth across this clip than size 384. Use only as shape/ordering evidence until calibrated. |
 | Mesh proposal | TripoSR, 128 extraction resolution, chunk 4096 | Both crops fit with memory margin; about 1.87 GiB PyTorch peak allocation and 0.6 s mesh extraction/object. Stable Fast 3D is an optional visual proposal for the blue target. |
-| Collision geometry | Existing measured primitives once dimensions are supplied | Both learned models invent unseen surfaces. Current primitive dimensions are assumptions, not measurements. |
+| Collision geometry | Primitive source cylinder and target tray | Source diameter is measured at 3 cm; source height and all target dimensions remain provisional. Both learned mesh models invent unseen surfaces. |
 | Simulator | robosuite 1.5.1, MuJoCo 3.3.7, EGL, Panda, 84×84 camera | A headless 100-step PickPlace run completed at 16.6 steps/s. This is a throughput smoke test only. |
 | Current proxy policy | Ridge behavior cloning | 100/100 successes on each of three held-out proxy rollout seeds. Small MLPs failed to grasp despite lower one-step action errors. |
 | Image policy benchmark | Direct action models plus learned dual-view waypoint estimation | Direct action variants fail; the temporal visual waypoint policy passes 19/20 held-out rollouts. |
@@ -147,9 +147,9 @@ median 15.2 pixels and a maximum 42.7 pixels. Together with 0.654 raw AbsRel on
 the UniHand RGB-D diagnostic, this is insufficient for metric geometry.
 
 The geometry output is explicitly marked `uncalibrated_geometry_evidence` in
-`results/geometry/real_place_img_6256/audit/report.json`. Physical dimensions
-and camera calibration remain required for scaled collision geometry and a
-metric trajectory.
+`results/geometry/real_place_img_6256/audit/report.json`. The measured 3 cm source
+diameter now anchors planar xy scale. Source height, target dimensions, and camera
+calibration remain required for scaled collision geometry and a 3D trajectory.
 
 The detailed comparison with the published Video2Robo collection and training
 recipe is in [`video2robo-gap-audit.md`](video2robo-gap-audit.md). It records both

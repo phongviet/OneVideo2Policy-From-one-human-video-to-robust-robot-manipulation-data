@@ -81,6 +81,7 @@ TRELLIS/VGGT, image-policy, or sim-to-real result.
 | SAM2 and CoTracker3 adapters | ✅ | CUDA run, overlay, and diagnostics complete |
 | Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
+| Real-scene metric geometry | 🟡 | Planar xy scale anchored by the measured 3 cm source diameter; calibrated 3D still pending |
 | TRELLIS and VGGT adapters | 🟡 | Blocked by 6 GB VRAM; official TRELLIS needs 16 GB |
 | Local end-to-end baseline | ✅ | 250 demos; 100/100 held-out proxy rollouts |
 | Faithful run bundle | ✅ | Hashed TRELLIS/VGGT inputs ready for 16 GB+ host |

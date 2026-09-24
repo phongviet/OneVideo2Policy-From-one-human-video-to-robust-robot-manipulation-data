@@ -94,5 +94,12 @@ def validate_config(config: dict[str, Any]) -> None:
         for key in required_dimensions:
             if key not in local or not isinstance(local[key], (int, float)) or local[key] <= 0:
                 raise ValueError(f"paths.local.{key} must be positive")
+        if "source_diameter_m" in local:
+            diameter = float(local["source_diameter_m"])
+            radius = float(local["source_radius_m"])
+            if diameter <= 0:
+                raise ValueError("paths.local.source_diameter_m must be positive")
+            if abs(diameter - 2 * radius) > 1e-9:
+                raise ValueError("paths.local source diameter must equal twice its radius")
         if int(paths["faithful"]["recommended_vram_gb"]) < int(paths["faithful"]["min_vram_gb"]):
             raise ValueError("faithful recommended VRAM must be at least its minimum")

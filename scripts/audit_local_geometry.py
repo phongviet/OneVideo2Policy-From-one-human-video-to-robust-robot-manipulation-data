@@ -25,11 +25,13 @@ def main() -> None:
     parser.add_argument("--proxy", type=Path, required=True)
     parser.add_argument("--camera-transforms", type=Path, required=True)
     parser.add_argument("--fixture-report", type=Path, required=True)
+    parser.add_argument("--measurements", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text())
     depth_report = json.loads(args.depth_report.read_text())
     fixture_report = json.loads(args.fixture_report.read_text())
+    measurements = json.loads(args.measurements.read_text()) if args.measurements else None
     frames = depth_report["results"]["518"]["frames"]
     n_frames = len(manifest["frames"])
     if len(frames) != n_frames or [row["frame_id"] for row in frames] != list(range(n_frames)):
@@ -54,6 +56,7 @@ def main() -> None:
     reliable = proxy["target_centroid_reliable"]
     target_reference = np.median(target_xy[reliable], axis=0)
     target_drift = np.linalg.norm(target_xy[reliable] - target_reference, axis=1)
+    has_measured_diameter = bool(measurements and measurements["source"].get("diameter_m"))
     times = np.array([frame["timestamp_s"] for frame in manifest["frames"]])
     args.output.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
@@ -67,7 +70,12 @@ def main() -> None:
     )
     report = {
         "status": "uncalibrated_geometry_evidence",
-        "scope": "57-frame real-video diagnostics; no recovered 6D poses or measured metric scale",
+        "scope": (
+            "57-frame real-video diagnostics; planar scale anchored by measured source diameter, "
+            "with no calibrated 3D poses"
+            if has_measured_diameter
+            else "57-frame real-video diagnostics; no recovered 6D poses or measured metric scale"
+        ),
         "camera_metadata": {
             "device": "iPhone 11 Pro Max",
             "source": "QuickTime MOV metadata",
@@ -78,7 +86,9 @@ def main() -> None:
             "depth_report": sha256(args.depth_report),
             "proxy": sha256(args.proxy),
             "camera_transforms": sha256(args.camera_transforms),
+            **({"measurements": sha256(args.measurements)} if args.measurements else {}),
         },
+        "measured_geometry": measurements,
         "camera_alignment": {
             "max_image_center_shift_px": float(np.max(np.linalg.norm(center_motion, axis=1))),
             "median_static_target_centroid_drift_px": float(np.median(target_drift)),
@@ -104,7 +114,13 @@ def main() -> None:
         "translation_evidence": {
             "initial_relative_xy_px": relative_xy[0].tolist(),
             "final_relative_xy_px": relative_xy[-1].tolist(),
-            "metric_scale_status": "awaiting measured dimensions and initial separation",
+            "metres_per_pixel": float(proxy["metres_per_pixel"]),
+            "scale_anchor": str(proxy["scale_anchor"]),
+            "metric_scale_status": (
+                "planar xy anchored by measured source diameter; calibrated 3D remains unavailable"
+                if has_measured_diameter
+                else "awaiting measured dimensions and initial separation"
+            ),
         },
         "orientation_evidence": {
             "status": "unestimated",
@@ -114,7 +130,11 @@ def main() -> None:
             ),
         },
         "next_required_inputs": [
-            "measured source diameter and height",
+            (
+                "measured source height"
+                if measurements and measurements["source"].get("diameter_m")
+                else "measured source diameter and height"
+            ),
             "measured target length, width, and height",
             "measured initial source-target center separation",
             "camera intrinsics or calibration capture for perspective 3D",

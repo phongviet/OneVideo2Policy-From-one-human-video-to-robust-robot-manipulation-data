@@ -9,7 +9,8 @@ test now has background-aligned target-relative motion, an occlusion-tolerant
 target trajectory, a Place containment check, and cylinder/tray assets. Faithful
 input-bundle preparation also completes. See the
 [capture audit](data-audits/real-place-img-6255-6256.md). The formal gate still
-requires a blind annotator; measured scene dimensions and a steadier capture are
+requires a blind annotator; the 3 cm source diameter is now recorded, while the
+remaining scene dimensions and a steadier capture are
 needed before treating metric motion or 3D results as evidence. The prior UniHand
 and HOI4D fixtures remain unchanged.
 
@@ -22,7 +23,7 @@ The defined formal gate still requires human-drawn independent masks.
 
 **Local geometry and simulation update (2026-09-21):** The full 57-frame depth
 and motion audit is saved as explicitly uncalibrated evidence. It does not
-support metric dimensions without physical measurements or camera calibration.
+support full metric 3D without the remaining physical measurements or camera calibration.
 The corrected robosuite study produced 100 successful built-in can-to-bin
 demonstrations (18,071 samples), two camera views, absolute joint targets, and
 370 recovery corrections. Seven learned configurations were tested. The

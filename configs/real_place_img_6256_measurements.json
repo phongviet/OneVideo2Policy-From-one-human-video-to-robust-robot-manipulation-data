@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "capture": "IMG_6256.MOV",
+  "recorded_date": "2026-09-24",
+  "units": "metres",
+  "source": {
+    "shape": "cylinder",
+    "diameter_m": 0.03,
+    "radius_m": 0.015,
+    "height_m": null
+  },
+  "target": {
+    "length_m": null,
+    "width_m": null,
+    "height_m": null
+  },
+  "initial_center_separation_m": null,
+  "provenance": "Diameter supplied by the user; other values remain unmeasured."
+}

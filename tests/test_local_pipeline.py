@@ -42,6 +42,22 @@ def test_planar_proxy_interpolates_occlusion_and_uses_measured_scale() -> None:
     assert xyz[6, 2] > 0.09
 
 
+def test_planar_proxy_can_use_measured_source_diameter() -> None:
+    source, target = _moving_masks()
+
+    result = recover_planar_proxy(
+        source,
+        target,
+        target_diameter_m=0.14,
+        source_diameter_m=0.03,
+        lift_height_m=0.1,
+    )
+
+    assert result["metres_per_pixel"] == 0.005
+    assert result["scale_anchor"] == "measured_source_diameter"
+    assert result["scale_anchor_pixels"] == 6
+
+
 def test_stabilized_proxy_tracks_moving_target_through_occlusion() -> None:
     source = np.zeros((6, 60, 100), dtype=bool)
     target = np.zeros_like(source)
