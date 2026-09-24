@@ -87,10 +87,10 @@ physical robot success, or sim-to-real transfer.
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
-| RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; 20.68 dB held-out render; optimization and robot composition pending |
+| RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; Panda foreground composite and 5/5 policy rollouts pass; metric camera registration and optimization pending |
 | Task-specific simulator | ✅ | Measured 3.83 cm ball and 9.91 cm bowl; oracle controller passes 3/3 randomized rollouts |
 | Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
-| Policy benchmark | ✅ | Small learned visual waypoint policy passes 5/5 measured-task rollouts at 4.9 mm median XY error |
+| Policy benchmark | ✅ | Mixed 2,000-frame waypoint model passes 5/5 clean and 5/5 Gaussian-composite rollouts |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 
@@ -318,6 +318,13 @@ MUJOCO_GL=egl PYTHONPATH=scripts .venv/bin/python \
 This learned localization plus scripted waypoint controller succeeds in 5/5
 randomized rollouts. The corresponding exact-position controller succeeds in 3/3,
 isolating the earlier failure to visual localization.
+
+The Gaussian appearance experiment keeps MuJoCo's registered Panda, gripper, ball,
+and bowl pixels and replaces unlabeled background pixels with the animated fused
+Gaussian scene. A balanced 2,000-frame model trained across clean/Gaussian appearance
+and reset/demonstration robot poses passes paired 5/5 clean and 5/5 Gaussian-composite
+rollouts. This is an appearance augmentation; the HOI4D and robosuite cameras are not
+metrically registered.
 
 ## Research gates
 

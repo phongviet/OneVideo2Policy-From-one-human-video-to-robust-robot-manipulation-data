@@ -19,6 +19,8 @@ Completed evidence:
 9. The measured ball-to-bowl simulator passes 3/3 exact-position controller rollouts.
 10. The compact learned visual waypoint policy passes 5/5 randomized measured-task
     rollouts with 4.9 mm median initial XY error.
+11. Gaussian appearance composition produces synchronized robot demonstrations; the
+    mixed model passes 5/5 paired clean and 5/5 composited rollouts.
 
 ## Remaining gates
 

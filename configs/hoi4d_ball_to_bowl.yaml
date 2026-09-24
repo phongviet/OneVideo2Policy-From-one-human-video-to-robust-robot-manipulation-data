@@ -53,7 +53,10 @@ generation:
   fusion_frames: [1, 12, 24, 36, 48, 60, 71]
   voxel_size_m: 0.01
   min_static_observations: 2
-  status: multiview_metric_scene_rendered
+  appearance_composite: mujoco_task_foreground_over_gaussian_scene
+  appearance_composite_camera_alignment: unregistered
+  synchronized_composite_samples: 350
+  status: multiview_metric_scene_and_robot_appearance_composite_rendered
 
 trajectory:
   source_model: known_radius_sphere
@@ -78,6 +81,11 @@ simulation:
   oracle_success: [3, 3]
   learned_success: [5, 5]
   median_closed_loop_xy_error_m: 0.004905271561447638
+  mixed_appearance_training_samples: 2000
+  mixed_policy_clean_success: [5, 5]
+  mixed_policy_gaussian_success: [5, 5]
+  mixed_policy_clean_median_xy_error_m: 0.00504113228933899
+  mixed_policy_gaussian_median_xy_error_m: 0.0019833124958749757
   status: local_learned_policy_gate_passed
 
 gates:

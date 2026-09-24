@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-25",
+  "scope": "appearance-only Gaussian background composition; cameras unregistered",
+  "model_parameters": 2607715,
+  "single_domain_cross_errors_m": {
+    "clean_model_on_gaussian_median": 0.11389554555322337,
+    "gaussian_model_on_clean_median": 0.04569276008409022
+  },
+  "final_training": {
+    "samples": 2000,
+    "clean_reset_samples": 500,
+    "gaussian_reset_samples": 500,
+    "clean_varied_robot_pose_samples": 500,
+    "gaussian_varied_robot_pose_samples": 500,
+    "training_seconds": 28.68035963999955,
+    "shuffled_episode_split": true
+  },
+  "offline_xy_error_m": {
+    "clean_reset_median": 0.0031208530541614234,
+    "clean_reset_p90": 0.005888949479891736,
+    "gaussian_reset_median": 0.0032907888275955305,
+    "gaussian_reset_p90": 0.006647735503940649,
+    "clean_varied_pose_median": 0.003951865601012717,
+    "clean_varied_pose_p90": 0.00830287634451368,
+    "gaussian_varied_pose_median": 0.0038080347786276416,
+    "gaussian_varied_pose_p90": 0.007779360832943061
+  },
+  "paired_closed_loop": {
+    "seed": 31415,
+    "clean_successes": 5,
+    "clean_episodes": 5,
+    "clean_median_initial_xy_error_m": 0.00504113228933899,
+    "gaussian_successes": 5,
+    "gaussian_episodes": 5,
+    "gaussian_median_initial_xy_error_m": 0.0019833124958749757,
+    "total_retries": 0
+  },
+  "synchronized_full_demo": {
+    "successes": 1,
+    "attempts": 1,
+    "samples": 350
+  }
+}

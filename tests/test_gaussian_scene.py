@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 
+from onevideo2policy.generation.compositing import composite_task_foreground
 from onevideo2policy.generation.gaussian_scene import (
     GaussianScene,
     fuse_gaussian_scenes,
@@ -9,6 +10,20 @@ from onevideo2policy.generation.gaussian_scene import (
     render_gaussians,
     transform_label,
 )
+
+
+def test_task_foreground_composites_over_gaussian_background() -> None:
+    image = np.full((9, 9, 3), [220, 20, 10], dtype=np.uint8)
+    background = np.full((9, 9, 3), [10, 40, 180], dtype=np.uint8)
+    segmentation = np.zeros((9, 9, 1), dtype=np.int32)
+    segmentation[3:6, 3:6] = 2
+
+    composite, alpha = composite_task_foreground(image, segmentation, background)
+
+    np.testing.assert_array_equal(composite[4, 4], image[4, 4])
+    np.testing.assert_array_equal(composite[0, 0], background[0, 0])
+    assert alpha[4, 4] == 1
+    assert alpha[0, 0] == 0
 
 
 def _fixture() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:

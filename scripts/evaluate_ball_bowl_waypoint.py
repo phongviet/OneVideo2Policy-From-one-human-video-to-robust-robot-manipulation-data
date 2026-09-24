@@ -16,9 +16,21 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from robosuite_policy_models import VisualWaypointPolicy  # noqa: E402
 
+from onevideo2policy.generation.compositing import (  # noqa: E402
+    composite_task_foreground,
+    load_video_frames,
+)
 
-def image_tensor(obs: dict, device: str) -> torch.Tensor:
-    image = np.concatenate((obs["agentview_image"], obs["frontview_image"]), axis=-1)
+
+def image_tensor(obs: dict, device: str, background: np.ndarray | None = None) -> torch.Tensor:
+    agent = obs["agentview_image"]
+    front = obs["frontview_image"]
+    if background is not None:
+        agent, _ = composite_task_foreground(agent, obs["agentview_segmentation_class"], background)
+        front, _ = composite_task_foreground(
+            front, obs["frontview_segmentation_class"], np.fliplr(background)
+        )
+    image = np.concatenate((agent, front), axis=-1)
     tensor = torch.from_numpy(image).to(device=device, dtype=torch.float32)
     return tensor.permute(2, 0, 1).unsqueeze(0) / 255
 
@@ -56,9 +68,10 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--episodes", default=5, type=int)
-    parser.add_argument("--max-steps", default=450, type=int)
+    parser.add_argument("--max-steps", default=650, type=int)
     parser.add_argument("--seed", default=1729, type=int)
     parser.add_argument("--initial-positions-data", type=Path)
+    parser.add_argument("--gaussian-background-video", type=Path)
     parser.add_argument(
         "--oracle-ball-position",
         action="store_true",
@@ -69,6 +82,7 @@ def main() -> None:
         action="store_true",
         help="Re-estimate during approach instead of freezing the unobstructed first frame.",
     )
+    parser.add_argument("--grasp-retries", default=4, type=int)
     args = parser.parse_args()
     np.random.seed(args.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -84,6 +98,9 @@ def main() -> None:
             ends = source["episode_ends"].astype(int)
             starts = np.r_[0, ends[:-1]]
             positions = source["ball_positions"][starts]
+    camera_options = {}
+    if args.gaussian_background_video:
+        camera_options["camera_segmentations"] = "class"
     env = suite.make(
         "BallToBowl",
         robots="Panda",
@@ -97,6 +114,12 @@ def main() -> None:
         horizon=args.max_steps,
         hard_reset=False,
         reward_shaping=False,
+        **camera_options,
+    )
+    backgrounds = (
+        load_video_frames(args.gaussian_background_video, 84, 84)
+        if args.gaussian_background_video
+        else None
     )
     results = []
     started = time.perf_counter()
@@ -108,8 +131,11 @@ def main() -> None:
             true_initial = env.ball_position.copy()
             history = []
             phase = hold = 0
+            grasp_attempts = 1
+            retry_xy_errors = []
             success = False
             initial_prediction = None
+            background = backgrounds[episode % len(backgrounds)] if backgrounds else None
             for _step in range(args.max_steps):
                 eef = obs["robot0_eef_pos"].copy()
                 ball = env.ball_position
@@ -121,7 +147,7 @@ def main() -> None:
                         else:
                             with torch.inference_mode():
                                 prediction = (
-                                    model(image_tensor(obs, device))[0].cpu().numpy()
+                                    model(image_tensor(obs, device, background))[0].cpu().numpy()
                                     * checkpoint["can_position_std"]
                                     + checkpoint["can_position_mean"]
                                 )
@@ -134,7 +160,31 @@ def main() -> None:
                 action = np.r_[np.clip((goal - eef) / 0.05, -0.25, 0.25), np.zeros(3), gripper]
                 obs, _, done, _ = env.step(action)
                 error = np.linalg.norm(goal - eef)
-                if phase in (0, 1, 3, 4, 7) and error < 0.008:
+                if phase == 3 and error < 0.008:
+                    grasped = env._check_grasp(
+                        gripper=env.robots[0].gripper,
+                        object_geoms=env.objects[0].contact_geoms,
+                    )
+                    if not grasped and grasp_attempts <= args.grasp_retries:
+                        if args.oracle_ball_position:
+                            retry_prediction = env.ball_position.copy()
+                        else:
+                            with torch.inference_mode():
+                                retry_prediction = (
+                                    model(image_tensor(obs, device, background))[0].cpu().numpy()
+                                    * checkpoint["can_position_std"]
+                                    + checkpoint["can_position_mean"]
+                                )
+                        grasp_xy = retry_prediction[:2]
+                        retry_xy_errors.append(
+                            float(np.linalg.norm(grasp_xy - env.ball_position[:2]))
+                        )
+                        grasp_attempts += 1
+                        phase = 0
+                    else:
+                        phase += 1
+                    hold = 0
+                elif phase in (0, 1, 4, 7) and error < 0.008:
                     phase += 1
                     hold = 0
                 elif phase == 5 and np.linalg.norm(eef[:2] - bowl[:2]) < 0.008 and eef[2] < 0.925:
@@ -154,6 +204,8 @@ def main() -> None:
                     "success": success,
                     "steps": _step + 1,
                     "terminal_phase": phase,
+                    "grasp_attempts": grasp_attempts,
+                    "retry_xy_errors_m": retry_xy_errors,
                     "initial_ball_position": true_initial.tolist(),
                     "initial_prediction": initial_prediction.tolist(),
                     "initial_localization_error_m": float(
@@ -190,6 +242,8 @@ def main() -> None:
             np.median([item["initial_xy_localization_error_m"] for item in results])
         ),
         "elapsed_seconds": time.perf_counter() - started,
+        "appearance": "gaussian_background_composite" if backgrounds else "robosuite_rgb",
+        "camera_alignment": ("appearance_only_unregistered" if backgrounds else "native_robosuite"),
         "episodes_detail": results,
     }
     args.output.mkdir(parents=True, exist_ok=True)

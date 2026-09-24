@@ -23,10 +23,17 @@ model passes 5/5 randomized rollouts after training on 500 targeted localization
 frames. Median held-out localization error is 5.7 mm and median closed-loop initial
 error is 4.9 mm.
 
+Gaussian appearance composition is also integrated. A mixed 2,000-frame locator
+passes 5/5 paired clean and 5/5 Gaussian-composite rollouts. One complete composited
+robot trajectory contains 350 synchronized dual-camera, state, and action samples.
+The current composite is explicitly appearance-only because the real HOI4D camera
+and simulated robot camera do not share a metric registration.
+
 ## Work remaining
 
-1. **Gaussian robot rendering:** optimize the fused seven-keyframe metric
-   scene, remove transient hand pixels, and composite the robot.
+1. **Metric Gaussian robot rendering:** optimize the fused seven-keyframe scene,
+   remove transient hand pixels, and calibrate the simulated robot camera into the
+   HOI4D scene. Appearance-only robot composition is complete.
 2. **Controlled evaluation:** measure success across object pose, camera, background,
    and lighting shifts with confidence intervals and failure categories.
 3. **Physical run:** calibrate a real robot and camera, add safety checks, then compare

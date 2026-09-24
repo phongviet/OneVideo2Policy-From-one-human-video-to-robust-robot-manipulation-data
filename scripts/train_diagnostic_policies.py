@@ -94,6 +94,11 @@ def main() -> None:
     parser.add_argument("--horizon", type=int, default=8)
     parser.add_argument("--loss", choices=("huber", "l1", "mse"), default="huber")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--shuffle-episodes",
+        action="store_true",
+        help="Shuffle episode IDs before the train/validation split.",
+    )
     args = parser.parse_args()
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -102,8 +107,13 @@ def main() -> None:
     ends = data["episode_ends"].astype(int)
     starts = np.r_[0, ends[:-1]]
     split = min(max(1, int(round(len(ends) * 0.8))), len(ends) - 1)
-    train_ids = np.concatenate([np.arange(starts[i], ends[i]) for i in range(split)])
-    val_ids = np.concatenate([np.arange(starts[i], ends[i]) for i in range(split, len(ends))])
+    episode_ids = np.arange(len(ends))
+    if args.shuffle_episodes:
+        np.random.shuffle(episode_ids)
+    train_episodes = episode_ids[:split]
+    validation_episodes = episode_ids[split:]
+    train_ids = np.concatenate([np.arange(starts[i], ends[i]) for i in train_episodes])
+    val_ids = np.concatenate([np.arange(starts[i], ends[i]) for i in validation_episodes])
     proprio = data["proprio"].astype(np.float32)
     images = data["images"]
     images_front = data["images_front"] if "images_front" in data else None
@@ -379,6 +389,7 @@ def main() -> None:
             "best_epoch": min(history, key=lambda item: item["val_mae"])["epoch"],
             "train_episodes": split,
             "validation_episodes": len(ends) - split,
+            "shuffled_episode_split": args.shuffle_episodes,
             "dual_camera": (
                 has_dual
                 if name

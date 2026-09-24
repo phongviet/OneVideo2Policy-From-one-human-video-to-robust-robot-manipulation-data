@@ -188,3 +188,33 @@
 - Artifacts: `results/simulation/robosuite_ball_bowl_10/`,
   `results/simulation/ball_localization_500/`, `results/policy/ball_localization_500/`,
   and `results/evaluation/ball_localization_500_random5/` (Git-ignored).
+
+## Gaussian appearance policy experiment
+
+- Date / commit: 2026-09-25 / pending
+- Hypothesis: the fused HOI4D Gaussian scene can supply useful background diversity
+  to the task-specific simulator without requiring a large rendering model.
+- Composition: preserve MuJoCo class-mask pixels for Panda, gripper, ball, and bowl;
+  replace unlabeled pixels with the animated fused Gaussian scene. Camera alignment
+  is appearance-only and unregistered.
+- Single-domain result: clean-only training gives 11.4 cm median XY error on Gaussian
+  frames; Gaussian-only training gives 4.6 cm on clean frames.
+- Reset-pose mixed result: offline median error falls to 3.1 mm clean and 4.2 mm
+  Gaussian, but Gaussian closed loop reaches only 3/5 because two 9.9–13.0 mm
+  outliers miss the grasp.
+- Correction: add 500 clean and 500 Gaussian samples using demonstration-derived
+  Panda joint poses, merge them with 1,000 reset-pose samples, and shuffle the
+  episode split. The 2,000-frame model trains in 28.7 seconds.
+- Final offline result: median XY error is 3.1–4.0 mm and p90 is below 8.4 mm across
+  clean/Gaussian and reset/varied-pose subsets.
+- Final closed loop result: 5/5 clean at 5.0 mm median initial XY error and 5/5
+  Gaussian at 2.0 mm, using the same checkpoint and paired seed. All succeed on the
+  first grasp attempt.
+- Data contract: one complete Gaussian-composite demonstration succeeds in one
+  attempt and stores 350 synchronized dual-camera, state, phase, and action samples.
+- Gate decision: **Pass for Gaussian appearance augmentation.** Metric camera
+  registration, depth occlusion, and scene optimization remain open.
+- Artifacts: `results/simulation/ball_localization_mixed_pose_2000/`,
+  `results/policy/ball_localization_mixed_pose_2000/`,
+  `results/evaluation/ball_localization_mixed_pose_{clean,gaussian}_random5/`, and
+  `results/simulation/robosuite_ball_bowl_gaussian_demo1/` (Git-ignored).

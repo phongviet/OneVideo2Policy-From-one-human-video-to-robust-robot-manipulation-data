@@ -11,12 +11,16 @@ import numpy as np
 import robosuite as suite
 import robosuite_ball_bowl_env  # noqa: F401
 
+from onevideo2policy.generation.compositing import composite_task_foreground, load_video_frames
+
 
 def action_toward(current: np.ndarray, goal: np.ndarray, gripper: float) -> np.ndarray:
     return np.r_[np.clip((goal - current) / 0.05, -0.25, 0.25), np.zeros(3), gripper]
 
 
-def collect_episode(env, max_steps: int) -> tuple[dict[str, np.ndarray], bool]:
+def collect_episode(
+    env, max_steps: int, backgrounds: list[np.ndarray] | None = None
+) -> tuple[dict[str, np.ndarray], bool]:
     obs = env.reset()
     grasp_xy = env.ball_position[:2].copy()
     phase = hold = 0
@@ -56,8 +60,20 @@ def collect_episode(env, max_steps: int) -> tuple[dict[str, np.ndarray], bool]:
         else:
             goal, gripper = np.r_[bowl[:2], 1.02], -1.0
         action = action_toward(eef, goal, gripper)
-        records["images"].append(obs["agentview_image"].copy())
-        records["images_front"].append(obs["frontview_image"].copy())
+        agent_image = obs["agentview_image"].copy()
+        front_image = obs["frontview_image"].copy()
+        if backgrounds:
+            background = backgrounds[len(records["images"]) % len(backgrounds)]
+            agent_image, _ = composite_task_foreground(
+                agent_image, obs["agentview_segmentation_class"], background
+            )
+            front_image, _ = composite_task_foreground(
+                front_image,
+                obs["frontview_segmentation_class"],
+                np.fliplr(background),
+            )
+        records["images"].append(agent_image)
+        records["images_front"].append(front_image)
         records["proprio"].append(obs["robot0_proprio-state"].copy())
         records["objects"].append(obs["object-state"].copy())
         records["actions"].append(action.copy())
@@ -94,8 +110,12 @@ def main() -> None:
     parser.add_argument("--max-attempts", default=20, type=int)
     parser.add_argument("--max-steps", default=450, type=int)
     parser.add_argument("--seed", default=42, type=int)
+    parser.add_argument("--gaussian-background-video", type=Path)
     args = parser.parse_args()
     np.random.seed(args.seed)
+    camera_options = {}
+    if args.gaussian_background_video:
+        camera_options["camera_segmentations"] = "class"
     env = suite.make(
         "BallToBowl",
         robots="Panda",
@@ -109,6 +129,12 @@ def main() -> None:
         horizon=args.max_steps,
         hard_reset=False,
         reward_shaping=False,
+        **camera_options,
+    )
+    backgrounds = (
+        load_video_frames(args.gaussian_background_video, 84, 84)
+        if args.gaussian_background_video
+        else None
     )
     episodes = []
     attempts = 0
@@ -116,7 +142,7 @@ def main() -> None:
     try:
         while len(episodes) < args.episodes and attempts < args.max_attempts:
             attempts += 1
-            episode, success = collect_episode(env, args.max_steps)
+            episode, success = collect_episode(env, args.max_steps, backgrounds)
             if success:
                 episodes.append(episode)
                 print(
@@ -150,6 +176,8 @@ def main() -> None:
         "samples": int(episode_ends[-1]),
         "episode_lengths": [int(len(episode["actions"])) for episode in episodes],
         "elapsed_seconds": time.perf_counter() - started,
+        "appearance": "gaussian_background_composite" if backgrounds else "robosuite_rgb",
+        "camera_alignment": ("appearance_only_unregistered" if backgrounds else "native_robosuite"),
     }
     (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))

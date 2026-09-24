@@ -185,7 +185,7 @@ rendered comparisons, and meshes are under
 `results/model_benchmarks/real_place_img_6256/` (ignored by Git). Upstream
 repositories and isolated environments are under
 `experiments/runs/model_benchmarks/` (ignored by Git). The current local
-pipeline's independent test suite passes (56 tests).
+pipeline's independent test suite passes (57 tests).
 
 The HOI4D task now has metric camera odometry, target-relative ball translation,
 multiview Gaussian fusion, an animated Gaussian object render, and measured
@@ -194,6 +194,16 @@ A 500-frame randomized localization set trains the 2.61-million-parameter waypoi
 model in 7.5 seconds. Its 100-frame held-out median XY error is 5.7 mm, and it passes
 5/5 randomized closed-loop rollouts at 4.9 mm median initial XY error. The exact
 position controller passes 3/3, confirming the physics and control ceiling. The
-remaining local task work is Gaussian robot composition and controlled visual-shift
-evaluation. The separate real phone clip still needs its remaining physical
-dimensions and camera calibration for metric use.
+remaining local task work is metric Gaussian camera registration and broader
+controlled visual-shift evaluation. The separate real phone clip still needs its
+remaining physical dimensions and camera calibration for metric use.
+
+The follow-up Gaussian appearance experiment exposes a strong domain tradeoff:
+the clean-only locator has 11.4 cm median error on Gaussian composites, while the
+Gaussian-only locator has 4.6 cm median error on clean frames. A balanced 2,000-frame
+dataset spans both appearances and reset plus demonstration-derived Panda poses.
+The resulting model keeps median offline XY error between 3.1 and 4.0 mm across all
+four subsets and passes paired 5/5 clean and 5/5 Gaussian-composite rollouts. A
+350-sample full composited trajectory verifies image/state/action synchronization.
+This appearance result does not provide metric camera registration or robot-scene
+depth occlusion.
