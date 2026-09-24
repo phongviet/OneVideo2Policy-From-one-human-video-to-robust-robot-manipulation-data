@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-24",
+  "task": "measured HOI4D ball-to-bowl in robosuite",
+  "geometry": {
+    "ball_radius_m": 0.01916061104985851,
+    "bowl_outer_radius_m": 0.0495615182508963,
+    "bowl_height_m": 0.05693338151487156
+  },
+  "scripted_demonstrations": {
+    "successes": 10,
+    "attempts": 10,
+    "samples": 3292
+  },
+  "oracle_closed_loop": {
+    "successes": 3,
+    "episodes": 3
+  },
+  "localization_dataset": {
+    "samples": 500,
+    "generation_seconds": 75.76536923100002,
+    "held_out_frames": 100,
+    "median_xy_error_m": 0.005717319366744012,
+    "mean_xy_error_m": 0.006269007793830578,
+    "p90_xy_error_m": 0.011244110449932418
+  },
+  "learned_policy": {
+    "architecture": "dual-view coordinate-aware visual waypoint plus scripted controller",
+    "parameters": 2607715,
+    "training_seconds": 7.470605194999962,
+    "successes": 5,
+    "episodes": 5,
+    "median_initial_xy_error_m": 0.004905271561447638
+  },
+  "claim_boundary": "local task-specific simulation; no physical robot claim"
+}

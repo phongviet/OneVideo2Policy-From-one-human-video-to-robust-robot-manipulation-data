@@ -114,7 +114,12 @@ def main() -> None:
     p_mean, p_std = normalize(proprio, train_ids)
     s_mean, s_std = normalize(state, train_ids)
     o_mean, o_std = normalize(objects, train_ids)
-    c_mean, c_std = normalize(data["can_positions"].astype(np.float32), train_ids)
+    source_position_key = "ball_positions" if "ball_positions" in data else "can_positions"
+    waypoint_train_ids = train_ids[np.isin(phases[train_ids], (0, 1))]
+    waypoint_val_ids = val_ids[np.isin(phases[val_ids], (0, 1))]
+    c_mean, c_std = normalize(
+        data[source_position_key].astype(np.float32), waypoint_train_ids
+    )
     has_dual = "images_front" in data
     chunks = chunk_indices(ends, args.horizon)
     requested = [name.strip() for name in args.models.split(",") if name.strip()]
@@ -137,7 +142,7 @@ def main() -> None:
             target_array = actions
         elif name == "visual_waypoint":
             model = VisualWaypointPolicy(6 if has_dual else 3).to(device)
-            target_array = data["can_positions"].astype(np.float32)
+            target_array = data[source_position_key].astype(np.float32)
         elif name == "phase":
             model = PhaseImagePolicy(proprio.shape[1], actions.shape[1], 3).to(device)
             target_array = actions
@@ -166,14 +171,18 @@ def main() -> None:
         else:
             raise ValueError(f"Unknown model: {name}")
         optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
-        phase_counts = np.maximum(np.bincount(phases[train_ids], minlength=8), 1)
-        weights = 1 / phase_counts[phases[train_ids]]
+        model_train_ids = waypoint_train_ids if name == "visual_waypoint" else train_ids
+        model_val_ids = waypoint_val_ids if name == "visual_waypoint" else val_ids
+        phase_counts = np.maximum(np.bincount(phases[model_train_ids], minlength=8), 1)
+        weights = 1 / phase_counts[phases[model_train_ids]]
         weights /= weights.sum()
         best_mae, best_state, history = float("inf"), None, []
         started = time.perf_counter()
         for epoch in range(args.epochs):
             model.train()
-            sampled = np.random.choice(train_ids, len(train_ids), replace=True, p=weights)
+            sampled = np.random.choice(
+                model_train_ids, len(model_train_ids), replace=True, p=weights
+            )
             losses = []
             for ids in np.array_split(sampled, int(np.ceil(len(sampled) / args.batch_size))):
                 object_loss = None
@@ -252,7 +261,9 @@ def main() -> None:
             model.eval()
             predictions, targets = [], []
             with torch.inference_mode():
-                for ids in np.array_split(val_ids, int(np.ceil(len(val_ids) / args.batch_size))):
+                for ids in np.array_split(
+                    model_val_ids, int(np.ceil(len(model_val_ids) / args.batch_size))
+                ):
                     if name == "state":
                         inputs = torch.from_numpy((state[ids] - s_mean) / s_std).to(device)
                         prediction = model(inputs)
@@ -357,6 +368,7 @@ def main() -> None:
             "object_std": o_std,
             "can_position_mean": c_mean,
             "can_position_std": c_std,
+            "source_position_key": source_position_key,
         }
         torch.save(checkpoint, args.output / f"{name}.pt")
         report = {
@@ -392,7 +404,7 @@ def main() -> None:
             "geometric_augmentation": name
             in ("spatial_phase", "phase", "chunk", "diffusion", "absolute_chunk"),
             "validation_metric": (
-                "normalized_can_position_mae"
+                "normalized_source_position_mae"
                 if name == "visual_waypoint"
                 else "diffusion_denoising_mae"
                 if name == "diffusion"

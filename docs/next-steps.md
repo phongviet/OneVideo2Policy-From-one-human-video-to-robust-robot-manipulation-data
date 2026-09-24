@@ -17,29 +17,30 @@ TripoSR and Depth Anything have both run on the local machine. The learned HOI4D
 meshes are too flat for collision use, and monocular depth has a large scale bias.
 Those failures are contained by using measured geometry for physics.
 
+The measured ball-to-bowl robosuite task is now implemented. Its scripted controller
+passes 3/3 oracle-position rollouts, and the 2.61-million-parameter visual waypoint
+model passes 5/5 randomized rollouts after training on 500 targeted localization
+frames. Median held-out localization error is 5.7 mm and median closed-loop initial
+error is 4.9 mm.
+
 ## Work remaining
 
-1. **Task-specific simulator:** replace robosuite's built-in can and bin with the
-   measured ball and bowl assets, then retarget the demonstrated trajectory.
-2. **Gaussian robot rendering:** optimize the fused seven-keyframe metric
+1. **Gaussian robot rendering:** optimize the fused seven-keyframe metric
    scene, remove transient hand pixels, and composite the robot.
-3. **Policy transfer:** generate successful ball-to-bowl Panda demonstrations and
-   retrain the selected temporal waypoint model on those observations.
-4. **Controlled evaluation:** measure success across object pose, camera, background,
+2. **Controlled evaluation:** measure success across object pose, camera, background,
    and lighting shifts with confidence intervals and failure categories.
-5. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
+3. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
 ## Immediate command
 
-Prepare the selected local model input contract:
+Reproduce the measured-task learned policy gate:
 
 ```bash
-uv run ov2p prepare-model-run \
-  --config configs/two_paths.yaml \
-  --manifest data/interim/hoi4d_ball_to_bowl_gate/manifest.json \
-  --crops data/interim/hoi4d_ball_to_bowl_gate_reseed16/crops_native \
-  --output results/model_bundle/hoi4d_ball_to_bowl
+MUJOCO_GL=egl PYTHONPATH=scripts .venv/bin/python \
+  scripts/evaluate_ball_bowl_waypoint.py \
+  --checkpoint results/policy/ball_localization_500/visual_waypoint.pt \
+  --output results/evaluation/ball_localization_500_random5 --episodes 5
 ```
 
 The detailed measurements are in

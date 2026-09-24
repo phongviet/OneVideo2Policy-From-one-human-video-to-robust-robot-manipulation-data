@@ -16,6 +16,9 @@ Completed evidence:
 6. The temporal visual waypoint policy passes 19/20 held-out rollouts.
 7. Metric RGB-D odometry and the target-relative ball trajectory cover all 72 frames.
 8. A fused Gaussian scene renders the animated ball with 0.28 px median centroid error.
+9. The measured ball-to-bowl simulator passes 3/3 exact-position controller rollouts.
+10. The compact learned visual waypoint policy passes 5/5 randomized measured-task
+    rollouts with 4.9 mm median initial XY error.
 
 ## Remaining gates
 
@@ -30,10 +33,10 @@ Camera and spherical-object translation now pass their metric artifact checks. Q
 the effect of the 20-frame interpolated occlusion interval and ablate the tracked-point
 loss on a nonsymmetric object where rotation is observable.
 
-### Gate C — task transfer
+### Gate C — task transfer (passed locally)
 
-Retarget the measured HOI4D ball-and-bowl geometry and trajectory into robosuite and
-verify grasp, transfer, release, and collision constraints.
+The measured HOI4D ball-and-bowl geometry is retargeted into robosuite. Successful
+oracle and learned-policy rollouts verify grasp, transfer, release, and placement.
 
 ### Gate D — policy evidence
 

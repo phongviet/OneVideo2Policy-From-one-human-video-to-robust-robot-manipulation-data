@@ -88,8 +88,9 @@ physical robot success, or sim-to-real transfer.
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; 20.68 dB held-out render; optimization and robot composition pending |
-| Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |
-| Policy benchmark | ✅ | Learned visual waypoint policy passes 19/20 held-out rollouts |
+| Task-specific simulator | ✅ | Measured 3.83 cm ball and 9.91 cm bowl; oracle controller passes 3/3 randomized rollouts |
+| Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
+| Policy benchmark | ✅ | Small learned visual waypoint policy passes 5/5 measured-task rollouts at 4.9 mm median XY error |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 
@@ -291,6 +292,32 @@ coordinate-aware dual-view waypoint estimation with temporal feedback and passes
 [robosuite diagnostic report](docs/robosuite-policy-diagnostics.md) for measured
 results and the [Video2Robo gap audit](docs/video2robo-gap-audit.md) for the claim
 boundary.
+
+### Run the measured ball-to-bowl policy
+
+The task-specific path uses the HOI4D-fitted ball and bowl dimensions. A cheap
+localization dataset gives broader spatial coverage than repeating complete robot
+trajectories:
+
+```bash
+MUJOCO_GL=egl PYTHONPATH=scripts .venv/bin/python \
+  scripts/generate_ball_localization_data.py \
+  --output results/simulation/ball_localization_500 --samples 500
+
+.venv/bin/python scripts/train_diagnostic_policies.py \
+  --data results/simulation/ball_localization_500/localization.npz \
+  --output results/policy/ball_localization_500 \
+  --models visual_waypoint --epochs 60 --batch-size 128
+
+MUJOCO_GL=egl PYTHONPATH=scripts .venv/bin/python \
+  scripts/evaluate_ball_bowl_waypoint.py \
+  --checkpoint results/policy/ball_localization_500/visual_waypoint.pt \
+  --output results/evaluation/ball_localization_500_random5 --episodes 5
+```
+
+This learned localization plus scripted waypoint controller succeeds in 5/5
+randomized rollouts. The corresponding exact-position controller succeeds in 3/3,
+isolating the earlier failure to visual localization.
 
 ## Research gates
 

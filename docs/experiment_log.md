@@ -165,3 +165,26 @@
   retargeting, robot-scene composition, and the long-occlusion sensitivity ablation remain.
 - Artifacts: `results/geometry/hoi4d_ball_to_bowl/object_trajectory/` and
   `results/gaussian_scene/hoi4d_ball_to_bowl_animated/` (Git-ignored).
+
+## Measured robosuite ball-to-bowl policy
+
+- Date / commit: 2026-09-24 / pending
+- Hypothesis: measured primitive geometry plus a compact visual source locator can
+  transfer the validated waypoint controller to the filmed ball-to-bowl task locally.
+- Simulator: Panda `BallToBowl`, 1.916 cm ball radius, 4.956 cm bowl outer radius,
+  5.693 cm bowl height, dual 84×84 cameras, OSC pose control.
+- Demonstrations: 10/10 successes in ten attempts, 3,292 synchronized samples.
+- Controller ceiling: exact ball positions produce 3/3 randomized successes.
+- Initial learned result: 1/5 successes; the ten trajectories provide only ten
+  distinct initial positions and include conflicting carried-ball targets.
+- Correction: train the waypoint model only on approach phases and render 500
+  independent randomized localization frames. Freeze the unobstructed initial
+  estimate during approach.
+- Localization: 5.7 mm held-out median XY error, 6.3 mm mean, 11.2 mm p90.
+- Final result: 5/5 randomized learned-policy successes with 4.9 mm median initial
+  XY error. Model size is 2,607,715 parameters; training took 7.5 seconds locally.
+- Gate decision: **Pass for task-specific local simulation and learned perception.**
+  Controlled visual shifts and physical robot transfer remain separate gates.
+- Artifacts: `results/simulation/robosuite_ball_bowl_10/`,
+  `results/simulation/ball_localization_500/`, `results/policy/ball_localization_500/`,
+  and `results/evaluation/ball_localization_500_random5/` (Git-ignored).

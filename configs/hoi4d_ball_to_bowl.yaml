@@ -64,6 +64,22 @@ trajectory:
   accepted_depth_frames: 51
   status: metric_translation_recovered_and_rendered
 
+simulation:
+  environment: BallToBowl
+  robot: Panda
+  controller: OSC_POSE
+  ball_radius_m: 0.01916061104985851
+  bowl_outer_radius_m: 0.0495615182508963
+  bowl_height_m: 0.05693338151487156
+  successful_demonstrations: 10
+  localization_samples: 500
+  policy: dual_view_visual_waypoint_initial_frame
+  policy_parameters: 2607715
+  oracle_success: [3, 3]
+  learned_success: [5, 5]
+  median_closed_loop_xy_error_m: 0.004905271561447638
+  status: local_learned_policy_gate_passed
+
 gates:
   min_mask_iou: 0.70
   min_track_survival: 0.80

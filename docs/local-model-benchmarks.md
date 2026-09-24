@@ -188,8 +188,12 @@ repositories and isolated environments are under
 pipeline's independent test suite passes (56 tests).
 
 The HOI4D task now has metric camera odometry, target-relative ball translation,
-multiview Gaussian fusion, and an animated Gaussian object render. The remaining
-task-level gap is robot retargeting: paired ball-to-bowl simulator observations and
-actions are required before policy families and the complete Gaussian augmentation
-ablation can be compared. The separate real phone clip still needs its remaining
-physical dimensions and camera calibration for metric use.
+multiview Gaussian fusion, an animated Gaussian object render, and measured
+ball-to-bowl robot retargeting. Ten scripted demonstrations pass in ten attempts.
+A 500-frame randomized localization set trains the 2.61-million-parameter waypoint
+model in 7.5 seconds. Its 100-frame held-out median XY error is 5.7 mm, and it passes
+5/5 randomized closed-loop rollouts at 4.9 mm median initial XY error. The exact
+position controller passes 3/3, confirming the physics and control ceiling. The
+remaining local task work is Gaussian robot composition and controlled visual-shift
+evaluation. The separate real phone clip still needs its remaining physical
+dimensions and camera calibration for metric use.

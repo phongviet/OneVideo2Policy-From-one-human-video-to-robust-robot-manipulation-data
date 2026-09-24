@@ -112,3 +112,28 @@ claims or robot execution.
 The tracked machine-readable result is
 [`experiments/robosuite-policy-diagnostic-results.json`](experiments/robosuite-policy-diagnostic-results.json).
 Raw trajectories, weights, and reports remain under ignored `results/` paths.
+
+## Measured ball-to-bowl transfer
+
+The final local task replaces the built-in can and bin with HOI4D-derived collision
+geometry: a 1.916 cm radius ball and a 4.956 cm outer-radius bowl. The scripted
+expert generated 10/10 successful trajectories in ten attempts, totaling 3,292
+dual-camera samples. An exact-position controller then passed 3/3 randomized
+closed-loop rollouts.
+
+The first transferred waypoint model used the full ten trajectories. It passed only
+1/5 randomized rollouts because ten initial placements did not cover the workspace;
+median initial 3D localization error was 5.9 cm. Training also mixed approach frames
+with frames where the ball was carried or placed. Restricting the localization target
+to approach phases removed that label conflict.
+
+A targeted generator then rendered 500 independent randomized placements in 75.8
+seconds. Training the same 2.61-million-parameter coordinate-aware model took 7.5
+seconds. On 100 held-out frames, median XY error is 5.7 mm, mean is 6.3 mm, and the
+90th percentile is 11.2 mm. The controller freezes the initial unobstructed estimate
+because the ball remains stationary before grasping. This configuration passes **5/5
+randomized measured-task rollouts**, with 4.9 mm median initial XY error.
+
+These five rollouts establish a successful local integration test, while the sample
+is too small for a tight reliability estimate. The next policy experiment expands
+seeds and introduces camera, background, and lighting shifts.
