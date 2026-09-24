@@ -14,6 +14,8 @@ Completed evidence:
 4. Primitive collision assets and the point-robot systems path run end to end.
 5. One hundred successful Panda demonstrations were generated in robosuite.
 6. The temporal visual waypoint policy passes 19/20 held-out rollouts.
+7. Metric RGB-D odometry and the target-relative ball trajectory cover all 72 frames.
+8. A fused Gaussian scene renders the animated ball with 0.28 px median centroid error.
 
 ## Remaining gates
 
@@ -22,10 +24,11 @@ Completed evidence:
 Capture or select larger, multi-view object crops and compare reconstructed proportions
 against measured geometry. Current TripoSR HOI4D meshes are too flat for physics.
 
-### Gate B — 6D motion
+### Gate B — motion quality
 
-Fit camera and object poses from calibrated RGB-D, quantify reprojection error and
-translation jitter, and ablate the tracked-point loss.
+Camera and spherical-object translation now pass their metric artifact checks. Quantify
+the effect of the 20-frame interpolated occlusion interval and ablate the tracked-point
+loss on a nonsymmetric object where rotation is observable.
 
 ### Gate C — task transfer
 

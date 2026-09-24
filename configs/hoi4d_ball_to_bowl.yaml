@@ -55,6 +55,15 @@ generation:
   min_static_observations: 2
   status: multiview_metric_scene_rendered
 
+trajectory:
+  source_model: known_radius_sphere
+  source_radius_m: 0.01916061104985851
+  target_frame: bowl_center
+  rotation: identity_due_to_spherical_symmetry
+  max_surface_error_m: 0.006
+  accepted_depth_frames: 51
+  status: metric_translation_recovered_and_rendered
+
 gates:
   min_mask_iou: 0.70
   min_track_survival: 0.80

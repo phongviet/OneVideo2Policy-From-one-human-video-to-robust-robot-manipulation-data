@@ -8,7 +8,7 @@ CoTracker3 artifacts.
 | Object geometry | Measured sphere and bowl primitives | TripoSR visual mesh proposals |
 | Scene geometry | HOI4D aligned RGB-D | Depth Anything V2 Metric Small, aligned to RGB-D |
 | Collision geometry | Measured primitives | Measured primitives; learned meshes are visual only |
-| Motion | Relative mask trajectory with a Place lift arc | Same trajectory with depth structure available |
+| Motion | Relative mask trajectory with a Place lift arc | Metric RGB-D camera and ball translation over 72 frames |
 | Robot | Point-robot baseline | robosuite Panda |
 | Policy | Ridge behavior cloning | Temporal dual-view waypoint model plus phase controller |
 

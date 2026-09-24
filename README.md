@@ -82,6 +82,7 @@ physical robot success, or sim-to-real transfer.
 | Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
 | Real-scene metric geometry | 🟡 | Planar xy scale anchored by the measured 3 cm source diameter; calibrated 3D still pending |
+| HOI4D metric camera and ball trajectory | ✅ | 72 frames; 0.75 px camera reprojection error; 0.28 px Gaussian ball tracking error |
 | TripoSR and Depth Anything V2 Small | ✅ | Both run on 6 GB; HOI4D mesh and sensor-depth diagnostics recorded |
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |

@@ -185,14 +185,11 @@ rendered comparisons, and meshes are under
 `results/model_benchmarks/real_place_img_6256/` (ignored by Git). Upstream
 repositories and isolated environments are under
 `experiments/runs/model_benchmarks/` (ignored by Git). The current local
-pipeline's independent test suite passes (49 tests).
+pipeline's independent test suite passes (56 tests).
 
-The filmed task still needs human independent object masks, measured scene
-dimensions or camera calibration, a reconstruction reference, and paired
-simulator observations/actions before a robot-success comparison or image
-policy training can identify a best task-level model. The existing local
-end-to-end run remains a point-robot systems baseline using assumed object
-dimensions. A measured 3D point set and camera intrinsics are also needed to
-evaluate a PnP-based 6D trajectory, and aligned robot trajectories are needed
-to compare image BC with a compact diffusion policy. The Gaussian-rendering
-ablation has no local implementation or fitted candidate to benchmark.
+The HOI4D task now has metric camera odometry, target-relative ball translation,
+multiview Gaussian fusion, and an animated Gaussian object render. The remaining
+task-level gap is robot retargeting: paired ball-to-bowl simulator observations and
+actions are required before policy families and the complete Gaussian augmentation
+ablation can be compared. The separate real phone clip still needs its remaining
+physical dimensions and camera calibration for metric use.

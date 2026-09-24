@@ -19,18 +19,15 @@ Those failures are contained by using measured geometry for physics.
 
 ## Work remaining
 
-1. **Calibrated object trajectory:** metric RGB-D camera odometry now covers all 72
-   frames. Recover the ball's 6D poses, report reprojection error and translation
-   jitter, and compare against the current planar proxy.
-2. **Task-specific simulator:** replace robosuite's built-in can and bin with the
+1. **Task-specific simulator:** replace robosuite's built-in can and bin with the
    measured ball and bowl assets, then retarget the demonstrated trajectory.
-3. **Gaussian demonstration rendering:** optimize the fused seven-keyframe metric
+2. **Gaussian robot rendering:** optimize the fused seven-keyframe metric
    scene, remove transient hand pixels, and composite the robot.
-4. **Policy transfer:** generate successful ball-to-bowl Panda demonstrations and
+3. **Policy transfer:** generate successful ball-to-bowl Panda demonstrations and
    retrain the selected temporal waypoint model on those observations.
-5. **Controlled evaluation:** measure success across object pose, camera, background,
+4. **Controlled evaluation:** measure success across object pose, camera, background,
    and lighting shifts with confidence intervals and failure categories.
-6. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
+5. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
 ## Immediate command

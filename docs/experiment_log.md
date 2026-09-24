@@ -148,3 +148,20 @@
   6D motion, transient hand removal, Gaussian optimization, and robot composition remain.
 - Artifacts: `results/geometry/hoi4d_ball_to_bowl/rgbd_odometry/` and
   `results/gaussian_scene/hoi4d_ball_to_bowl_fused/` (Git-ignored).
+
+## Metric ball trajectory and Gaussian animation
+
+- Date / commit: 2026-09-24 / pending
+- Method: robust known-radius sphere fitting on masked aligned depth; fits above 6 mm
+  median surface error rejected; translations expressed in both camera-odometry world
+  coordinates and target-relative coordinates.
+- Coverage: 51 accepted and 21 interpolated frames. The longest interpolation interval
+  is 20 frames. Ball rotation is identity because spherical orientation is unobservable.
+- Task geometry: initial observed bowl-center separation 0.582 m; final separation
+  0.019 m versus a 0.0496 m bowl radius, so the observed Place check passes.
+- Gaussian animation: 72 frames at 320×180 with 69.9% mean scene coverage. Across the
+  51 depth-observed frames, source centroid error is 0.28 px median and 0.41 px p90.
+- Gate decision: metric translation and Gaussian object animation pass. Robot
+  retargeting, robot-scene composition, and the long-occlusion sensitivity ablation remain.
+- Artifacts: `results/geometry/hoi4d_ball_to_bowl/object_trajectory/` and
+  `results/gaussian_scene/hoi4d_ball_to_bowl_animated/` (Git-ignored).
