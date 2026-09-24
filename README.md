@@ -12,9 +12,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-early%20research%20prototype-orange)](#project-status)
 
-<img src="docs/assets/hero-placeholder.svg" width="920" alt="OneVideo2Policy project overview placeholder">
+<img src="docs/assets/project-overview.svg" width="920" alt="OneVideo2Policy measured project overview">
 
-<sub>Project media placeholder — a real input-to-output demo will replace this panel after the first tracking milestone.</sub>
+<sub>Measured local pipeline: metric HOI4D geometry, Gaussian appearance data, and a robust ball-to-bowl policy.</sub>
 
 </div>
 
@@ -144,19 +144,20 @@ training data:
 
 | Training data | ID | Object pose | Camera | Background | Lighting | Combined |
 |---|---:|---:|---:|---:|---:|---:|
-| One demonstration | — | — | — | — | — | — |
-| + standard 2D augmentation | — | — | — | — | — | — |
-| + geometry-only 3D augmentation | — | — | — | — | — | — |
-| **+ full 3DGS augmentation** | — | — | — | — | — | — |
+| One demonstration | — | — | — | — | — | 1/20 |
+| + standard 2D augmentation | — | — | — | — | — | 0/20 |
+| Geometry-only exact-pose ceiling | — | — | — | — | — | 20/20 |
+| **+ Gaussian and rendered robustness data** | 20/20 | 20/20 | 19/20 | 20/20 | 20/20 | 18/20 |
 
-All cells are intentionally blank until measured. Planned secondary studies test
-synthetic dataset scaling ($N \in \{10, 50, 100, 250, 500\}$), individual augmentation
-families, and pose tracking with versus without correspondence loss.
+All combined cells use the same seed, ±2 cm camera translation, half lighting, and
+Gaussian background. The one-demo and 2D rows fail this out-of-distribution condition;
+their isolated columns were not run. The exact-pose row is a controller ceiling rather
+than a learned policy. The final row uses one fixed 2.61-million-parameter model.
 
 <div align="center">
-<img src="docs/assets/results-placeholder.svg" width="760" alt="Planned robustness results chart placeholder">
+<img src="docs/assets/robustness-results.svg" width="760" alt="Robustness evaluation dimensions">
 <br>
-<sub>Results placeholder — generated from logged experiment outputs once Gate D passes.</sub>
+<sub>Gate D measured results are tracked in <code>docs/experiments/ball-bowl-robustness-results.json</code>.</sub>
 </div>
 
 ## Quick start

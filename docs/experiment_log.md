@@ -243,3 +243,19 @@
   `results/policy/ball_localization_robust_4000/`, and
   `results/evaluation/final_*_20/` plus `robustness_combined_augmented_20/`
   (Git-ignored).
+
+## Matched combined-shift policy ablation
+
+- Date / commit: 2026-09-25 / pending
+- Fixed condition: seed 6001, 20 episodes, randomized object pose, ±2 cm camera
+  translations, half lighting, and Gaussian background.
+- One-demonstration waypoint model: 1/20 successes, 5.48 cm median initial XY error.
+- Clean-only 500-frame 2D model: 0/20, 10.07 cm median error. Its nominal success
+  does not transfer to the combined Gaussian/camera/light domain.
+- Geometry-only exact-position controller ceiling: 20/20, zero localization error.
+- Final 4,000-frame learned model: 18/20, 3.73 mm median error.
+- Interpretation: broad rendered coverage is necessary; the remaining two failures
+  are perception outliers rather than a physics/controller ceiling. The clean-only
+  row scoring below one-demo is not a monotonic data-scaling claim because both are
+  far outside their training appearance and the one-demo row has one chance success.
+- Artifacts: `results/evaluation/ablation_*_combined20/` (Git-ignored).

@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-25",
+  "condition": {
+    "episodes": 20,
+    "seed": 6001,
+    "object_pose": "randomized",
+    "camera_jitter_m": 0.02,
+    "lighting_scale": 0.5,
+    "background": "appearance-only Gaussian composite"
+  },
+  "rows": {
+    "one_demonstration": {
+      "training_episodes": 1,
+      "successes": 1,
+      "median_initial_xy_error_m": 0.05479043135131968
+    },
+    "clean_2d_localization": {
+      "training_frames": 500,
+      "successes": 0,
+      "median_initial_xy_error_m": 0.10068907634700086
+    },
+    "geometry_exact_pose_ceiling": {
+      "successes": 20,
+      "median_initial_xy_error_m": 0.0
+    },
+    "gaussian_rendered_robustness": {
+      "training_frames": 4000,
+      "successes": 18,
+      "median_initial_xy_error_m": 0.0037317802623988957
+    }
+  },
+  "claim_boundary": "geometry row is an oracle controller ceiling; Gaussian composition is appearance-only"
+}

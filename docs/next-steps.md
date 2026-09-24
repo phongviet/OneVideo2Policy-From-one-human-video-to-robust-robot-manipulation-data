@@ -41,6 +41,12 @@ and half-light data. It passes 97/100 total rollouts: 20/20 nominal, 19/20 camer
 2. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
+Both remaining items require external evidence absent from this workspace. Metric
+robot insertion needs shared robot/HOI4D camera correspondences or a new calibrated
+capture. Physical validation needs access to the robot, camera calibration, workspace
+measurements, and an operator-approved safety envelope. The existing video cannot
+recover those quantities by computation alone.
+
 ## Immediate command
 
 Reproduce the measured-task learned policy gate:

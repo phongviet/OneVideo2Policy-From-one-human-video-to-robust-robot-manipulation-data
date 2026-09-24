@@ -30,12 +30,16 @@ Completed evidence:
 
 Capture or select larger, multi-view object crops and compare reconstructed proportions
 against measured geometry. Current TripoSR HOI4D meshes are too flat for physics.
+This needs a new close multi-view capture; the released sequence has insufficient
+object detail for a faithful learned mesh.
 
 ### Gate B — motion quality
 
 Camera and spherical-object translation now pass their metric artifact checks. Quantify
 the effect of the 20-frame interpolated occlusion interval and ablate the tracked-point
 loss on a nonsymmetric object where rotation is observable.
+The current ball is rotationally symmetric, so that rotation ablation requires a
+nonsymmetric-object sequence rather than another computation on the same frames.
 
 ### Gate C — task transfer (passed locally)
 
@@ -52,3 +56,4 @@ combination. The combined condition passes 18/20. Physical transfer remains Gate
 
 Run a small real-robot evaluation after safety checks, calibration, and a successful
 simulation transfer. Compare the learned policy with the scripted controller.
+No robot interface, calibration, or physical workspace is connected to this project.

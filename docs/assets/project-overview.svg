@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
-  <title id="title">OneVideo2Policy project media placeholder</title>
+  <title id="title">OneVideo2Policy measured project overview</title>
   <desc id="desc">A visual pipeline from a human video through 3D reconstruction to diverse robot demonstrations.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -33,12 +33,12 @@
     </g>
     <path d="M525 258C560 215 632 290 681 246" fill="none" stroke="#82efb7" stroke-width="4" stroke-dasharray="8 8"/>
     <text x="600" y="304" fill="#ccecff" font-family="Inter,Segoe UI,sans-serif" font-size="17" text-anchor="middle">Geometry + 6D motion</text>
-    <text x="600" y="329" fill="#769db4" font-family="Inter,Segoe UI,sans-serif" font-size="13" text-anchor="middle">CURRENT MILESTONE</text>
+    <text x="600" y="329" fill="#769db4" font-family="Inter,Segoe UI,sans-serif" font-size="13" text-anchor="middle">METRIC RGB-D + GAUSSIANS</text>
   </g>
   <path d="M765 228H835" stroke="url(#accent)" stroke-width="5" stroke-linecap="round"/>
   <path d="M824 217L837 228 824 239" fill="none" stroke="#7ae9c1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
   <g>
-    <rect x="865" y="108" width="280" height="240" rx="18" fill="#10283b" stroke="#397493" stroke-dasharray="7 7"/>
+    <rect x="865" y="108" width="280" height="240" rx="18" fill="#10283b" stroke="#397493"/>
     <rect x="891" y="139" width="100" height="81" rx="7" fill="#274b62"/>
     <rect x="1018" y="139" width="100" height="81" rx="7" fill="#315945"/>
     <rect x="891" y="236" width="100" height="58" rx="7" fill="#51445d"/>
@@ -47,5 +47,5 @@
     <path d="M1060 193V165L1074 153 1088 165V193" fill="none" stroke="#9bf0bc" stroke-width="4"/>
     <text x="1005" y="321" fill="#ccecff" font-family="Inter,Segoe UI,sans-serif" font-size="17" text-anchor="middle">Diverse robot episodes</text>
   </g>
-  <text x="600" y="402" fill="#6f9db7" font-family="Inter,Segoe UI,sans-serif" font-size="14" text-anchor="middle" letter-spacing="2">DEMO GIF PLACEHOLDER</text>
+  <text x="600" y="402" fill="#6f9db7" font-family="Inter,Segoe UI,sans-serif" font-size="14" text-anchor="middle" letter-spacing="2">97/100 ROBUSTNESS · 7,007 GAUSSIANS · 57 TESTS</text>
 </svg>
