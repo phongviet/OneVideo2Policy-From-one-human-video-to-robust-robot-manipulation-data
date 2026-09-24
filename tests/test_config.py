@@ -16,14 +16,14 @@ def test_two_path_config_is_valid() -> None:
     config = load_config(Path(__file__).parents[1] / "configs" / "two_paths.yaml")
 
     assert config["paths"]["local"]["policy"] == "ridge_behavior_cloning"
-    assert config["paths"]["faithful"]["recommended_vram_gb"] == 24
+    assert config["paths"]["model_assisted"]["recommended_vram_gb"] == 6
 
 
 def test_two_path_config_requires_both_paths() -> None:
     config = load_config(Path(__file__).parents[1] / "configs" / "two_paths.yaml")
-    del config["paths"]["faithful"]
+    del config["paths"]["model_assisted"]
 
-    with pytest.raises(ValueError, match="paths.faithful"):
+    with pytest.raises(ValueError, match="paths.model_assisted"):
         validate_config(config)
 
 

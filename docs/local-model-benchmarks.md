@@ -158,6 +158,22 @@ the ten-trajectory baseline diagnosis and the outcome of the corrected
 
 ## Reproducibility and remaining evidence
 
+### HOI4D ball-to-bowl model run
+
+The selected models were also run on the downloaded metric HOI4D sequence. TripoSR
+at resolution 128 and chunk size 4096 peaked at 1,869 MiB. It produced watertight
+ball and bowl meshes, but their minimum-to-maximum extent ratios were 0.065 and
+0.085, so both are excluded from collision geometry.
+
+Depth Anything V2 Metric Small at input size 518 peaked at 415 MiB and had 0.159 s
+median inference after warmup. Against five aligned sensor-depth frames, raw mean
+AbsRel was 0.715. Independent median scale alignment used a median factor of 0.526
+and reduced mean AbsRel to 0.155. This confirms the local choice for depth structure
+while retaining HOI4D RGB-D as the metric reference.
+
+The reproducible evaluator is `scripts/evaluate_hoi4d_depth.py`; raw outputs are in
+`results/model_benchmarks/hoi4d_ball_to_bowl/` and ignored by Git.
+
 Benchmark scripts live in `scripts/benchmark_local_depth.py`,
 `scripts/benchmark_depth_fixture.py`, `scripts/benchmark_triposr.py`,
 `scripts/benchmark_robosuite.py`, `scripts/benchmark_local_policy.py`,
@@ -169,7 +185,7 @@ rendered comparisons, and meshes are under
 `results/model_benchmarks/real_place_img_6256/` (ignored by Git). Upstream
 repositories and isolated environments are under
 `experiments/runs/model_benchmarks/` (ignored by Git). The current local
-pipeline's independent test suite passes (47 tests).
+pipeline's independent test suite passes (49 tests).
 
 The filmed task still needs human independent object masks, measured scene
 dimensions or camera calibration, a reconstruction reference, and paired

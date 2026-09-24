@@ -1,4 +1,4 @@
-"""Package and verify the current real Place inputs for a larger CUDA host."""
+"""Package and verify the current real Place inputs and local model contract."""
 
 from __future__ import annotations
 
@@ -54,12 +54,12 @@ def verify(package: Path) -> dict[str, object]:
                 raise ValueError(f"Track visibility shape mismatch: {name}")
             if tracks["xy"].shape[0] != count or tracks["xy"].shape[2] != 2:
                 raise ValueError(f"Track sequence shape mismatch: {name}")
-    with (package / "faithful/run-spec.json").open(encoding="utf-8") as stream:
+    with (package / "model_bundle/run-spec.json").open(encoding="utf-8") as stream:
         spec = json.load(stream)
     for item in spec["inputs"]:
-        path = package / "faithful" / item["path"]
+        path = package / "model_bundle" / item["path"]
         if not path.is_file() or sha256(path) != item["sha256"]:
-            raise ValueError(f"Faithful input checksum mismatch: {item['path']}")
+            raise ValueError(f"Model input checksum mismatch: {item['path']}")
     return {"status": "verified", "files": len(files), "frames": count, "resolution": shape}
 
 
@@ -81,7 +81,7 @@ def prepare(package: Path) -> dict[str, object]:
     manifest["source_video"] = "IMG_6256.MOV"
     (source / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
-    shutil.copytree(ROOT / "results/faithful_bundle/real_place_img_6256", package / "faithful")
+    shutil.copytree(ROOT / "results/model_bundle/real_place_img_6256", package / "model_bundle")
     code = package / "code"
     code.mkdir()
     for directory in ("src", "scripts", "configs", "tests", "docs"):

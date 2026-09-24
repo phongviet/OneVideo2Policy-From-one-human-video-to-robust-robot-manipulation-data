@@ -3,7 +3,7 @@
 ## State on 2026-09-20
 
 The `IMG_6256.MOV` intake, SAM2/CoTracker3 perception, native object crops,
-camera-compensated local systems run, and 12-keyframe faithful input bundle are
+camera-compensated local systems run, and 12-keyframe local model bundle are
 complete. The 57-frame manifest validates. The local run reproduced byte for byte
 in a second output directory, including its trajectory, generated demonstrations,
 ridge policy, rollout, and report. It produced 250 proxy episodes and 100/100
@@ -22,10 +22,9 @@ manifest uses a relative path to the original video. Prepare and verify it with:
   results/handoff/real_place_img_6256 --verify
 ```
 
-The handoff is a source and evidence package. `faithful/run-spec.json` names the
-planned TRELLIS, VGGT, robosuite, and Diffusion Policy outputs; those adapters and
-the faithful pipeline have not yet been implemented or run. A larger GPU alone will
-not produce a research result without that work.
+The handoff is a source and evidence package. The selected local stack is TripoSR,
+Depth Anything V2 Metric Small, robosuite, and the temporal visual waypoint policy.
+Learned meshes remain visual proposals; measured primitives provide collision geometry.
 
 ## Inputs still needed
 
@@ -89,4 +88,4 @@ not produce a research result without that work.
 Transfer the entire `results/handoff/real_place_img_6256/` directory or its ZIP.
 On the receiving host, install the code from `code/`, then run the packaged verifier
 before installing model stacks or running reconstruction. Preserve the
-`handoff-manifest.json` and `faithful/run-spec.json` with all returned outputs.
+`handoff-manifest.json` and `model_bundle/run-spec.json` with all returned outputs.

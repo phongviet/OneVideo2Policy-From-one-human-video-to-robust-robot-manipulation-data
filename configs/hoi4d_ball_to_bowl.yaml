@@ -36,9 +36,14 @@ tracking:
 
 reconstruction:
   input_crop_dir: data/interim/hoi4d_ball_to_bowl_gate_reseed16/crops_native
-  object_model: trellis
-  geometry_model: vggt
-  status: blocked_insufficient_vram_and_input_resolution
+  object_model: stabilityai/TripoSR
+  mesh_resolution: 128
+  chunk_size: 4096
+  geometry_model: depth-anything/Depth-Anything-V2-Metric-Hypersim-Small
+  geometry_input_size: 518
+  metric_scale_reference: aligned_rgbd
+  collision_geometry: measured_primitives
+  status: completed_local_models
 
 gates:
   min_mask_iou: 0.70

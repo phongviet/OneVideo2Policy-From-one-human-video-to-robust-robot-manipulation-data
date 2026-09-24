@@ -17,7 +17,7 @@ planar trajectory and makes the take weaker than a locked-tripod capture.
 
 The source is roughly 200 px across in the native first frame, below the preferred
 250–300 px reconstruction crop. This is a usable systems/perception take, **not**
-yet evidence that paper-faithful single-view 3D reconstruction will pass Gate A.
+yet evidence that validated single-view 3D reconstruction will pass Gate A.
 The source diameter was measured later at **3 cm**. Source height, target
 dimensions, initial separation, and camera calibration remain unknown. The
 diameter anchors planar xy scale, but it is insufficient for calibrated 3D motion.
@@ -90,9 +90,9 @@ uv run ov2p run-local-e2e \
 ```
 
 The run writes `relative_trajectory.png`, `camera_transforms.npy`, primitive
-OBJ files, a proxy rollout, and `report.json`. A hashed 12-keyframe faithful
-input bundle is staged at `results/faithful_bundle/real_place_img_6256/`, with
-its status marked blocked by the independent gate and 16 GB+ GPU requirement.
+OBJ files, a proxy rollout, and `report.json`. A hashed 12-keyframe local model input bundle can be staged at
+`results/model_bundle/real_place_img_6256/`. TripoSR and Depth Anything V2 Small
+fit the 6 GB GPU, while the remaining physical dimensions still bound metric use.
 
 ## Measured-diameter update
 

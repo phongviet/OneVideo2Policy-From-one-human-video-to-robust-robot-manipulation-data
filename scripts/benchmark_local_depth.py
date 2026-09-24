@@ -31,7 +31,8 @@ def main() -> None:
     parser.add_argument("--frame-ids", nargs="+", type=int, default=[0, 14, 28, 42, 56])
     parser.add_argument("--relative", action="store_true", help="Use relative-depth weights")
     args = parser.parse_args()
-    sys.path.insert(0, str(args.repo.resolve()))
+    module_root = args.repo.resolve() if args.relative else (args.repo / "metric_depth").resolve()
+    sys.path.insert(0, str(module_root))
     from depth_anything_v2.dpt import DepthAnythingV2
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -71,7 +72,11 @@ def main() -> None:
             if not np.isfinite(depth).all():
                 raise ValueError(f"Non-finite depth in frame {frame_id}")
             np.save(args.output / f"depth_{size}_{frame_id:06d}.npy", depth.astype(np.float32))
-            table_patch = depth[380:500, 740:900]
+            height, width = depth.shape
+            table_patch = depth[
+                round(height * 0.70) : round(height * 0.93),
+                round(width * 0.77) : round(width * 0.94),
+            ]
             record = {
                 "frame_id": frame_id,
                 "seconds": elapsed,

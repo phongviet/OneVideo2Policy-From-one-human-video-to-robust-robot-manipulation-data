@@ -1,49 +1,44 @@
-# Reconstruction readiness audit
+# Local reconstruction readiness
 
-## Inputs produced
+## Selected models
 
-The passing HOI4D perception run can export transparent crops from the native
-1920×1080 source video while reusing the frozen 640×360 SAM2 masks. Masks are
-scaled with nearest-neighbor interpolation; RGB detail comes from original frame 86.
+The 6 GB GTX 1660 Ti path uses models measured on this machine:
+
+| Stage | Model | Local result |
+|---|---|---|
+| Object proposal | `stabilityai/TripoSR` | 128 mesh resolution and 4096 chunk size peak at about 1.87 GiB |
+| Monocular depth | `depth-anything/Depth-Anything-V2-Metric-Hypersim-Small` | 518 input size peaks at 415 MiB and takes 0.16 s/frame after warmup |
+| Metric geometry | HOI4D aligned RGB-D plus calibrated primitives | Used for scale and collision geometry |
+
+SAM2.1 Hiera Small and CoTracker3 offline provide the masks and tracks consumed by
+these stages. Stable Fast 3D remains an optional visual proposal, but its roughly
+6.1 GiB peak allocation leaves too little margin on this GPU.
+
+## HOI4D result
+
+The native crops are 99×99 for the ball and 196×196 for the bowl. TripoSR produced
+watertight meshes for both at 128 extraction resolution, but their minimum-to-maximum
+extent ratios are 0.065 and 0.085. This severe flattening makes them unsuitable for
+collision geometry. They are retained as visual proposals only.
+
+Depth Anything V2 Metric Small was evaluated on five sampled frames against the
+HOI4D sensor depth. It used a median 0.526 scale correction, with raw mean AbsRel
+0.715 and independently scale-aligned mean AbsRel 0.155. The model therefore supplies
+depth structure; aligned RGB-D supplies metric scale. Per-frame scale alignment is a
+diagnostic and is not evidence of monocular metric recovery.
+
+## Reproduce
 
 ```bash
-uv run ov2p export-rgba-crops \
-  data/interim/hoi4d_ball_to_bowl_gate/manifest.json \
-  --masks data/interim/hoi4d_ball_to_bowl_gate/masks \
-  --source-video data/raw/sources/hoi4d/HOI4D_release/ZY20210800001/H1/C7/N14/S280/s04/T5/align_rgb/image.mp4 \
-  --output data/interim/hoi4d_ball_to_bowl_gate_reseed16/crops_native \
-  --frame 0 --padding 0.15
+.venv/bin/python scripts/benchmark_local_depth.py \
+  --repo experiments/runs/model_benchmarks/third_party/Depth-Anything-V2 \
+  --checkpoint "$HOME/.cache/huggingface/hub/models--depth-anything--Depth-Anything-V2-Metric-Hypersim-Small/snapshots/3bc65d4e14a6786a61acec16453c50e12bf5f338/depth_anything_v2_metric_hypersim_vits.pth" \
+  --frames data/interim/hoi4d_ball_to_bowl_gate/frames \
+  --target-masks data/interim/hoi4d_ball_to_bowl_gate/masks/target \
+  --source-masks data/interim/hoi4d_ball_to_bowl_gate/masks/source \
+  --output results/model_benchmarks/hoi4d_ball_to_bowl/depth_metric_small \
+  --sizes 518 --frame-ids 0 18 36 59 71
 ```
 
-| Object | Native RGBA crop | Foreground pixels | Readiness |
-|---|---:|---:|---|
-| Ball | 99×99 | 3,402 | Too small/blurry for a credible geometry gate |
-| Bowl | 196×196 | 13,104 | Usable for an adapter smoke test, not a strong benchmark |
-
-The crop manifest preserves source bounding boxes, canvas offsets, foreground
-counts, and the original source-frame ID.
-
-## Blocker
-
-The current host has an NVIDIA GeForce GTX 1660 Ti with 6 GB VRAM. The official
-[TRELLIS repository](https://github.com/microsoft/TRELLIS) specifies an NVIDIA GPU
-with at least 16 GB for its only image-conditioned model, TRELLIS-image-large.
-Installing its compiled CUDA stack and multi-gigabyte weights cannot produce a
-valid local run on this host, so the integration stops before that environment
-change.
-
-VGGT integration alone would not satisfy Gate A because the planned gate requires
-recognizable object reconstructions as well as scene depth/scale. It is deferred
-with TRELLIS to keep the milestone atomic.
-
-## Unblocking conditions
-
-Provide both:
-
-1. a CUDA host with at least 16 GB VRAM (24 GB preferred for useful margin); and
-2. the planned real Place recording where each rigid object occupies substantially
-   more pixels and exposes useful nearby views.
-
-After that, pin the TRELLIS and VGGT revisions in an isolated reconstruction
-environment, run one-object smoke tests, render fixed turntables, and evaluate
-recognizability, missing surfaces, and scale before pose optimization.
+The raw reports and generated meshes are kept under
+`results/model_benchmarks/hoi4d_ball_to_bowl/` and are ignored by Git.

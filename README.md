@@ -70,8 +70,8 @@ stable.
 ## Project status
 
 The repository now includes a runnable local end-to-end systems baseline and a
-portable high-fidelity run contract. It does **not** yet claim a paper-faithful
-TRELLIS/VGGT, image-policy, or sim-to-real result.
+local model assisted run contract. It does **not** yet claim validated 6D motion,
+physical robot success, or sim-to-real transfer.
 
 | Component | Status | Evidence / next deliverable |
 |---|:---:|---|
@@ -82,9 +82,9 @@ TRELLIS/VGGT, image-policy, or sim-to-real result.
 | Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
 | Real-scene metric geometry | 🟡 | Planar xy scale anchored by the measured 3 cm source diameter; calibrated 3D still pending |
-| TRELLIS and VGGT adapters | 🟡 | Blocked by 6 GB VRAM; official TRELLIS needs 16 GB |
+| TripoSR and Depth Anything V2 Small | ✅ | Both run on 6 GB; HOI4D mesh and sensor-depth diagnostics recorded |
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
-| Faithful run bundle | ✅ | Hashed TRELLIS/VGGT inputs ready for 16 GB+ host |
+| Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
 | 6D tracking ablation | ⬜ | Compare with/without tracked-point loss |
 | Synthetic demonstrations | ✅ | 100 successful robosuite demonstrations; 18,071 samples |
 | Policy benchmark | ✅ | Learned visual waypoint policy passes 19/20 held-out rollouts |
@@ -208,7 +208,7 @@ uv run ov2p run-local-e2e \
 ```
 
 See the [two-path execution guide](docs/two-path-execution.md) for the exact claim
-boundary and the portable faithful-path bundle. The real `IMG_6256.MOV` local
+boundary and the local model bundle. The real `IMG_6256.MOV` local
 run and its camera-compensated, target-relative trajectory are documented in the
 [capture audit](docs/data-audits/real-place-img-6255-6256.md). The
 [local handoff](docs/real-place-handoff.md) records the verified transfer package
@@ -325,8 +325,9 @@ uv run pytest
 - Grasp pose is manually specified in the planned robot synthesis stage.
 - Deformable objects, bimanual control, real-robot deployment, and VLA training are
   outside the initial scope.
-- SAM2, CoTracker3, TRELLIS, VGGT, Robosuite, and Diffusion Policy are not vendored.
-  Their versions and installation steps will be pinned as each adapter lands.
+- SAM2, CoTracker3, TripoSR, Depth Anything V2, Stable Fast 3D, and robosuite are not
+  vendored. Their tested revisions and isolated environments are recorded in the model
+  experiment artifacts.
 
 ## Acknowledgements
 

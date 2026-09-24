@@ -41,15 +41,19 @@ paths:
     eval_episodes: 100
     steps: 48
     min_success_rate: 0.80
-  faithful:
-    reconstruction: microsoft/TRELLIS-image-large
-    geometry: facebook/VGGT-1B
+  model_assisted:
+    reconstruction: stabilityai/TripoSR
+    reconstruction_mesh_resolution: 128
+    reconstruction_chunk_size: 4096
+    geometry: depth-anything/Depth-Anything-V2-Metric-Hypersim-Small
+    geometry_input_size: 518
+    metric_scale_reference: hoi4d_aligned_rgbd
     simulator: robosuite
-    policy: diffusion_policy
+    policy: visual_waypoint_temporal
     keyframes: 12
-    min_vram_gb: 16
-    recommended_vram_gb: 24
-    status: ready_for_external_compute
+    min_vram_gb: 4
+    recommended_vram_gb: 6
+    status: completed_local_models
 
 gates:
   min_mask_iou: 0.70

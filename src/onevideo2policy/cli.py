@@ -10,7 +10,7 @@ from onevideo2policy.evaluation.perception_gate import (
     evaluate_ground_truth_directories,
     prepare_annotation_workspace,
 )
-from onevideo2policy.pipeline import prepare_faithful_bundle, run_local_end_to_end
+from onevideo2policy.pipeline import prepare_model_bundle, run_local_end_to_end
 from onevideo2policy.reconstruction.crops import (
     export_rgba_crops,
     load_video_frame,
@@ -140,13 +140,13 @@ def build_parser() -> argparse.ArgumentParser:
     local_e2e.add_argument("--masks", required=True, type=Path)
     local_e2e.add_argument("--output", required=True, type=Path)
 
-    faithful = subparsers.add_parser(
-        "prepare-faithful-run", help="Bundle hashed TRELLIS/VGGT inputs for a GPU host"
+    model_run = subparsers.add_parser(
+        "prepare-model-run", help="Bundle inputs for the selected local reconstruction models"
     )
-    faithful.add_argument("--config", required=True, type=Path)
-    faithful.add_argument("--manifest", required=True, type=Path)
-    faithful.add_argument("--crops", required=True, type=Path)
-    faithful.add_argument("--output", required=True, type=Path)
+    model_run.add_argument("--config", required=True, type=Path)
+    model_run.add_argument("--manifest", required=True, type=Path)
+    model_run.add_argument("--crops", required=True, type=Path)
+    model_run.add_argument("--output", required=True, type=Path)
 
     hoi4d = subparsers.add_parser(
         "import-hoi4d", help="Import decoded HOI4D RGB-D and motion masks"
@@ -266,9 +266,9 @@ def main() -> None:
             masks["source"], masks["target"], args.output, config=config, frames=frames
         )
         print(json.dumps(report, indent=2))
-    elif args.command == "prepare-faithful-run":
+    elif args.command == "prepare-model-run":
         config = load_config(args.config)
-        spec = prepare_faithful_bundle(args.manifest, args.crops, args.output, config=config)
+        spec = prepare_model_bundle(args.manifest, args.crops, args.output, config=config)
         print(json.dumps(spec, indent=2))
     elif args.command == "import-hoi4d":
         if args.annotations is not None:

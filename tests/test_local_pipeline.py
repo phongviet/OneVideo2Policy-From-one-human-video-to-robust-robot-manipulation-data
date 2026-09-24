@@ -8,7 +8,7 @@ from onevideo2policy.pipeline import (
     evaluate_mask_placement,
     fit_ridge_policy,
     generate_local_demonstrations,
-    prepare_faithful_bundle,
+    prepare_model_bundle,
     recover_planar_proxy,
     run_local_end_to_end,
     write_bowl_obj,
@@ -179,7 +179,7 @@ def test_local_end_to_end_writes_contract(tmp_path: Path) -> None:
     assert (tmp_path / "report.json").is_file()
 
 
-def test_faithful_bundle_selects_and_hashes_inputs(tmp_path: Path) -> None:
+def test_model_bundle_selects_and_hashes_inputs(tmp_path: Path) -> None:
     import json
 
     source_dir = tmp_path / "source"
@@ -197,30 +197,36 @@ def test_faithful_bundle_selects_and_hashes_inputs(tmp_path: Path) -> None:
         (crops_dir / f"{name}.png").write_bytes(name.encode())
     config = {
         "paths": {
-            "faithful": {
+            "model_assisted": {
                 "keyframes": 3,
-                "reconstruction": "trellis",
-                "geometry": "vggt",
+                "reconstruction": "stabilityai/TripoSR",
+                "reconstruction_mesh_resolution": 128,
+                "reconstruction_chunk_size": 4096,
+                "geometry": "depth-anything/Depth-Anything-V2-Metric-Hypersim-Small",
+                "geometry_input_size": 518,
+                "metric_scale_reference": "aligned_rgbd",
                 "simulator": "robosuite",
-                "policy": "diffusion_policy",
-                "min_vram_gb": 16,
-                "recommended_vram_gb": 24,
+                "policy": "visual_waypoint_temporal",
+                "min_vram_gb": 4,
+                "recommended_vram_gb": 6,
             }
         }
     }
 
-    spec = prepare_faithful_bundle(
+    spec = prepare_model_bundle(
         source_dir / "manifest.json", crops_dir, tmp_path / "bundle", config=config
     )
 
-    keyframes = [item for item in spec["inputs"] if item["role"] == "vggt_keyframe"]
-    assert spec["status"] == "ready_for_external_compute"
+    keyframes = [item for item in spec["inputs"] if item["role"] == "geometry_keyframe"]
+    assert spec["status"] == "runnable_local"
+    assert spec["path"] == "model_assisted"
+    assert spec["model_parameters"]["geometry_input_size"] == 518
     assert len(keyframes) == 3
     assert all(len(item["sha256"]) == 64 for item in spec["inputs"])
     assert (tmp_path / "bundle/run-spec.json").is_file()
 
-    config["paths"]["faithful"]["status"] = "blocked_by_independent_gate_and_gpu"
-    blocked = prepare_faithful_bundle(
+    config["paths"]["model_assisted"]["status"] = "geometry_uncalibrated"
+    blocked = prepare_model_bundle(
         source_dir / "manifest.json", crops_dir, tmp_path / "blocked_bundle", config=config
     )
-    assert blocked["status"] == "blocked_by_independent_gate_and_gpu"
+    assert blocked["status"] == "geometry_uncalibrated"

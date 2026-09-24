@@ -8,13 +8,13 @@ from numpy.typing import NDArray
 
 
 class DepthEstimator(Protocol):
-    """VGGT-compatible metric or scale-consistent depth boundary."""
+    """Metric or scale-consistent depth estimator boundary."""
 
     def estimate(self, frames: NDArray[np.uint8]) -> NDArray[np.floating]: ...
 
 
 class ObjectReconstructor(Protocol):
-    """TRELLIS-compatible single-view object reconstruction boundary."""
+    """Single-view object reconstruction boundary."""
 
     def reconstruct(
         self, crop: NDArray[np.uint8], mask: NDArray[np.bool_], output: Path

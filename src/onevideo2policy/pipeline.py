@@ -18,14 +18,14 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def prepare_faithful_bundle(
+def prepare_model_bundle(
     manifest_path: str | Path,
     crops_dir: str | Path,
     output_dir: str | Path,
     *,
     config: dict[str, Any],
 ) -> dict[str, Any]:
-    """Create a portable, hashed TRELLIS/VGGT input bundle on any machine."""
+    """Create a hashed input bundle for the selected local reconstruction models."""
     manifest_path = Path(manifest_path)
     crops_dir = Path(crops_dir)
     output_dir = Path(output_dir)
@@ -34,8 +34,8 @@ def prepare_faithful_bundle(
     frames = manifest.get("frames")
     if not isinstance(frames, list) or len(frames) < 2:
         raise ValueError("Manifest must contain at least two frames")
-    faithful = config["paths"]["faithful"]
-    keyframe_count = min(int(faithful["keyframes"]), len(frames))
+    model_config = config["paths"]["model_assisted"]
+    keyframe_count = min(int(model_config["keyframes"]), len(frames))
     indices = np.unique(np.linspace(0, len(frames) - 1, keyframe_count).round().astype(int))
     bundle_frames = output_dir / "frames"
     bundle_crops = output_dir / "crops"
@@ -52,7 +52,7 @@ def prepare_faithful_bundle(
         shutil.copy2(source, destination)
         files.append(
             {
-                "role": "vggt_keyframe",
+                "role": "geometry_keyframe",
                 "frame_idx": int(frame_idx),
                 "path": destination.relative_to(output_dir).as_posix(),
                 "sha256": _sha256(destination),
@@ -66,24 +66,30 @@ def prepare_faithful_bundle(
         shutil.copy2(source, destination)
         files.append(
             {
-                "role": f"trellis_{name}",
+                "role": f"reconstruction_{name}",
                 "path": destination.relative_to(output_dir).as_posix(),
                 "sha256": _sha256(destination),
             }
         )
     spec: dict[str, Any] = {
         "schema_version": 1,
-        "path": "faithful",
-        "status": faithful.get("status", "ready_for_external_compute"),
+        "path": "model_assisted",
+        "status": model_config.get("status", "runnable_local"),
         "models": {
-            "object_reconstruction": faithful["reconstruction"],
-            "scene_geometry": faithful["geometry"],
-            "simulator": faithful["simulator"],
-            "policy": faithful["policy"],
+            "object_reconstruction": model_config["reconstruction"],
+            "scene_geometry": model_config["geometry"],
+            "simulator": model_config["simulator"],
+            "policy": model_config["policy"],
+        },
+        "model_parameters": {
+            "reconstruction_mesh_resolution": model_config.get("reconstruction_mesh_resolution"),
+            "reconstruction_chunk_size": model_config.get("reconstruction_chunk_size"),
+            "geometry_input_size": model_config.get("geometry_input_size"),
+            "metric_scale_reference": model_config.get("metric_scale_reference"),
         },
         "hardware": {
-            "min_vram_gb": int(faithful["min_vram_gb"]),
-            "recommended_vram_gb": int(faithful["recommended_vram_gb"]),
+            "min_vram_gb": int(model_config["min_vram_gb"]),
+            "recommended_vram_gb": int(model_config["recommended_vram_gb"]),
         },
         "inputs": files,
         "expected_outputs": [
@@ -97,6 +103,10 @@ def prepare_faithful_bundle(
     }
     (output_dir / "run-spec.json").write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
     return spec
+
+
+# Compatibility alias for callers created before the local model selection.
+prepare_faithful_bundle = prepare_model_bundle
 
 
 def _centroids(masks: NDArray[np.bool_]) -> NDArray[np.float64]:
@@ -823,7 +833,7 @@ def run_local_end_to_end(
         "fidelity": "systems_baseline",
         "claims": {
             "supported": "artifact-compatible end-to-end execution on local hardware",
-            "unsupported": "paper-faithful 3D reconstruction or sim-to-real robustness",
+            "unsupported": "validated 6D reconstruction or sim-to-real robustness",
         },
         "geometry": {"source": source_primitive, "target": target_primitive},
         "trajectory": {

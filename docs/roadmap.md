@@ -1,49 +1,43 @@
 # Roadmap and gates
 
-## Current milestone: one video to relative trajectory
+## Current milestone
 
-The CPU-safe systems baseline is complete through generation and held-out policy
-rollouts. Paper-faithful Gate A remains pending on the external-compute path; see
-[`two-path-execution.md`](two-path-execution.md).
+The local pipeline now runs segmentation, tracking, TripoSR reconstruction proposals,
+Depth Anything V2 Small, measured collision geometry, robosuite demonstration
+generation, and policy evaluation on the 6 GB machine.
 
-1. Record one clean 10–20 second monocular Place demonstration.
-2. Sample frames and manually select source and target in frame zero.
-3. Integrate SAM2 and CoTracker3 adapters; annotate 30 evaluation frames.
-4. Integrate TRELLIS and VGGT adapters; visually inspect novel views and scale.
-5. Optimize initial translation, rotation, and scale with RGB/depth/mask losses.
-6. Warm-start each later pose from its predecessor and ablate tracked-point loss.
+Completed evidence:
 
-### Gate A — reconstruction
+1. SAM2.1 Hiera Small and CoTracker3 pass the HOI4D perception gate.
+2. HOI4D RGB-D provides metric dimensions and depth reference.
+3. TripoSR and Depth Anything V2 Small fit local VRAM and have measured reports.
+4. Primitive collision assets and the point-robot systems path run end to end.
+5. One hundred successful Panda demonstrations were generated in robosuite.
+6. The temporal visual waypoint policy passes 19/20 held-out rollouts.
 
-Both rigid objects are recognizable from useful nearby views and their proportions are
-plausible. If not, simplify the objects or swap the reconstruction backend.
+## Remaining gates
 
-### Gate B — tracking
+### Gate A — reconstruction quality
 
-Object identity is stable, mask IoU and track survival meet `configs/place.yaml`, and
-the relative trajectory has no catastrophic jumps. If not, manually refine the
-initialization before adding downstream systems.
+Capture or select larger, multi-view object crops and compare reconstructed proportions
+against measured geometry. Current TripoSR HOI4D meshes are too flat for physics.
 
-## Deferred milestones
+### Gate B — 6D motion
 
-- Robot motion: manually define the grasp transform; generate transit, grasp,
-  transfer, and release stages with kinematic validation.
-- Synthetic engine: randomize object pose, nearby cameras, background, tabletop
-  texture, and Gaussian color-based lighting.
-- Policy: train Diffusion Policy from front/side RGB and joint positions.
-- Evaluation: compare one demo, 2D augmentation, geometry-only 3D augmentation, and
-  full 3DGS under isolated and combined shifts.
+Fit camera and object poses from calibrated RGB-D, quantify reprojection error and
+translation jitter, and ablate the tracked-point loss.
 
-### Gate C — generation
+### Gate C — task transfer
 
-At least 80–90% of synthetic trajectories satisfy task and kinematic constraints.
+Retarget the measured HOI4D ball-and-bowl geometry and trajectory into robosuite and
+verify grasp, transfer, release, and collision constraints.
 
-### Gate D — learning
+### Gate D — policy evidence
 
-The policy learns the in-distribution Place task before robustness experiments.
+Evaluate the selected waypoint policy on the retargeted task across held-out object,
+camera, background, and lighting shifts. Report failures and confidence intervals.
 
-### Gate E — value
+### Gate E — physical validation
 
-Full or geometry-only 3D augmentation improves robustness over ordinary 2D
-augmentation under at least one controlled shift. A negative result is retained and
-analyzed rather than hidden.
+Run a small real-robot evaluation after safety checks, calibration, and a successful
+simulation transfer. Compare the learned policy with the scripted controller.

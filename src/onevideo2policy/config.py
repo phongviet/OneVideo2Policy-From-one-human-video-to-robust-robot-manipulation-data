@@ -28,9 +28,13 @@ LOCAL_PATH_KEYS = (
     "min_success_rate",
 )
 
-FAITHFUL_PATH_KEYS = (
+MODEL_ASSISTED_PATH_KEYS = (
     "reconstruction",
+    "reconstruction_mesh_resolution",
+    "reconstruction_chunk_size",
     "geometry",
+    "geometry_input_size",
+    "metric_scale_reference",
     "simulator",
     "policy",
     "keyframes",
@@ -68,7 +72,10 @@ def validate_config(config: dict[str, Any]) -> None:
     if paths is not None:
         if not isinstance(paths, dict):
             raise ValueError("paths must be a mapping")
-        for name, keys in (("local", LOCAL_PATH_KEYS), ("faithful", FAITHFUL_PATH_KEYS)):
+        for name, keys in (
+            ("local", LOCAL_PATH_KEYS),
+            ("model_assisted", MODEL_ASSISTED_PATH_KEYS),
+        ):
             section = paths.get(name)
             if not isinstance(section, dict):
                 raise ValueError(f"paths.{name} must be a mapping")
@@ -101,5 +108,7 @@ def validate_config(config: dict[str, Any]) -> None:
                 raise ValueError("paths.local.source_diameter_m must be positive")
             if abs(diameter - 2 * radius) > 1e-9:
                 raise ValueError("paths.local source diameter must equal twice its radius")
-        if int(paths["faithful"]["recommended_vram_gb"]) < int(paths["faithful"]["min_vram_gb"]):
-            raise ValueError("faithful recommended VRAM must be at least its minimum")
+        if int(paths["model_assisted"]["recommended_vram_gb"]) < int(
+            paths["model_assisted"]["min_vram_gb"]
+        ):
+            raise ValueError("model-assisted recommended VRAM must be at least its minimum")

@@ -98,3 +98,20 @@
 - Next action: retain this run as the calibrated dataset diagnostic, obtain a true
   initial separation from a fully visible fixed-camera recording, then execute the
   faithful bundle on a 16–24 GB GPU.
+
+## Local model replacement run
+
+- Date / commit: 2026-09-24 / pending
+- Decision: The earlier TRELLIS/VGGT external-compute plan is superseded by the
+  measured local stack in `configs/two_paths.yaml`.
+- Object model: TripoSR, resolution 128, chunk 4096; peak 1,869 MiB. HOI4D ball and
+  bowl meshes are watertight but flattened, with minimum-to-maximum extent ratios
+  0.065 and 0.085. They are visual proposals only.
+- Depth model: Depth Anything V2 Metric Hypersim Small, input 518; 415 MiB peak and
+  0.159 s median inference after warmup. Five-frame HOI4D sensor comparison gives
+  raw mean AbsRel 0.715 and scale-aligned mean AbsRel 0.155 with median scale 0.526.
+- Geometry decision: use aligned HOI4D RGB-D and measured primitives for metric scale
+  and collision geometry.
+- Policy decision: retain the temporal dual-view waypoint model plus phase controller,
+  which passed 19/20 prior held-out robosuite rollouts.
+- Artifacts: `results/model_benchmarks/hoi4d_ball_to_bowl/` (Git-ignored).
