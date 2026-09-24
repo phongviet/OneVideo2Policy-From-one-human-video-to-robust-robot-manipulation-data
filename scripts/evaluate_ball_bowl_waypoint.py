@@ -43,6 +43,12 @@ def set_ball_position(env, position: np.ndarray) -> dict:
     return env._get_observations(force_update=True)
 
 
+def set_camera_observables(env, enabled: bool) -> None:
+    for name, observable in env._observables.items():
+        if name.startswith(("agentview_", "frontview_")):
+            observable.set_enabled(enabled)
+
+
 def phase_goal(
     phase: int, eef: np.ndarray, grasp_xy: np.ndarray, ball: np.ndarray, bowl: np.ndarray
 ) -> tuple[np.ndarray, float]:
@@ -83,6 +89,8 @@ def main() -> None:
         help="Re-estimate during approach instead of freezing the unobstructed first frame.",
     )
     parser.add_argument("--grasp-retries", default=4, type=int)
+    parser.add_argument("--camera-jitter-m", default=0.0, type=float)
+    parser.add_argument("--lighting-scale", default=1.0, type=float)
     args = parser.parse_args()
     np.random.seed(args.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -121,10 +129,25 @@ def main() -> None:
         if args.gaussian_background_video
         else None
     )
+    camera_ids = [env.sim.model.camera_name2id(name) for name in ("agentview", "frontview")]
+    base_camera_positions = env.sim.model.cam_pos[camera_ids].copy()
+    base_light_diffuse = env.sim.model.light_diffuse.copy()
+    base_light_ambient = env.sim.model.light_ambient.copy()
+    rng = np.random.default_rng(args.seed + 1)
     results = []
     started = time.perf_counter()
     try:
         for episode in range(args.episodes):
+            set_camera_observables(env, True)
+            env.sim.model.cam_pos[camera_ids] = base_camera_positions + rng.uniform(
+                -args.camera_jitter_m, args.camera_jitter_m, size=(2, 3)
+            )
+            env.sim.model.light_diffuse[:] = np.clip(
+                base_light_diffuse * args.lighting_scale, 0, 1
+            )
+            env.sim.model.light_ambient[:] = np.clip(
+                base_light_ambient * args.lighting_scale, 0, 1
+            )
             obs = env.reset()
             if positions is not None:
                 obs = set_ball_position(env, positions[episode % len(positions)])
@@ -156,6 +179,8 @@ def main() -> None:
                         history.append(prediction)
                         history = history[-5:]
                         grasp_xy = np.median(history, axis=0)[:2]
+                        if not args.continuous_localization:
+                            set_camera_observables(env, False)
                 goal, gripper = phase_goal(phase, eef, grasp_xy, ball, bowl)
                 action = np.r_[np.clip((goal - eef) / 0.05, -0.25, 0.25), np.zeros(3), gripper]
                 obs, _, done, _ = env.step(action)
@@ -169,12 +194,17 @@ def main() -> None:
                         if args.oracle_ball_position:
                             retry_prediction = env.ball_position.copy()
                         else:
+                            set_camera_observables(env, True)
+                            recovery_obs = env._get_observations(force_update=True)
                             with torch.inference_mode():
                                 retry_prediction = (
-                                    model(image_tensor(obs, device, background))[0].cpu().numpy()
+                                    model(image_tensor(recovery_obs, device, background))[0]
+                                    .cpu()
+                                    .numpy()
                                     * checkpoint["can_position_std"]
                                     + checkpoint["can_position_mean"]
                                 )
+                            set_camera_observables(env, False)
                         grasp_xy = retry_prediction[:2]
                         retry_xy_errors.append(
                             float(np.linalg.norm(grasp_xy - env.ball_position[:2]))
@@ -244,6 +274,8 @@ def main() -> None:
         "elapsed_seconds": time.perf_counter() - started,
         "appearance": "gaussian_background_composite" if backgrounds else "robosuite_rgb",
         "camera_alignment": ("appearance_only_unregistered" if backgrounds else "native_robosuite"),
+        "camera_jitter_m": args.camera_jitter_m,
+        "lighting_scale": args.lighting_scale,
         "episodes_detail": results,
     }
     args.output.mkdir(parents=True, exist_ok=True)

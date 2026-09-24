@@ -104,12 +104,14 @@ Measured results:
 | Clean-only model on Gaussian frames, median XY error | 11.4 cm |
 | Gaussian-only model on clean frames, median XY error | 4.6 cm |
 | Final mixed model size | 2,607,715 parameters |
-| Final clean paired rollouts | 5/5, 5.0 mm median XY error |
-| Final Gaussian paired rollouts | 5/5, 2.0 mm median XY error |
+| Final training frames | 4,000 |
+| Final nominal rollouts | 20/20, 2.5 mm median XY error |
+| Final Gaussian rollouts | 20/20, 3.1 mm median XY error |
+| Final combined camera + light + Gaussian rollouts | 18/20, 3.7 mm median XY error |
 
-The final model uses 2,000 balanced frames across clean and Gaussian appearance and
-reset and demonstration-derived robot poses. The varied poses support re-localization
-after a missed grasp; the reported paired rollouts completed on their first attempts.
+The final model uses 4,000 balanced frames across clean and Gaussian appearance,
+reset and demonstration-derived robot poses, nominal and ±2 cm camera positions,
+and normal and half lighting. Its five-condition robustness total is 97/100.
 
 This compositor is an appearance augmentation. The HOI4D Gaussian camera and the
 robosuite camera are not metrically registered, so Gaussian depth cannot correctly

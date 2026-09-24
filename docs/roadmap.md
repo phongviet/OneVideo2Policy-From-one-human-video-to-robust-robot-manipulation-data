@@ -21,6 +21,8 @@ Completed evidence:
     rollouts with 4.9 mm median initial XY error.
 11. Gaussian appearance composition produces synchronized robot demonstrations; the
     mixed model passes 5/5 paired clean and 5/5 composited rollouts.
+12. The final robustness model passes 97/100 across nominal, camera, lighting,
+    Gaussian-background, and combined 20-episode conditions.
 
 ## Remaining gates
 
@@ -40,10 +42,11 @@ loss on a nonsymmetric object where rotation is observable.
 The measured HOI4D ball-and-bowl geometry is retargeted into robosuite. Successful
 oracle and learned-policy rollouts verify grasp, transfer, release, and placement.
 
-### Gate D — policy evidence
+### Gate D — policy evidence (passed locally)
 
-Evaluate the selected waypoint policy on the retargeted task across held-out object,
-camera, background, and lighting shifts. Report failures and confidence intervals.
+The selected waypoint policy passes 97/100 total held-out simulated rollouts across
+object pose, ±2 cm camera translation, half lighting, Gaussian background, and their
+combination. The combined condition passes 18/20. Physical transfer remains Gate E.
 
 ### Gate E — physical validation
 

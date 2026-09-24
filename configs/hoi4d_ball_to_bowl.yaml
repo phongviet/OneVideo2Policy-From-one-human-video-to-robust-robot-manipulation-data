@@ -86,6 +86,15 @@ simulation:
   mixed_policy_gaussian_success: [5, 5]
   mixed_policy_clean_median_xy_error_m: 0.00504113228933899
   mixed_policy_gaussian_median_xy_error_m: 0.0019833124958749757
+  final_training_samples: 4000
+  final_robustness_success:
+    nominal: [20, 20]
+    camera_jitter_2cm: [19, 20]
+    half_lighting: [20, 20]
+    gaussian_background: [20, 20]
+    combined: [18, 20]
+    aggregate: [97, 100]
+  final_aggregate_wilson_95: [0.9154806357094724, 0.9897454759759611]
   status: local_learned_policy_gate_passed
 
 gates:

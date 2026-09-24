@@ -90,7 +90,7 @@ physical robot success, or sim-to-real transfer.
 | RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; Panda foreground composite and 5/5 policy rollouts pass; metric camera registration and optimization pending |
 | Task-specific simulator | ✅ | Measured 3.83 cm ball and 9.91 cm bowl; oracle controller passes 3/3 randomized rollouts |
 | Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
-| Policy benchmark | ✅ | Mixed 2,000-frame waypoint model passes 5/5 clean and 5/5 Gaussian-composite rollouts |
+| Policy benchmark | ✅ | Final 4,000-frame waypoint model passes 97/100 across five clean and shifted conditions |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 
@@ -325,6 +325,11 @@ Gaussian scene. A balanced 2,000-frame model trained across clean/Gaussian appea
 and reset/demonstration robot poses passes paired 5/5 clean and 5/5 Gaussian-composite
 rollouts. This is an appearance augmentation; the HOI4D and robosuite cameras are not
 metrically registered.
+
+The final robustness model adds rendered ±2 cm camera translations and half-light
+frames. On one shared 20-episode seed it scores 20/20 nominal, 19/20 camera shift,
+20/20 half light, 20/20 Gaussian background, and 18/20 with all shifts combined.
+The aggregate is 97/100 with a 95% Wilson interval of 91.5–99.0%.
 
 ## Research gates
 

@@ -20,6 +20,8 @@ def main() -> None:
     parser.add_argument("--samples", default=500, type=int)
     parser.add_argument("--seed", default=2026, type=int)
     parser.add_argument("--gaussian-background-video", type=Path)
+    parser.add_argument("--camera-jitter-m", default=0.0, type=float)
+    parser.add_argument("--lighting-scale", default=1.0, type=float)
     parser.add_argument(
         "--robot-poses-data",
         type=Path,
@@ -54,6 +56,11 @@ def main() -> None:
     if args.robot_poses_data:
         with np.load(args.robot_poses_data, allow_pickle=False) as pose_data:
             robot_poses = pose_data["joint_positions"].copy()
+    camera_ids = [env.sim.model.camera_name2id(name) for name in ("agentview", "frontview")]
+    base_camera_positions = env.sim.model.cam_pos[camera_ids].copy()
+    base_light_diffuse = env.sim.model.light_diffuse.copy()
+    base_light_ambient = env.sim.model.light_ambient.copy()
+    rng = np.random.default_rng(args.seed + 1)
     foreground_fractions = []
     records: dict[str, list[np.ndarray | int]] = {
         key: []
@@ -71,6 +78,15 @@ def main() -> None:
     started = time.perf_counter()
     try:
         for index in range(args.samples):
+            env.sim.model.cam_pos[camera_ids] = base_camera_positions + rng.uniform(
+                -args.camera_jitter_m, args.camera_jitter_m, size=(2, 3)
+            )
+            env.sim.model.light_diffuse[:] = np.clip(
+                base_light_diffuse * args.lighting_scale, 0, 1
+            )
+            env.sim.model.light_ambient[:] = np.clip(
+                base_light_ambient * args.lighting_scale, 0, 1
+            )
             obs = env.reset()
             if robot_poses is not None:
                 pose = robot_poses[index * len(robot_poses) // args.samples]
@@ -122,6 +138,8 @@ def main() -> None:
         "robot_pose_diversity": "demonstration_joint_poses"
         if robot_poses is not None
         else "reset_pose",
+        "camera_jitter_m": args.camera_jitter_m,
+        "lighting_scale": args.lighting_scale,
     }
     (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))

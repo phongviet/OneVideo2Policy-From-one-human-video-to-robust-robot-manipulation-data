@@ -29,14 +29,16 @@ robot trajectory contains 350 synchronized dual-camera, state, and action sample
 The current composite is explicitly appearance-only because the real HOI4D camera
 and simulated robot camera do not share a metric registration.
 
+The final 4,000-frame robustness model also includes rendered ±2 cm camera jitter
+and half-light data. It passes 97/100 total rollouts: 20/20 nominal, 19/20 camera,
+20/20 lighting, 20/20 Gaussian appearance, and 18/20 combined.
+
 ## Work remaining
 
 1. **Metric Gaussian robot rendering:** optimize the fused seven-keyframe scene,
    remove transient hand pixels, and calibrate the simulated robot camera into the
    HOI4D scene. Appearance-only robot composition is complete.
-2. **Controlled evaluation:** measure success across object pose, camera, background,
-   and lighting shifts with confidence intervals and failure categories.
-3. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
+2. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
 ## Immediate command

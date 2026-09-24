@@ -207,3 +207,11 @@ four subsets and passes paired 5/5 clean and 5/5 Gaussian-composite rollouts. A
 350-sample full composited trajectory verifies image/state/action synchronization.
 This appearance result does not provide metric camera registration or robot-scene
 depth occlusion.
+
+The final robustness pass first measures the 2,000-frame model at only 11/20 under
+±2 cm camera shifts. Adding 1,000 truly rendered camera-shift frames raises the same
+paired condition to 17/20. The combined Gaussian, camera, and half-light condition
+still scores 10/20 because the training brightness floor was 0.7. Adding 1,000
+rendered half-light camera-shift frames produces the selected 4,000-frame model.
+That model scores 20/20 nominal, 19/20 camera, 20/20 half light, 20/20 Gaussian,
+and 18/20 combined. The 97/100 aggregate has a 95% Wilson interval of 91.5% to 99.0%.

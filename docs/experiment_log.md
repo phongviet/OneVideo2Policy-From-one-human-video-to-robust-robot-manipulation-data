@@ -218,3 +218,28 @@
   `results/policy/ball_localization_mixed_pose_2000/`,
   `results/evaluation/ball_localization_mixed_pose_{clean,gaussian}_random5/`, and
   `results/simulation/robosuite_ball_bowl_gaussian_demo1/` (Git-ignored).
+
+## Controlled visual robustness matrix
+
+- Date / commit: 2026-09-25 / pending
+- Initial selected model: 2,000 clean/Gaussian, reset/varied-pose frames.
+- Nominal result: 20/20, 3.2 mm median XY error.
+- Initial camera result: 11/20 under independent ±2 cm translations, 9.4 mm median
+  error. This isolates camera geometry as the main remaining simulated weakness.
+- Camera correction: add 500 clean and 500 Gaussian varied-pose frames rendered with
+  true ±2 cm camera translations. The 3,000-frame model improves the paired camera
+  result to 17/20 and scores 17/20 at half light and 20/20 on Gaussian backgrounds.
+- Initial combined result: 10/20 for Gaussian + camera + half light. The existing
+  photometric augmentation only scales brightness to 0.7, while the test uses 0.5.
+- Combined correction: add 500 clean and 500 Gaussian camera-jitter frames rendered
+  at half light. The final 4,000-frame model trains in 55.4 seconds.
+- Final shared-model matrix: nominal 20/20, camera 19/20, half light 20/20,
+  Gaussian background 20/20, combined 18/20. Aggregate 97/100; 95% Wilson interval
+  91.5–99.0%. Combined-only interval is 69.9–97.2%.
+- Gate decision: **Pass local controlled robustness.** All five point estimates meet
+  the frozen 80% gate. Metric Gaussian registration and physical robot validation
+  remain separate gates.
+- Artifacts: `results/simulation/ball_localization_robust_4000/`,
+  `results/policy/ball_localization_robust_4000/`, and
+  `results/evaluation/final_*_20/` plus `robustness_combined_augmented_20/`
+  (Git-ignored).

@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-25",
+  "checkpoint": "results/policy/ball_localization_robust_4000/visual_waypoint.pt",
+  "model_parameters": 2607715,
+  "training_samples": 4000,
+  "training_seconds": 55.35078040500048,
+  "seed": 6001,
+  "conditions": {
+    "nominal": {
+      "successes": 20,
+      "episodes": 20,
+      "median_initial_xy_error_m": 0.0024561350941851704,
+      "wilson_95": [0.8388748419471806, 1.0]
+    },
+    "camera_jitter_2cm": {
+      "successes": 19,
+      "episodes": 20,
+      "median_initial_xy_error_m": 0.004044785785714134,
+      "wilson_95": [0.763868806553258, 0.9911185511992047]
+    },
+    "half_lighting": {
+      "successes": 20,
+      "episodes": 20,
+      "median_initial_xy_error_m": 0.0018618840931907397,
+      "wilson_95": [0.8388748419471806, 1.0]
+    },
+    "gaussian_background": {
+      "successes": 20,
+      "episodes": 20,
+      "median_initial_xy_error_m": 0.0030961935759348212,
+      "wilson_95": [0.8388748419471806, 1.0]
+    },
+    "combined": {
+      "successes": 18,
+      "episodes": 20,
+      "median_initial_xy_error_m": 0.0037317802623988957,
+      "wilson_95": [0.6989663547715128, 0.9721335187862319]
+    }
+  },
+  "aggregate": {
+    "successes": 97,
+    "episodes": 100,
+    "wilson_95": [0.9154806357094724, 0.9897454759759611]
+  },
+  "claim_boundary": "local robosuite robustness; no physical robot claim"
+}
