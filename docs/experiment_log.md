@@ -338,3 +338,24 @@
   `docs/experiments/metric-registered-gaussian-demo.json`,
   `docs/assets/metric-gaussian-robot-registration.png`, and
   `docs/assets/metric-registered-gaussian-demo.png`.
+
+## Physical software preflight
+
+- Date / commit: 2026-09-25 / pending
+- Frozen checkpoint SHA-256:
+  `c1b5310537d85734ecef0d427a1a9a13f49d69eb617842802a044ecdcd228125`.
+- Inference smoke test: predicted the retained source position within 3.84 mm.
+- Motion dry run: 143 Cartesian commands completed without a stop, using 1 cm
+  maximum steps and 8 cm/s maximum speed over 17.36 seconds of command time.
+- Calibration fixture: both simulated cameras pass the numeric checks at 0.5 and
+  0.6 px reprojection RMSE. The preflight correctly refuses hardware readiness
+  because the fixture is simulation-only and has no operator, emergency-stop, or
+  physical robot verification.
+- Trial gate test: an empty physical template is rejected; a synthetic paired fixture
+  at 4/5 scripted and 4/5 learned successes passes with zero safety aborts and force
+  violations. This tests the validator and is not robot evidence.
+- Gate decision: **Pass for local deployment software.** Gate E remains open until a
+  real calibration and ten paired physical trials satisfy the frozen criteria.
+- Artifacts: `docs/experiments/physical-software-preflight.json`,
+  `docs/experiments/physical-gate-validator-fixture.json`, and
+  `docs/physical-evaluation-runbook.md`.

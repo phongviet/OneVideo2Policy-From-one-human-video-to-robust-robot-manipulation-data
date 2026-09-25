@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "gate": {
+    "trials_per_controller": 5,
+    "min_success_rate": 0.8,
+    "max_force_n": 15.0,
+    "zero_safety_aborts": true
+  },
+  "controllers": {
+    "scripted": {
+      "trials": 5,
+      "successes": 4,
+      "success_rate": 0.8,
+      "wilson_95": [
+        0.3755282641185388,
+        0.9637768390302125
+      ],
+      "safety_aborts": 0,
+      "force_violations": 0,
+      "passes": true
+    },
+    "learned": {
+      "trials": 5,
+      "successes": 4,
+      "success_rate": 0.8,
+      "wilson_95": [
+        0.3755282641185388,
+        0.9637768390302125
+      ],
+      "safety_aborts": 0,
+      "force_violations": 0,
+      "passes": true
+    }
+  },
+  "errors": []
+}

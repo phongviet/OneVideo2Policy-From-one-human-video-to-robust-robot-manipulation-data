@@ -8,7 +8,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-Ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
-[![Tests](https://img.shields.io/badge/tests-47%20passing-2EA44F)](#testing)
+[![Tests](https://img.shields.io/badge/tests-64%20passing-2EA44F)](#testing)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-early%20research%20prototype-orange)](#project-status)
 
@@ -81,7 +81,7 @@ physical robot success, or sim-to-real transfer.
 | SAM2 and CoTracker3 adapters | ✅ | CUDA run, overlay, and diagnostics complete |
 | Independent perception gate | ✅ | HOI4D GT gate passes with controlled reseeding |
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
-| Real-scene metric geometry | 🟡 | Planar xy scale anchored by the measured 3 cm source diameter; calibrated 3D still pending |
+| Real-scene metric geometry | ✅ | HOI4D RGB-D plus Record3D proportion reference; primitives retained for collision geometry |
 | HOI4D metric camera and ball trajectory | ✅ | 72 frames; 0.75 px camera reprojection error; 0.28 px Gaussian ball tracking error |
 | Local reconstruction alternatives | ✅ | TripoSR and Stable Fast 3D compared with a metric Record3D proportion reference |
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
@@ -91,6 +91,8 @@ physical robot success, or sim-to-real transfer.
 | Task-specific simulator | ✅ | Measured 3.83 cm ball and 9.91 cm bowl; oracle controller passes 3/3 randomized rollouts |
 | Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
 | Policy benchmark | ✅ | Final 4,000-frame waypoint model passes 97/100 across five clean and shifted conditions |
+| Physical deployment preflight | ✅ | Calibration validator, safety supervisor, frozen-checkpoint smoke test, artifact hashes, and paired result gate |
+| Physical robot evaluation | ⬜ | Five scripted plus five learned trials; see [`docs/physical-evaluation-runbook.md`](docs/physical-evaluation-runbook.md) |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned
 

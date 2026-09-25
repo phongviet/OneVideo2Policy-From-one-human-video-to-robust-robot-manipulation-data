@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "software_preflight_pass",
+  "hardware_ready": false,
+  "calibration": {
+    "valid": true,
+    "errors": [],
+    "camera_diagnostics": [
+      {
+        "name": "agentview",
+        "reprojection_rmse_px": 0.5,
+        "rotation_orthogonality_error": 0.0,
+        "rotation_determinant": 1.0,
+        "errors": []
+      },
+      {
+        "name": "frontview",
+        "reprojection_rmse_px": 0.6,
+        "rotation_orthogonality_error": 0.0,
+        "rotation_determinant": 1.0,
+        "errors": []
+      }
+    ],
+    "table_tilt_deg": 0.0,
+    "simulation_only": true,
+    "operator_approved": false,
+    "emergency_stop_verified": false
+  },
+  "checkpoint": {
+    "sha256": "c1b5310537d85734ecef0d427a1a9a13f49d69eb617842802a044ecdcd228125",
+    "smoke_prediction_m": [
+      0.06933701038360596,
+      -0.20204496383666992,
+      0.8191605806350708
+    ],
+    "smoke_expected_m": [
+      0.07315005124206159,
+      -0.2025296591115801,
+      0.8191606110498586
+    ],
+    "smoke_error_m": 0.0038437234680316645
+  },
+  "dry_run": {
+    "commands": 143,
+    "final_position_m": [
+      0.1,
+      -0.20000000000000004,
+      1.02
+    ],
+    "elapsed_command_time_s": 17.360115293503515,
+    "stopped": false,
+    "max_step_m": 0.01,
+    "max_speed_m_s": 0.08
+  },
+  "arming_blockers": [
+    "replace simulation fixture with measured physical calibration",
+    "operator approval is false",
+    "emergency stop is not verified",
+    "physical robot serial is absent"
+  ]
+}

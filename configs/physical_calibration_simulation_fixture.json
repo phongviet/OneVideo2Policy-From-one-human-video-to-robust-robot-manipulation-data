@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "simulation_only": true,
+  "robot": "Panda",
+  "robot_serial": "SIMULATION-FIXTURE",
+  "operator_approved": false,
+  "emergency_stop_verified": false,
+  "workspace_bounds_m": [
+    [-0.1, 0.2],
+    [-0.35, 0.25],
+    [0.79, 1.08]
+  ],
+  "table_normal_robot": [0.0, 0.0, 1.0],
+  "table_height_robot_m": 0.8,
+  "cameras": [
+    {
+      "name": "agentview",
+      "resolution": [84, 84],
+      "intrinsics": [[80.0, 0.0, 41.5], [0.0, 80.0, 41.5], [0.0, 0.0, 1.0]],
+      "camera_to_robot": [[1.0, 0.0, 0.0, 0.5], [0.0, 1.0, 0.0, -0.3], [0.0, 0.0, 1.0, 1.4], [0.0, 0.0, 0.0, 1.0]],
+      "reprojection_rmse_px": 0.5
+    },
+    {
+      "name": "frontview",
+      "resolution": [84, 84],
+      "intrinsics": [[80.0, 0.0, 41.5], [0.0, 80.0, 41.5], [0.0, 0.0, 1.0]],
+      "camera_to_robot": [[0.0, -1.0, 0.0, 0.6], [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.2], [0.0, 0.0, 0.0, 1.0]],
+      "reprojection_rmse_px": 0.6
+    }
+  ]
+}

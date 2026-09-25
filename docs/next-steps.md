@@ -36,8 +36,10 @@ and half-light data. It passes 97/100 total rollouts: 20/20 nominal, 19/20 camer
 
 ## Work remaining
 
-1. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
-   the learned policy with the scripted controller.
+1. **Physical run:** measure the two camera-to-robot calibrations, connect the local
+   `RobotInterface` to the installed robot SDK, and collect five scripted plus five
+   learned-policy trials. Each controller must pass at least 4/5 with no safety abort
+   or force violation.
 
 The correspondence-sensitive rotation ablation is complete on the asymmetric
 `EM1-0406` action camera: 0.70 px median held-out error versus 34.89 px without
@@ -46,20 +48,26 @@ comparison: neither TripoSR nor Stable Fast 3D passes the 15% proportion gate, s
 metric RGB-D geometry remains selected. The remaining item requires external evidence
 absent from this workspace. Metric Gaussian insertion is now implemented from the
 shared table normal, bowl center, and source direction, including a 353-sample
-depth-ordered dual-camera demonstration. Physical validation needs access to the
-robot, camera calibration, workspace
-measurements, and an operator-approved safety envelope. The existing video cannot
-recover those quantities by computation alone.
+depth-ordered dual-camera demonstration. The local physical software preflight now
+passes: frozen-checkpoint smoke inference is within 3.84 mm, and 143 Cartesian
+commands complete under 1 cm step and 8 cm/s limits. Hardware arming remains disabled
+by the simulation fixture. Physical validation needs access to the robot, measured
+camera calibration, workspace measurements, and an operator-approved safety envelope.
+The existing video cannot recover those quantities by computation alone. See the
+[`physical evaluation runbook`](physical-evaluation-runbook.md).
 
-## Immediate command
+## Immediate local command
 
-Reproduce the measured-task learned policy gate:
+Reproduce the hardware-neutral software preflight:
 
 ```bash
-MUJOCO_GL=egl PYTHONPATH=scripts:src .venv/bin/python \
-  scripts/evaluate_ball_bowl_waypoint.py \
+PYTHONPATH=src .venv/bin/python scripts/prepare_physical_evaluation.py \
+  --calibration configs/physical_calibration_simulation_fixture.json \
+  --safety configs/physical_safety.yaml \
   --checkpoint results/policy/ball_localization_robust_4000/visual_waypoint.pt \
-  --output results/evaluation/final_nominal_20 --episodes 20
+  --smoke-data results/simulation/ball_localization_robust_4000/demonstrations.npz \
+  --output results/deployment/physical_preflight_sim \
+  --allow-simulation-fixture
 ```
 
 The detailed measurements are in

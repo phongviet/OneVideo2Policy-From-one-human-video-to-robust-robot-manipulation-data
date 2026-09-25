@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "robot_serial": "REPLACE_WITH_ROBOT_SERIAL",
+  "calibration_sha256": "REPLACE_WITH_CALIBRATION_SHA256",
+  "checkpoint_sha256": "c1b5310537d85734ecef0d427a1a9a13f49d69eb617842802a044ecdcd228125",
+  "trials": []
+}
