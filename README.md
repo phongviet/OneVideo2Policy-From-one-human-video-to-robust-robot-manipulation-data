@@ -40,9 +40,9 @@ measurable reproduction of its central data-generation claim.
 | **Task** | Tabletop pick, transfer, and place with rigid objects |
 | **Representation** | Per-object 3D Gaussian representation and SE(3) trajectory |
 | **Synthetic output** | Robot demonstrations with geometric and appearance variation |
-| **Policy** | Diffusion Policy using front/side RGB and robot joint state |
-| **Main comparison** | One demo vs. 2D augmentation vs. 3D geometry vs. full 3DGS |
-| **Current focus** | Independent perception annotation and gate evaluation |
+| **Policy** | 2.61-million-parameter dual-view visual waypoint model |
+| **Main comparison** | One demo vs. clean 2D data vs. exact geometry vs. Gaussian and robust data |
+| **Current focus** | Physical robot calibration and validation |
 
 ## System overview
 
@@ -54,23 +54,23 @@ flowchart LR
     D --> E[Extract relative<br/>object skill]
     E --> F[Synthesize robot<br/>trajectory]
     F --> G[Render diverse<br/>3DGS demonstrations]
-    G --> H[Train Diffusion<br/>Policy]
+    G --> H[Train visual waypoint<br/>policy]
     H --> I[Evaluate controlled<br/>distribution shifts]
+    I --> J[Validate on a<br/>physical robot]
 
     classDef active fill:#e8f5ff,stroke:#1677a8,stroke-width:2px,color:#102a43;
     classDef future fill:#f6f8fa,stroke:#8c959f,stroke-dasharray:5 5,color:#57606a;
-    class A,B,C,D active;
-    class E,F,G,H,I future;
+    class A,B,C,D,E,F,G,H,I active;
+    class J future;
 ```
 
-Solid nodes are the current milestone; dashed nodes are intentionally gated future
-work. Heavy model integrations are added only after their upstream measurements are
-stable.
+Solid nodes are complete locally; the dashed physical-robot node requires external
+hardware, calibration, and safety validation.
 
 ## Project status
 
 The repository now includes a runnable local end-to-end systems baseline and a
-local model assisted run contract. It does **not** yet claim validated 6D motion,
+local model assisted run contract. It does **not** yet claim full SE(3) rotation accuracy,
 physical robot success, or sim-to-real transfer.
 
 | Component | Status | Evidence / next deliverable |
@@ -83,11 +83,11 @@ physical robot success, or sim-to-real transfer.
 | Reconstruction preparation | ✅ | Native-resolution RGBA crop export verified |
 | Real-scene metric geometry | 🟡 | Planar xy scale anchored by the measured 3 cm source diameter; calibrated 3D still pending |
 | HOI4D metric camera and ball trajectory | ✅ | 72 frames; 0.75 px camera reprojection error; 0.28 px Gaussian ball tracking error |
-| TripoSR and Depth Anything V2 Small | ✅ | Both run on 6 GB; HOI4D mesh and sensor-depth diagnostics recorded |
+| Local reconstruction alternatives | ✅ | TripoSR and Stable Fast 3D compared with a metric Record3D proportion reference |
 | Local end-to-end baseline | ✅ | 250 demos; 81/100 held-out rollouts with calibrated HOI4D geometry |
 | Local model bundle | ✅ | Hashed TripoSR/depth inputs and 4–6 GB VRAM contract |
 | Rotation tracking ablation | ✅ | 13-frame asymmetric-object test; held-out error falls 34.89 px → 0.70 px |
-| RGB-D Gaussian scene | 🟡 | 7,007 fused Gaussians; Panda foreground composite and 5/5 policy rollouts pass; metric camera registration and optimization pending |
+| RGB-D Gaussian scene | ✅ | 7,007 fused Gaussians; tuned held-out views plus a 353-sample metric registered dual-camera robot demo |
 | Task-specific simulator | ✅ | Measured 3.83 cm ball and 9.91 cm bowl; oracle controller passes 3/3 randomized rollouts |
 | Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
 | Policy benchmark | ✅ | Final 4,000-frame waypoint model passes 97/100 across five clean and shifted conditions |
@@ -259,7 +259,7 @@ onevideo2policy/
 │   ├── pose_tracking/        # Tracking losses and temporal metrics
 │   ├── skill/                # Relative motion and Place phase extraction
 │   ├── generation/           # Synthetic data engine milestone
-│   ├── policy/               # Diffusion Policy milestone
+│   ├── policy/               # Compact visual waypoint policy and diagnostics
 │   └── evaluation/           # Dataset and robustness metrics
 └── tests/                    # Fast, model-free unit tests
 ```

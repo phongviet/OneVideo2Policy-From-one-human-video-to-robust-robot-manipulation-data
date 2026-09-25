@@ -31,6 +31,7 @@ def main() -> None:
     parser.add_argument("--mesh-resolution", type=int, default=256)
     parser.add_argument("--chunk-size", type=int, default=4096)
     parser.add_argument("--skip-renders", action="store_true")
+    parser.add_argument("--names", nargs="+", default=["source", "target"])
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -44,7 +45,7 @@ def main() -> None:
     load_seconds = time.perf_counter() - start
     load_peak_mb = torch.cuda.max_memory_allocated() / 2**20 if device == "cuda" else None
     objects = {}
-    for name in ("source", "target"):
+    for name in args.names:
         image_path = args.inputs / f"{name}_gray.png"
         image = Image.open(image_path).convert("RGB")
         folder = args.output / name

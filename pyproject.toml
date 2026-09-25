@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-video = ["opencv-python>=4.9", "lzfse>=0.4.2"]
+video = ["opencv-python>=4.9", "lzfse>=0.4.2", "matplotlib>=3.8"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]

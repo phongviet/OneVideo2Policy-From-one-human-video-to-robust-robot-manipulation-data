@@ -56,7 +56,12 @@ generation:
   appearance_composite: mujoco_task_foreground_over_gaussian_scene
   appearance_composite_camera_alignment: unregistered
   synchronized_composite_samples: 350
-  status: multiview_metric_scene_and_robot_appearance_composite_rendered
+  metric_registration: table_normal_bowl_center_and_source_direction
+  metric_registered_camera_frames: [24, 36]
+  metric_registered_samples: 353
+  metric_registration_table_residual_m: 0.002669788167737038
+  metric_registration_bowl_reprojection_error_px: 6.260377891300712
+  status: multiview_metric_scene_and_registered_robot_demo_rendered
 
 trajectory:
   source_model: known_radius_sphere

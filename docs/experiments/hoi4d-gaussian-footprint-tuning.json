@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "method": "global Gaussian scale and opacity held-out sweep",
+  "selection_frame": 30,
+  "test_frames": [
+    42,
+    54,
+    66
+  ],
+  "fixed_evaluation_support": "baseline alpha > 0.5, excluding source and target masks",
+  "selected": {
+    "scale_multiplier": 1.1,
+    "opacity": 1.0
+  },
+  "evaluations": [
+    {
+      "frame_id": 30,
+      "role": "selection",
+      "evaluated_coverage": 0.66984375,
+      "baseline_psnr_db": 20.677612785957994,
+      "optimized_psnr_db": 21.508446976327257,
+      "improvement_db": 0.8308341903692629
+    },
+    {
+      "frame_id": 42,
+      "role": "test",
+      "evaluated_coverage": 0.7579513888888889,
+      "baseline_psnr_db": 19.63628138665242,
+      "optimized_psnr_db": 19.986029607426445,
+      "improvement_db": 0.3497482207740248
+    },
+    {
+      "frame_id": 54,
+      "role": "test",
+      "evaluated_coverage": 0.7324522569444445,
+      "baseline_psnr_db": 20.604177045986646,
+      "optimized_psnr_db": 21.041357346653037,
+      "improvement_db": 0.437180300666391
+    },
+    {
+      "frame_id": 66,
+      "role": "test",
+      "evaluated_coverage": 0.7395529513888889,
+      "baseline_psnr_db": 20.837281762401805,
+      "optimized_psnr_db": 21.529018413601527,
+      "improvement_db": 0.6917366511997223
+    }
+  ],
+  "mean_test_improvement_db": 0.49288839088004605,
+  "grid": [
+    {
+      "scale_multiplier": 0.6,
+      "opacity": 0.4,
+      "selection_psnr_db": 8.240889274005552
+    },
+    {
+      "scale_multiplier": 0.6,
+      "opacity": 0.55,
+      "selection_psnr_db": 9.624970487633547
+    },
+    {
+      "scale_multiplier": 0.6,
+      "opacity": 0.7,
+      "selection_psnr_db": 10.96790316608153
+    },
+    {
+      "scale_multiplier": 0.6,
+      "opacity": 0.85,
+      "selection_psnr_db": 12.236726370362497
+    },
+    {
+      "scale_multiplier": 0.6,
+      "opacity": 0.95,
+      "selection_psnr_db": 13.020296576952703
+    },
+    {
+      "scale_multiplier": 0.6,
+      "opacity": 1.0,
+      "selection_psnr_db": 13.387802846589738
+    },
+    {
+      "scale_multiplier": 0.75,
+      "opacity": 0.4,
+      "selection_psnr_db": 10.17148301155516
+    },
+    {
+      "scale_multiplier": 0.75,
+      "opacity": 0.55,
+      "selection_psnr_db": 12.202680384149438
+    },
+    {
+      "scale_multiplier": 0.75,
+      "opacity": 0.7,
+      "selection_psnr_db": 14.110862915420643
+    },
+    {
+      "scale_multiplier": 0.75,
+      "opacity": 0.85,
+      "selection_psnr_db": 15.82776606777593
+    },
+    {
+      "scale_multiplier": 0.75,
+      "opacity": 0.95,
+      "selection_psnr_db": 16.82696756653978
+    },
+    {
+      "scale_multiplier": 0.75,
+      "opacity": 1.0,
+      "selection_psnr_db": 17.274067788897504
+    },
+    {
+      "scale_multiplier": 0.9,
+      "opacity": 0.4,
+      "selection_psnr_db": 12.310396362617508
+    },
+    {
+      "scale_multiplier": 0.9,
+      "opacity": 0.55,
+      "selection_psnr_db": 14.89211966108973
+    },
+    {
+      "scale_multiplier": 0.9,
+      "opacity": 0.7,
+      "selection_psnr_db": 17.128651826336785
+    },
+    {
+      "scale_multiplier": 0.9,
+      "opacity": 0.85,
+      "selection_psnr_db": 18.913003955093853
+    },
+    {
+      "scale_multiplier": 0.9,
+      "opacity": 0.95,
+      "selection_psnr_db": 19.814539024765235
+    },
+    {
+      "scale_multiplier": 0.9,
+      "opacity": 1.0,
+      "selection_psnr_db": 20.17636360447085
+    },
+    {
+      "scale_multiplier": 1.0,
+      "opacity": 0.4,
+      "selection_psnr_db": 13.789114351839205
+    },
+    {
+      "scale_multiplier": 1.0,
+      "opacity": 0.55,
+      "selection_psnr_db": 16.5981171640509
+    },
+    {
+      "scale_multiplier": 1.0,
+      "opacity": 0.7,
+      "selection_psnr_db": 18.804578011416094
+    },
+    {
+      "scale_multiplier": 1.0,
+      "opacity": 0.85,
+      "selection_psnr_db": 20.32228757464423
+    },
+    {
+      "scale_multiplier": 1.0,
+      "opacity": 0.95,
+      "selection_psnr_db": 20.96394752811721
+    },
+    {
+      "scale_multiplier": 1.0,
+      "opacity": 1.0,
+      "selection_psnr_db": 21.186912092128864
+    },
+    {
+      "scale_multiplier": 1.1,
+      "opacity": 0.4,
+      "selection_psnr_db": 15.241975692169765
+    },
+    {
+      "scale_multiplier": 1.1,
+      "opacity": 0.55,
+      "selection_psnr_db": 18.094561584367288
+    },
+    {
+      "scale_multiplier": 1.1,
+      "opacity": 0.7,
+      "selection_psnr_db": 20.025140859287912
+    },
+    {
+      "scale_multiplier": 1.1,
+      "opacity": 0.85,
+      "selection_psnr_db": 21.087276724276084
+    },
+    {
+      "scale_multiplier": 1.1,
+      "opacity": 0.95,
+      "selection_psnr_db": 21.422634274289226
+    },
+    {
+      "scale_multiplier": 1.1,
+      "opacity": 1.0,
+      "selection_psnr_db": 21.508446976327257
+    },
+    {
+      "scale_multiplier": 1.25,
+      "opacity": 0.4,
+      "selection_psnr_db": 17.220084181285088
+    },
+    {
+      "scale_multiplier": 1.25,
+      "opacity": 0.55,
+      "selection_psnr_db": 19.719036010897227
+    },
+    {
+      "scale_multiplier": 1.25,
+      "opacity": 0.7,
+      "selection_psnr_db": 20.922180650691388
+    },
+    {
+      "scale_multiplier": 1.25,
+      "opacity": 0.85,
+      "selection_psnr_db": 21.29880914891574
+    },
+    {
+      "scale_multiplier": 1.25,
+      "opacity": 0.95,
+      "selection_psnr_db": 21.305983547314746
+    },
+    {
+      "scale_multiplier": 1.25,
+      "opacity": 1.0,
+      "selection_psnr_db": 21.268804023509126
+    },
+    {
+      "scale_multiplier": 1.5,
+      "opacity": 0.4,
+      "selection_psnr_db": 19.458259576828894
+    },
+    {
+      "scale_multiplier": 1.5,
+      "opacity": 0.55,
+      "selection_psnr_db": 20.6578588359202
+    },
+    {
+      "scale_multiplier": 1.5,
+      "opacity": 0.7,
+      "selection_psnr_db": 20.807590368336733
+    },
+    {
+      "scale_multiplier": 1.5,
+      "opacity": 0.85,
+      "selection_psnr_db": 20.625598417735482
+    },
+    {
+      "scale_multiplier": 1.5,
+      "opacity": 0.95,
+      "selection_psnr_db": 20.453625683259887
+    },
+    {
+      "scale_multiplier": 1.5,
+      "opacity": 1.0,
+      "selection_psnr_db": 20.363939479846795
+    }
+  ],
+  "limitations": [
+    "The sweep tunes global footprint parameters, not independent per-Gaussian means.",
+    "Camera poses and RGB-D initialized colors remain fixed.",
+    "Robot camera registration requires cross-scene correspondences and is not inferred here."
+  ]
+}

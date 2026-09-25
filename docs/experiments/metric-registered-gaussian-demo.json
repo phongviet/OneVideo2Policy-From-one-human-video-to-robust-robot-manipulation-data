@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "method": "dual-view metric task-anchor registration and depth compositing",
+  "samples": 353,
+  "episodes": 1,
+  "camera_frames": [
+    24,
+    36
+  ],
+  "render_resolution": [
+    320,
+    180
+  ],
+  "dataset_resolution": [
+    84,
+    84
+  ],
+  "sim_to_hoi4d": [
+    [
+      0.6077915213865177,
+      -0.7940962744438618,
+      -0.0007572615407669798,
+      0.45687748854923693
+    ],
+    [
+      -0.551973517549281,
+      -0.4217877880955751,
+      -0.719319329462038,
+      0.9886608853511573
+    ],
+    [
+      0.5708893959909712,
+      0.43761417793282364,
+      -0.6946791553064213,
+      1.3775355412439372
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "table_plane": {
+    "candidate_points": 3387,
+    "inliers": 2100,
+    "inlier_ratio": 0.6200177147918512,
+    "median_inlier_residual_m": 0.002669788167737038,
+    "normal_world": [
+      -0.0007572615407669797,
+      -0.7193193294620379,
+      -0.6946791553064212
+    ],
+    "center_world_m": [
+      0.4142199411686486,
+      0.4016442781417636,
+      0.8027862908147446
+    ]
+  },
+  "per_view": [
+    {
+      "name": "agentview",
+      "foreground_pixels": 4214963,
+      "visible_pixels": 4189847,
+      "occluded_pixels": 25116,
+      "visible_fraction": 0.9940412288316647
+    },
+    {
+      "name": "frontview",
+      "foreground_pixels": 3747696,
+      "visible_pixels": 3722651,
+      "occluded_pixels": 25045,
+      "visible_fraction": 0.9933172274378712
+    }
+  ],
+  "synchronization": {
+    "states_actions_copied_without_resampling": true,
+    "episode_end": 353,
+    "image_count_matches_actions": true
+  },
+  "limitations": [
+    "Sparse Gaussian holes and missing contact shadows remain visible.",
+    "This replays one successful trajectory rather than evaluating a physical robot."
+  ]
+}

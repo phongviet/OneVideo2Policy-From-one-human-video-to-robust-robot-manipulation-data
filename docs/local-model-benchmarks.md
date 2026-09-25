@@ -95,6 +95,22 @@ TripoSR as the practical local default. Neither model provides measured
 collision geometry. Texture baking through the CPU bridge also means these
 times are for this local adaptation, not the upstream CUDA implementation.
 
+#### Calibrated asymmetric-object proportion check
+
+The retained `EM1-0406` Record3D frame supplies a larger 282×282 action-camera crop
+and 609 aligned metric-depth samples. Its robust visible-surface box is
+81.9 × 60.6 × 35.4 mm. After aligning only the longest dimension, TripoSR-128 gives
+81.9 × 69.7 × 14.5 mm and Stable Fast 3D gives 81.9 × 68.3 × 23.7 mm. Their maximum
+secondary-dimension errors are 58.9% and 33.1%, so neither passes the frozen 15%
+gate. Stable Fast 3D is closer but remains non-watertight and peaks at 6,169 MiB;
+TripoSR remains the practical 1,867 MiB watertight visual proposal. Metric RGB-D or
+fitted primitives remain mandatory for physics.
+
+The reproducible preparation and evaluator are
+`scripts/prepare_record3d_reconstruction.py` and
+`scripts/evaluate_reconstruction_proportions.py`. The measured comparison is in
+[`em1-0406-reconstruction-proportions.json`](experiments/em1-0406-reconstruction-proportions.json).
+
 ### Simulator and policy
 
 Robosuite PickPlace with Panda and EGL renders 84×84 observations at 16.6
@@ -185,7 +201,7 @@ rendered comparisons, and meshes are under
 `results/model_benchmarks/real_place_img_6256/` (ignored by Git). Upstream
 repositories and isolated environments are under
 `experiments/runs/model_benchmarks/` (ignored by Git). The current local
-pipeline's independent test suite passes (58 tests).
+pipeline's independent test suite passes (60 tests).
 
 The HOI4D task now has metric camera odometry, target-relative ball translation,
 multiview Gaussian fusion, an animated Gaussian object render, and measured
@@ -195,8 +211,8 @@ model in 7.5 seconds. Its 100-frame held-out median XY error is 5.7 mm, and it p
 5/5 randomized closed-loop rollouts at 4.9 mm median initial XY error. The exact
 position controller passes 3/3, confirming the physics and control ceiling. The
 controlled visual-shift evaluation and asymmetric-object rotation ablation are
-complete. The remaining local task work is metric Gaussian camera registration.
-The separate real phone clip still needs its
+complete. Metric Gaussian camera registration and a synchronized dual-camera replay
+are also complete. The separate real phone clip still needs its
 remaining physical dimensions and camera calibration for metric use.
 
 The follow-up Gaussian appearance experiment exposes a strong domain tradeoff:
@@ -216,3 +232,17 @@ still scores 10/20 because the training brightness floor was 0.7. Adding 1,000
 rendered half-light camera-shift frames produces the selected 4,000-frame model.
 That model scores 20/20 nominal, 19/20 camera, 20/20 half light, 20/20 Gaussian,
 and 18/20 combined. The 97/100 aggregate has a 95% Wilson interval of 91.5% to 99.0%.
+
+The explicit 7,007-Gaussian renderer also supports a local held-out parameter sweep.
+A 1.1× standard-deviation scale and opacity 1.0 improve PSNR by 0.83 dB on the
+selection view and by a mean 0.49 dB on three separate test views. This higher-PSNR
+render is not the best policy augmentation: the selected 4,000-frame checkpoint
+scores 18/20 on it, and a 4,500-frame adapted model scores 17/20, versus 20/20 for
+the selected checkpoint on the original Gaussian render. The original render remains
+the policy configuration; the tuned scene is used for geometry rendering.
+
+The geometry branch now registers robosuite to the HOI4D world using the table
+normal, placed-bowl center, and source direction. Its table fit has 2.7 mm median
+residual, and a full replay produces 353 synchronized dual-camera samples with metric
+depth ordering. This closes the local registration and data-contract work while the
+original appearance composite remains the selected policy augmentation.

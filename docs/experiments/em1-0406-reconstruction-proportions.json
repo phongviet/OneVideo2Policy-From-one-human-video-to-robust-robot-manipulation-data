@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "experiment": "EM1-0406 action-camera reconstruction proportion gate",
+  "metric_reference": "results/model_benchmarks/em1-0406/inputs/metric_reference.json",
+  "metric_reference_sha256": "fa20c283f917136d651f423c099bfbee3ba8e085338def5d3ca25f05132f4e65",
+  "metric_extents_mm_descending": [
+    81.93386974129669,
+    60.60262132464844,
+    35.35357755663791
+  ],
+  "metric_extent_ratios_descending": [
+    1.0,
+    0.7396528629246865,
+    0.43148917130687936
+  ],
+  "alignment": "isotropic scale chosen to match the largest metric extent",
+  "acceptance_gate": "each secondary scale-aligned extent within 15% of RGB-D reference",
+  "models": [
+    {
+      "model": "TripoSR-128",
+      "report": "results/model_benchmarks/em1-0406/triposr/resolution128/report.json",
+      "report_sha256": "d1b15c9ddc68fe9778cf7eee7e3b4959265c4334bcb9151c9fdac9a67e19b246",
+      "watertight": true,
+      "peak_gpu_allocated_mb": 1866.54150390625,
+      "mesh_extents_unscaled_descending": [
+        0.9979018270969391,
+        0.8493333756923676,
+        0.17699062824249268
+      ],
+      "scale_aligned_extents_mm_descending": [
+        81.93386974129669,
+        69.73548728070837,
+        14.532017765753567
+      ],
+      "extent_ratios_descending": [
+        1.0,
+        0.851119170873971,
+        0.17736276599210926
+      ],
+      "absolute_dimension_error_mm": [
+        0.0,
+        9.13286595605993,
+        20.821559790884343
+      ],
+      "secondary_ratio_mae": 0.18279635663202734,
+      "max_secondary_relative_dimension_error": 0.5889519881694387,
+      "passes_15_percent_secondary_extent_gate": false
+    },
+    {
+      "model": "Stable Fast 3D",
+      "report": "results/model_benchmarks/em1-0406/sf3d/texture128/report.json",
+      "report_sha256": "decc440b4ea734a7576e76b7d6a4c88dc49beb537972de6688b192a7ba8010db",
+      "watertight": false,
+      "peak_gpu_allocated_mb": 6168.98486328125,
+      "mesh_extents_unscaled_descending": [
+        0.8676208257675171,
+        0.7231343388557434,
+        0.2504616975784302
+      ],
+      "scale_aligned_extents_mm_descending": [
+        81.9338697412967,
+        68.28927218621337,
+        23.652378429738057
+      ],
+      "extent_ratios_descending": [
+        1.0,
+        0.8334681664839504,
+        0.28867644729120706
+      ],
+      "absolute_dimension_error_mm": [
+        1.4210854715202004e-14,
+        7.686650861564928,
+        11.701199126899851
+      ],
+      "secondary_ratio_mae": 0.11831401378746811,
+      "max_secondary_relative_dimension_error": 0.33097638020237247,
+      "passes_15_percent_secondary_extent_gate": false
+    }
+  ],
+  "decision": {
+    "learned_mesh_gate_passed": false,
+    "visual_mesh": "TripoSR-128 for local speed and watertight output",
+    "metric_geometry": "Record3D RGB-D point cloud or fitted primitive",
+    "reason": "Stable Fast 3D is proportionally closer but non-watertight and uses 6.17 GiB; neither learned mesh passes the metric extent gate."
+  },
+  "limitations": [
+    "Extents are a robust PCA bounding box of visible RGB-D surfaces.",
+    "The depth camera has 192x256 resolution, so this is not caliper-grade metrology.",
+    "The mask threshold and ROI are fixed for the audited EM1-0406 frame 0."
+  ]
+}

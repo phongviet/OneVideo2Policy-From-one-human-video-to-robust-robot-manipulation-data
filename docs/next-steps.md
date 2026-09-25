@@ -26,8 +26,9 @@ error is 4.9 mm.
 Gaussian appearance composition is also integrated. A mixed 2,000-frame locator
 passes 5/5 paired clean and 5/5 Gaussian-composite rollouts. One complete composited
 robot trajectory contains 350 synchronized dual-camera, state, and action samples.
-The current composite is explicitly appearance-only because the real HOI4D camera
-and simulated robot camera do not share a metric registration.
+That policy augmentation remains appearance-only. A separate semantic-anchor path now
+registers robosuite to HOI4D metric cameras and produces a 353-sample dual-camera
+demonstration with Gaussian/simulator depth ordering.
 
 The final 4,000-frame robustness model also includes rendered ±2 cm camera jitter
 and half-light data. It passes 97/100 total rollouts: 20/20 nominal, 19/20 camera,
@@ -35,22 +36,18 @@ and half-light data. It passes 97/100 total rollouts: 20/20 nominal, 19/20 camer
 
 ## Work remaining
 
-1. **Measured reconstruction gate:** obtain measured dimensions for a nonsymmetric
-   object and compare them with a close multiview reconstruction. The retained
-   Record3D sequence supplies calibrated RGB-D views but no authoritative object
-   dimensions.
-2. **Metric Gaussian robot rendering:** optimize the fused seven-keyframe scene,
-   remove transient hand pixels, and calibrate the simulated robot camera into the
-   HOI4D scene. Appearance-only robot composition is complete.
-3. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
+1. **Physical run:** calibrate a real robot and camera, add safety checks, then compare
    the learned policy with the scripted controller.
 
 The correspondence-sensitive rotation ablation is complete on the asymmetric
 `EM1-0406` action camera: 0.70 px median held-out error versus 34.89 px without
-tracked correspondences. The remaining items require external evidence absent from
-this workspace. Metric
-robot insertion needs shared robot/HOI4D camera correspondences or a new calibrated
-capture. Physical validation needs access to the robot, camera calibration, workspace
+tracked correspondences. Its calibrated depth also closes the reconstruction
+comparison: neither TripoSR nor Stable Fast 3D passes the 15% proportion gate, so
+metric RGB-D geometry remains selected. The remaining item requires external evidence
+absent from this workspace. Metric Gaussian insertion is now implemented from the
+shared table normal, bowl center, and source direction, including a 353-sample
+depth-ordered dual-camera demonstration. Physical validation needs access to the
+robot, camera calibration, workspace
 measurements, and an operator-approved safety envelope. The existing video cannot
 recover those quantities by computation alone.
 
@@ -59,10 +56,10 @@ recover those quantities by computation alone.
 Reproduce the measured-task learned policy gate:
 
 ```bash
-MUJOCO_GL=egl PYTHONPATH=scripts .venv/bin/python \
+MUJOCO_GL=egl PYTHONPATH=scripts:src .venv/bin/python \
   scripts/evaluate_ball_bowl_waypoint.py \
-  --checkpoint results/policy/ball_localization_500/visual_waypoint.pt \
-  --output results/evaluation/ball_localization_500_random5 --episodes 5
+  --checkpoint results/policy/ball_localization_robust_4000/visual_waypoint.pt \
+  --output results/evaluation/final_nominal_20 --episodes 20
 ```
 
 The detailed measurements are in

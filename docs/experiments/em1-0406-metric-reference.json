@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "source_archive": "data/raw/sources/EM1-0406.r3d",
+  "source_archive_sha256": "f7121089e77fb01dbb93df8c5a73ace092f45b6eb65f8a8179dada62bcbade80",
+  "frame_id": 0,
+  "method": "aligned metric Record3D depth under audited dark-object mask",
+  "roi_xyxy": [
+    520,
+    1300,
+    850,
+    1600
+  ],
+  "gray_threshold": 105,
+  "depth_samples": 609,
+  "robust_extent_percentiles": [
+    2,
+    98
+  ],
+  "metric_extents_m_descending": [
+    0.08193386974129668,
+    0.060602621324648435,
+    0.035353577556637907
+  ],
+  "metric_extent_ratios_descending": [
+    1.0,
+    0.7396528629246865,
+    0.4314891713068794
+  ],
+  "depth_m_percentiles": [
+    0.548828125,
+    0.55029296875,
+    0.56396484375,
+    0.58935546875,
+    0.60009765625
+  ],
+  "intrinsics_depth": [
+    [
+      195.74015299479166,
+      0.0,
+      94.6450439453125
+    ],
+    [
+      0.0,
+      195.74015299479166,
+      129.1432373046875
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "inputs": {
+    "rgba": {
+      "path": "action_camera_rgba.png",
+      "sha256": "7ea282dd9b0368ee615840ac75bd7e5c09824d1a8b27cc214bb5efd4451bf502"
+    },
+    "gray": {
+      "path": "action_camera_gray.png",
+      "sha256": "191c494798418589a07bafb298c043a1760cc9e5fb965595c33620db00fb4aee"
+    }
+  },
+  "limitations": [
+    "Extents are a robust PCA bounding box of visible RGB-D surfaces.",
+    "The depth camera has 192x256 resolution, so this is not caliper-grade metrology.",
+    "The mask threshold and ROI are fixed for the audited EM1-0406 frame 0."
+  ]
+}

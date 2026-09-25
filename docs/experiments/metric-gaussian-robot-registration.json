@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "method": "metric task-anchor registration with Gaussian/simulator depth ordering",
+  "frame_id": 24,
+  "anchors": [
+    "placed bowl center",
+    "table normal",
+    "source-to-target direction"
+  ],
+  "sim_to_hoi4d": [
+    [
+      0.5701302953758179,
+      -0.8215539378821343,
+      -0.0007572615407669798,
+      0.4612962236057916
+    ],
+    [
+      -0.571027280365282,
+      -0.39561034786885185,
+      -0.719319329462038,
+      0.9845855729224883
+    ],
+    [
+      0.5906600472127032,
+      0.41053815877387634,
+      -0.6946791553064213,
+      1.3817505876334168
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "rotation_determinant": 1.0000000000000004,
+  "table_normal_alignment_deg": 0.0,
+  "target_anchor_3d_error_m": 2.220446049250313e-16,
+  "target_anchor_reprojection_error_px": 6.355287432313019e-14,
+  "rendered_bowl_centroid_to_anchor_px": 6.260377891300712,
+  "table_plane": {
+    "candidate_points": 3387,
+    "inliers": 2100,
+    "inlier_ratio": 0.6200177147918512,
+    "median_inlier_residual_m": 0.002669788167737038,
+    "normal_world": [
+      -0.0007572615407669797,
+      -0.7193193294620379,
+      -0.6946791553064212
+    ],
+    "center_world_m": [
+      0.4142199411686486,
+      0.4016442781417636,
+      0.8027862908147446
+    ]
+  },
+  "class_ids": {
+    "FixedHollowCylinderObject": 1,
+    "BallObject": 2,
+    "Panda": 3,
+    "RethinkMount": 4,
+    "PandaGripper": 5
+  },
+  "gaussian_static_count": 6954,
+  "gaussian_coverage": 0.6900043402777778,
+  "simulator_foreground_pixels": 32349,
+  "depth_visible_foreground_pixels": 32091,
+  "depth_occluded_foreground_pixels": 258,
+  "depth_ordered_fraction_visible": 0.9920244829824724,
+  "limitations": [
+    "Registration uses semantic 3D task anchors rather than image correspondences.",
+    "The sparse Gaussian scene has holes and does not model contact shadows.",
+    "The full registered rollout is validated by generate_metric_gaussian_demo.py."
+  ]
+}

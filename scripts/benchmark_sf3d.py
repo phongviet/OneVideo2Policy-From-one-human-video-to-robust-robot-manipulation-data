@@ -46,6 +46,7 @@ def main() -> None:
     parser.add_argument("--model", default="stabilityai/stable-fast-3d")
     parser.add_argument("--texture-resolution", type=int, default=256)
     parser.add_argument("--precision", choices=("fp16", "fp32"), default="fp16")
+    parser.add_argument("--names", nargs="+", default=["source", "target"])
     args = parser.parse_args()
     if not torch.cuda.is_available():
         raise RuntimeError("Stable Fast 3D CUDA benchmark requires a GPU")
@@ -61,7 +62,7 @@ def main() -> None:
     load_seconds = time.perf_counter() - start
     load_peak = torch.cuda.max_memory_allocated() / 2**20
     records = {}
-    for name in ("source", "target"):
+    for name in args.names:
         image_path = args.inputs / f"{name}_rgba.png"
         image = Image.open(image_path).convert("RGBA")
         folder = args.output / name

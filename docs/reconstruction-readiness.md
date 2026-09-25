@@ -27,6 +27,16 @@ HOI4D sensor depth. It used a median 0.526 scale correction, with raw mean AbsRe
 depth structure; aligned RGB-D supplies metric scale. Per-frame scale alignment is a
 diagnostic and is not evidence of monocular metric recovery.
 
+## Asymmetric Record3D result
+
+The larger `EM1-0406` action-camera crop provides 609 calibrated depth samples and a
+metric 81.9 × 60.6 × 35.4 mm visible-surface reference. After longest-axis scale
+alignment, TripoSR-128 underestimates thickness by 58.9%, while Stable Fast 3D
+underestimates it by 33.1%. Neither passes the 15% secondary-extent gate. This
+confirms the selected contract on an asymmetric object: learned meshes provide
+appearance proposals; RGB-D point clouds or fitted primitives provide metric and
+collision geometry.
+
 ## Reproduce
 
 ```bash

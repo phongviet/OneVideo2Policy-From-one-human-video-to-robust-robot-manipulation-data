@@ -278,3 +278,63 @@
   does not claim full SE(3) accuracy.
 - Artifacts: `docs/experiments/em1-0406-rotation-ablation.json` and
   `docs/assets/em1-0406-rotation-ablation.png`.
+
+## Gaussian footprint tuning and policy selection
+
+- Date / commit: 2026-09-25 / pending
+- Scene selection protocol: sweep global Gaussian scale and opacity on held-out frame
+  30 using fixed baseline-alpha support; reserve frames 42, 54, and 66 for testing.
+- Selected geometry: 1.1× standard-deviation scale and opacity 1.0. Selection PSNR improves
+  by 0.83 dB; independent test improvements are 0.35, 0.44, and 0.69 dB.
+- Downstream test: the selected 4,000-frame policy scores 18/20 on the tuned render,
+  compared with its existing 20/20 on the original Gaussian render.
+- Adaptation test: add 500 tuned-background, varied-Panda-pose frames and retrain the
+  same 2.61-million-parameter model on 4,500 frames. It scores 17/20 on the tuned
+  render, so this checkpoint is rejected.
+- Selection: retain the 4,000-frame checkpoint and original Gaussian render for the
+  policy. Retain the tuned scene for higher-PSNR geometry rendering. View PSNR and
+  closed-loop localization robustness select different configurations.
+- Artifacts: `docs/experiments/hoi4d-gaussian-footprint-tuning.json`,
+  `docs/experiments/gaussian-tuning-policy-results.json`, and
+  `docs/assets/hoi4d-gaussian-footprint-tuning.png`.
+
+## Metric reconstruction proportion gate
+
+- Date / commit: 2026-09-25 / pending
+- Source: `EM1-0406` frame 0, a 282×282 action-camera crop with 609 aligned Record3D
+  depth samples. Robust 2nd–98th percentile PCA extents are 81.9 × 60.6 × 35.4 mm.
+- Gate: align arbitrary model scale by the longest extent, then require both secondary
+  extents to be within 15% of the metric RGB-D reference.
+- TripoSR-128: 81.9 × 69.7 × 14.5 mm, 58.9% maximum secondary error, watertight,
+  1,867 MiB peak allocation. **Fail.**
+- Stable Fast 3D: 81.9 × 68.3 × 23.7 mm, 33.1% maximum secondary error,
+  non-watertight, 6,169 MiB peak allocation. **Fail.**
+- Selection: use aligned RGB-D point clouds or fitted primitives for metric and
+  collision geometry. Keep TripoSR-128 as the fast local visual proposal. Stable Fast
+  3D is proportionally closer but does not justify its memory or topology cost here.
+- Artifacts: `docs/experiments/em1-0406-metric-reference.json`,
+  `docs/experiments/em1-0406-reconstruction-proportions.json`, and
+  `docs/assets/em1-0406-reconstruction-proportions.png`.
+
+## Metric Gaussian robot registration
+
+- Date / commit: 2026-09-25 / pending
+- Anchors: robust newspaper table normal, HOI4D placed-bowl center, and the projected
+  source-to-target direction. These define a metric rigid transform from robosuite
+  to the fused Gaussian world.
+- Registration audit: rotation determinant 1.0, table-normal error 0°, target-center
+  3D/reprojection error at numerical precision, 2.7 mm median table-plane residual,
+  and 6.3 px rendered bowl-centroid error.
+- Depth audit: 32,349 simulator foreground pixels in the still; Gaussian depth hides
+  258 pixels and retains 99.2%.
+- Full data contract: replay one successful 353-sample trajectory through registered
+  HOI4D camera frames 24 and 36. Both 84×84 image streams match all state/action
+  samples without resampling. Across the trajectory, depth ordering hides 50,161
+  simulator pixels and retains 99.3–99.4% of foreground.
+- Gate decision: **Pass for local metric Gaussian robot data generation.** Sparse
+  scene holes and missing contact shadows limit visual fidelity; physical validation
+  remains separate.
+- Artifacts: `docs/experiments/metric-gaussian-robot-registration.json`,
+  `docs/experiments/metric-registered-gaussian-demo.json`,
+  `docs/assets/metric-gaussian-robot-registration.png`, and
+  `docs/assets/metric-registered-gaussian-demo.png`.

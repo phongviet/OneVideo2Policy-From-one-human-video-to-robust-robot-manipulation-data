@@ -1,0 +1,47 @@
+{
+  "experiment": "Gaussian footprint tuning and downstream policy selection",
+  "scene_tuning_report": "docs/experiments/hoi4d-gaussian-footprint-tuning.json",
+  "scene_summary": {
+    "selected_scale_multiplier": 1.1,
+    "selected_opacity": 1.0,
+    "selection_improvement_db": 0.8308341903692629,
+    "mean_independent_test_improvement_db": 0.49288839088004605,
+    "independent_test_improvements_db": [
+      0.3497482207740248,
+      0.437180300666391,
+      0.6917366511997223
+    ]
+  },
+  "policy_runs": [
+    {
+      "configuration": "selected 4000-frame checkpoint + original Gaussian render",
+      "successes": 20,
+      "episodes": 20,
+      "median_xy_error_m": 0.0030961935759348212
+    },
+    {
+      "configuration": "selected 4000-frame checkpoint + tuned Gaussian render",
+      "successes": 18,
+      "episodes": 20,
+      "median_xy_error_m": 0.004907879448983417
+    },
+    {
+      "configuration": "retrained 4500-frame checkpoint + tuned Gaussian render",
+      "successes": 17,
+      "episodes": 20,
+      "median_xy_error_m": 0.003975879222049762
+    }
+  ],
+  "retrained_checkpoint": {
+    "parameters": 2607715,
+    "training_frames": 4500,
+    "best_validation_mae": 0.07312783598899841,
+    "checkpoint_sha256": "d7d0c49e7cc376d3e8c0faa9ffb6299a7cc6e8abede9394749faa60d231e0dfd"
+  },
+  "selection": "Keep the 4000-frame checkpoint and original Gaussian render for policy evaluation; retain the tuned scene for higher-fidelity geometry renders.",
+  "interpretation": "Held-out render PSNR and closed-loop localization robustness are different objectives. The footprint change improves view reconstruction but shifts the composited policy input.",
+  "limitations": [
+    "All robot composites remain appearance-only because simulated and HOI4D cameras lack metric cross-scene registration.",
+    "Twenty episodes distinguish the observed configurations but do not tightly estimate small success-rate differences."
+  ]
+}

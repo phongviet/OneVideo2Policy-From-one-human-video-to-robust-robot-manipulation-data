@@ -74,6 +74,22 @@ and bowl Gaussians come only from reference frame 1 to avoid motion smearing.
 The trajectory command is `ov2p estimate-rgbd-trajectory`. Multiview fusion is
 reproduced by `scripts/fuse_hoi4d_gaussians.py`.
 
+### Held-out footprint tuning
+
+The explicit Gaussian renderer was tuned locally without adding a large learned
+model. `scripts/tune_hoi4d_gaussians.py` sweeps one global scale multiplier and
+opacity on frame 30 while keeping the baseline render support fixed, then evaluates
+the selected parameters on frames 42, 54, and 66. It selects a 1.1× scale multiplier
+and opacity 1.0. PSNR rises by 0.83 dB on the selection frame and by 0.35, 0.44, and
+0.69 dB on the three untouched test frames (mean +0.49 dB).
+
+Temporal voxel support also removes the moving hand from the fused render in the
+held-out visual audit. This is evidence of transient filtering, although it is not a
+semantic hand-segmentation guarantee. The tracked
+[sweep report](experiments/hoi4d-gaussian-footprint-tuning.json) and
+[visual comparison](assets/hoi4d-gaussian-footprint-tuning.png) contain the full grid
+and fixed-support evaluation.
+
 ## Animated object trajectory
 
 The ball center is fitted with its measured 1.916 cm radius on every depth-visible
@@ -113,18 +129,50 @@ The final model uses 4,000 balanced frames across clean and Gaussian appearance,
 reset and demonstration-derived robot poses, nominal and ±2 cm camera positions,
 and normal and half lighting. Its five-condition robustness total is 97/100.
 
-This compositor is an appearance augmentation. The HOI4D Gaussian camera and the
-robosuite camera are not metrically registered, so Gaussian depth cannot correctly
-occlude the robot and the result does not establish photorealistic robot insertion.
+This original compositor remains the selected policy augmentation and uses image
+replacement without metric camera registration.
+
+The tuned render was also tested downstream. The selected 4,000-frame checkpoint
+scores 18/20 on the tuned background, versus 20/20 on the original background.
+Adding 500 tuned-background examples and retraining the same 2.61-million-parameter
+model scores 17/20. The policy therefore retains the original Gaussian background,
+while the tuned scene is retained for higher-fidelity geometry renders. This negative
+result shows that held-out PSNR alone does not select the best policy augmentation.
+The exact comparison is in
+[`gaussian-tuning-policy-results.json`](experiments/gaussian-tuning-policy-results.json).
+
+## Metric robot registration and depth compositing
+
+A separate geometry path now registers robosuite into the HOI4D world from three
+metric semantic anchors: the fitted newspaper table normal, the placed bowl center,
+and the projected source-to-target direction. The resulting transform is a proper
+rigid matrix with determinant 1.0. On frame 24, table-plane RANSAC has 2.7 mm median
+inlier residual, the 3D target anchor agrees to numerical precision, and the rendered
+bowl centroid is 6.3 px from the projected anchor.
+
+`scripts/render_metric_gaussian_robot.py` converts the HOI4D OpenCV camera into the
+MuJoCo camera convention, removes source and target Gaussians to prevent duplicates,
+and composites simulator classes by metric depth. The audited still contains 32,349
+simulator foreground pixels; 258 are correctly hidden behind Gaussian geometry.
+
+`scripts/generate_metric_gaussian_demo.py` applies the same transform to HOI4D camera
+frames 24 and 36 and replays a complete successful robot trajectory. The resulting
+dataset has 353 synchronized dual-camera 84×84 image pairs with state and action
+arrays copied without resampling. Depth ordering retains 99.4% and 99.3% of task
+foreground in the two views and occludes 50,161 pixels across the trajectory. See the
+[registration audit](experiments/metric-gaussian-robot-registration.json),
+[registered demo report](experiments/metric-registered-gaussian-demo.json), and
+[demo montage](assets/metric-registered-gaussian-demo.png).
 
 ## Remaining Gaussian work
 
-1. Optimize Gaussian means, covariance, opacity, and color against held-out views.
-2. Remove the hand and other transient pixels from the static scene.
-3. Register the simulated robot camera to the scene for correct metric depth ordering
-   and shadows. Appearance-only task composition is implemented.
-4. Expand synchronized Gaussian demonstrations and complete the four policy ablations.
+1. Extend the completed global scale/opacity tuning to independent per-Gaussian
+   means, covariance, opacity, and color if photorealistic rendering is required.
+2. Add semantic hand masks if stronger guarantees are required beyond the current
+   temporal-support filtering.
+3. Add physically based contact shadows if photorealistic insertion is required.
 
-The present artifact proves metric multiview fusion, semantic motion, rendering, and
-appearance-composited robot data contracts. It is not yet an optimized 3DGS or a
-metrically registered Gaussian robot dataset.
+The present artifact proves metric multiview fusion, semantic motion, held-out global
+footprint tuning, rendering, appearance augmentation, metric robot registration, and
+a synchronized depth-ordered robot dataset. It is not yet a fully optimized
+per-Gaussian 3DGS or a photorealistic renderer with contact shadows.

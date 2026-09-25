@@ -15,7 +15,8 @@ Completed evidence:
 5. One hundred successful Panda demonstrations were generated in robosuite.
 6. The temporal visual waypoint policy passes 19/20 held-out rollouts.
 7. Metric RGB-D odometry and the target-relative ball trajectory cover all 72 frames.
-8. A fused Gaussian scene renders the animated ball with 0.28 px median centroid error.
+8. A fused Gaussian scene renders the animated ball with 0.28 px median centroid error;
+   held-out footprint tuning improves three independent views by 0.49 dB mean PSNR.
 9. The measured ball-to-bowl simulator passes 3/3 exact-position controller rollouts.
 10. The compact learned visual waypoint policy passes 5/5 randomized measured-task
     rollouts with 4.9 mm median initial XY error.
@@ -23,15 +24,23 @@ Completed evidence:
     mixed model passes 5/5 paired clean and 5/5 composited rollouts.
 12. The final robustness model passes 97/100 across nominal, camera, lighting,
     Gaussian-background, and combined 20-episode conditions.
+13. Semantic metric anchors register robosuite into HOI4D with a 2.7 mm table-plane
+    residual and produce a 353-sample depth-ordered dual-camera Gaussian demo.
 
 ## Remaining gates
 
-### Gate A — reconstruction quality
+### Gate A — reconstruction quality (evaluated; learned meshes rejected for metrics)
 
-Capture or select larger, multi-view object crops and compare reconstructed proportions
-against measured geometry. Current TripoSR HOI4D meshes are too flat for physics.
-This needs a new close multi-view capture; the released sequence has insufficient
-object detail for a faithful learned mesh.
+The retained Record3D `EM1-0406` sequence provides a 282×282 asymmetric action-camera
+crop and 609 aligned metric-depth samples. Its robust visible-surface extents are
+81.9 × 60.6 × 35.4 mm. After isotropic longest-axis alignment, TripoSR predicts
+81.9 × 69.7 × 14.5 mm and Stable Fast 3D predicts 81.9 × 68.3 × 23.7 mm. Neither
+passes the frozen requirement that both secondary extents fall within 15% of the
+RGB-D reference. Stable Fast 3D is closer, but is non-watertight and peaks at
+6,169 MiB; TripoSR is watertight and peaks at 1,867 MiB. The project therefore uses
+Record3D/HOI4D metric depth or fitted primitives for geometry and keeps TripoSR only
+as a fast visual proposal. The comparison requirement is complete without promoting
+an inaccurate learned mesh into physics.
 
 ### Gate B — motion quality (passed for observable image-plane rotation)
 
