@@ -21,7 +21,7 @@ def validate_results(
     errors = []
     if not raw.get("robot_serial") or str(raw["robot_serial"]).startswith("REPLACE_"):
         errors.append("physical robot serial is missing")
-    for key in ("calibration_sha256", "checkpoint_sha256"):
+    for key in ("deployment_manifest_sha256", "calibration_sha256", "checkpoint_sha256"):
         value = str(raw.get(key, ""))
         if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
             errors.append(f"{key} must be a SHA-256 digest")
@@ -42,6 +42,29 @@ def validate_results(
     valid_ids = [trial_id for trial_id in ids if isinstance(trial_id, str) and trial_id]
     if len(valid_ids) != len(set(valid_ids)):
         errors.append("trial IDs must be unique")
+    reset_ids = [item.get("reset_id") for item in trials]
+    if any(not isinstance(reset_id, str) or not reset_id for reset_id in reset_ids):
+        errors.append("every trial requires a nonempty string reset_id")
+    valid_reset_ids = {
+        reset_id for reset_id in reset_ids if isinstance(reset_id, str) and reset_id
+    }
+    if len(valid_reset_ids) != trials_per_controller:
+        errors.append(f"paired evaluation requires {trials_per_controller} unique reset IDs")
+    for reset_id in sorted(valid_reset_ids):
+        pair = [item for item in trials if item.get("reset_id") == reset_id]
+        controllers = {item.get("controller") for item in pair}
+        orders = {item.get("pair_order") for item in pair}
+        if len(pair) != 2 or controllers != {"scripted", "learned"} or orders != {1, 2}:
+            errors.append(f"reset {reset_id} must pair both controllers at orders 1 and 2")
+    first_counts = {
+        controller: sum(
+            item.get("controller") == controller and item.get("pair_order") == 1
+            for item in trials
+        )
+        for controller in ("scripted", "learned")
+    }
+    if valid_reset_ids and min(first_counts.values()) < trials_per_controller // 2:
+        errors.append("controller order must be counterbalanced across reset pairs")
 
     summaries = {}
     for controller in ("scripted", "learned"):
@@ -56,6 +79,7 @@ def validate_results(
             if type(item.get("success")) is not bool
             or type(item.get("safety_abort")) is not bool
             or not math.isfinite(_force(item.get("max_force_n")))
+            or _force(item.get("max_force_n")) < 0
         ]
         if malformed:
             errors.append(f"{controller} trials have invalid required fields: {malformed}")
@@ -92,6 +116,8 @@ def validate_results(
             "min_success_rate": min_success_rate,
             "max_force_n": max_force_n,
             "zero_safety_aborts": True,
+            "paired_resets": True,
+            "counterbalanced_order": True,
         },
         "controllers": summaries,
         "errors": errors,

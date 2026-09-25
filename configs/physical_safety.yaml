@@ -1,14 +1,15 @@
 schema_version: 1
 robot: panda_cartesian_interface
 workspace_bounds_m:
-  - [-0.10, 0.20]
-  - [-0.35, 0.25]
-  - [0.79, 1.08]
+  - [0.40, 0.70]
+  - [-0.25, 0.35]
+  - [-0.122, 0.168]
 max_cartesian_step_m: 0.01
 max_cartesian_speed_m_s: 0.08
 max_force_n: 15.0
 gripper_range: [-1.0, 1.0]
 abort_on_camera_timeout_s: 0.25
+max_camera_skew_s: 0.05
 abort_on_robot_fault: true
 required_operator_checks:
   - emergency_stop_verified

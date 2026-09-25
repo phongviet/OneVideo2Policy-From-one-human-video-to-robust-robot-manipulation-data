@@ -5,23 +5,181 @@
   "robot_serial": "REPLACE_WITH_ROBOT_SERIAL",
   "operator_approved": false,
   "emergency_stop_verified": false,
-  "workspace_bounds_m": [[null, null], [null, null], [null, null]],
-  "table_normal_robot": [null, null, null],
+  "workspace_bounds_m": [
+    [
+      null,
+      null
+    ],
+    [
+      null,
+      null
+    ],
+    [
+      null,
+      null
+    ]
+  ],
+  "table_normal_robot": [
+    null,
+    null,
+    null
+  ],
   "table_height_robot_m": null,
   "cameras": [
     {
       "name": "agentview",
-      "resolution": [84, 84],
-      "intrinsics": [[null, 0, null], [0, null, null], [0, 0, 1]],
-      "camera_to_robot": [[null, null, null, null], [null, null, null, null], [null, null, null, null], [0, 0, 0, 1]],
+      "resolution": [
+        84,
+        84
+      ],
+      "intrinsics": [
+        [
+          null,
+          0,
+          null
+        ],
+        [
+          0,
+          null,
+          null
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "distortion_coefficients": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "camera_to_robot": [
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
       "reprojection_rmse_px": null
     },
     {
       "name": "frontview",
-      "resolution": [84, 84],
-      "intrinsics": [[null, 0, null], [0, null, null], [0, 0, 1]],
-      "camera_to_robot": [[null, null, null, null], [null, null, null, null], [null, null, null, null], [0, 0, 0, 1]],
+      "resolution": [
+        84,
+        84
+      ],
+      "intrinsics": [
+        [
+          null,
+          0,
+          null
+        ],
+        [
+          0,
+          null,
+          null
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "distortion_coefficients": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "camera_to_robot": [
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
       "reprojection_rmse_px": null
     }
-  ]
+  ],
+  "home_position_robot_m": [
+    null,
+    null,
+    null
+  ],
+  "target_center_robot_m": [
+    null,
+    null,
+    null
+  ],
+  "task_to_robot": [
+    [
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      0,
+      0,
+      0,
+      1
+    ]
+  ],
+  "source_diameter_m": null,
+  "target_outer_diameter_m": null,
+  "target_height_m": null
 }

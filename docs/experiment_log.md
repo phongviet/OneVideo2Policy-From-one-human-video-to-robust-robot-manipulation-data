@@ -345,15 +345,30 @@
 - Frozen checkpoint SHA-256:
   `c1b5310537d85734ecef0d427a1a9a13f49d69eb617842802a044ecdcd228125`.
 - Inference smoke test: predicted the retained source position within 3.84 mm.
-- Motion dry run: 143 Cartesian commands completed without a stop, using 1 cm
-  maximum steps and 8 cm/s maximum speed over 17.36 seconds of command time.
+- Motion dry run: 149 Cartesian commands completed without a stop, using 1 cm
+  maximum steps and 8 cm/s maximum speed over 18.69 seconds of command time. Gripper
+  close and release commands occur at stationary source and target waypoints.
 - Calibration fixture: both simulated cameras pass the numeric checks at 0.5 and
   0.6 px reprojection RMSE. The preflight correctly refuses hardware readiness
   because the fixture is simulation-only and has no operator, emergency-stop, or
   physical robot verification.
+- Camera transfer contract: both measured camera transforms must stay within 2 cm and
+  5° of the frozen robosuite training cameras, focal lengths within 5%, and principal
+  points within 2 px. A synchronized frame watchdog enforces 250 ms age and 50 ms
+  inter-camera skew limits during execution.
+- Negative check: a valid synthetic camera calibration with different poses and focal
+  lengths is rejected before packaging for translation, rotation, and focal mismatch.
+- Coordinate contract: the policy's robosuite task frame is fitted to the physical
+  robot-base frame from 3D correspondences and must validate within 5 mm. Learned
+  source predictions are transformed into robot coordinates before planning.
+- Object contract: measured physical dimensions must remain within 10% of the
+  3.832 cm source diameter and 9.912 cm outer diameter by 5.693 cm target height.
+  The separately supplied 3 cm source is rejected for this frozen-policy test.
 - Trial gate test: an empty physical template is rejected; a synthetic paired fixture
   at 4/5 scripted and 4/5 learned successes passes with zero safety aborts and force
-  violations. This tests the validator and is not robot evidence.
+  violations. The gate also requires five shared reset IDs, counterbalanced order,
+  and deployment, calibration, and checkpoint hashes. This tests the validator and
+  is not robot evidence.
 - Gate decision: **Pass for local deployment software.** Gate E remains open until a
   real calibration and ten paired physical trials satisfy the frozen criteria.
 - Artifacts: `docs/experiments/physical-software-preflight.json`,

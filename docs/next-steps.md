@@ -49,10 +49,14 @@ metric RGB-D geometry remains selected. The remaining item requires external evi
 absent from this workspace. Metric Gaussian insertion is now implemented from the
 shared table normal, bowl center, and source direction, including a 353-sample
 depth-ordered dual-camera demonstration. The local physical software preflight now
-passes: frozen-checkpoint smoke inference is within 3.84 mm, and 143 Cartesian
-commands complete under 1 cm step and 8 cm/s limits. Hardware arming remains disabled
+passes: frozen-checkpoint smoke inference is within 3.84 mm, and 149 Cartesian
+commands complete under 1 cm step and 8 cm/s limits. Gripper changes happen only at
+stationary source and target waypoints. Policy task coordinates are explicitly
+transformed into robot-base coordinates before safety checks. Hardware arming remains disabled
 by the simulation fixture. Physical validation needs access to the robot, measured
 camera calibration, workspace measurements, and an operator-approved safety envelope.
+It also requires a source and bowl matching the frozen 3.832 cm and 9.912 × 5.693 cm
+training geometry; the previously supplied 3 cm source is too small for this gate.
 The existing video cannot recover those quantities by computation alone. See the
 [`physical evaluation runbook`](physical-evaluation-runbook.md).
 
@@ -64,6 +68,7 @@ Reproduce the hardware-neutral software preflight:
 PYTHONPATH=src .venv/bin/python scripts/prepare_physical_evaluation.py \
   --calibration configs/physical_calibration_simulation_fixture.json \
   --safety configs/physical_safety.yaml \
+  --camera-reference configs/physical_camera_reference.json \
   --checkpoint results/policy/ball_localization_robust_4000/visual_waypoint.pt \
   --smoke-data results/simulation/ball_localization_robust_4000/demonstrations.npz \
   --output results/deployment/physical_preflight_sim \

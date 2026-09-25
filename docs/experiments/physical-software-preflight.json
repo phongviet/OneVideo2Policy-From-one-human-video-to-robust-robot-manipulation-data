@@ -9,14 +9,14 @@
       {
         "name": "agentview",
         "reprojection_rmse_px": 0.5,
-        "rotation_orthogonality_error": 0.0,
-        "rotation_determinant": 1.0,
+        "rotation_orthogonality_error": 6.283982970220274e-16,
+        "rotation_determinant": 1.0000000000000007,
         "errors": []
       },
       {
         "name": "frontview",
         "reprojection_rmse_px": 0.6,
-        "rotation_orthogonality_error": 0.0,
+        "rotation_orthogonality_error": 2.221909959592946e-16,
         "rotation_determinant": 1.0,
         "errors": []
       }
@@ -25,6 +25,36 @@
     "simulation_only": true,
     "operator_approved": false,
     "emergency_stop_verified": false
+  },
+  "training_camera_alignment": {
+    "valid": true,
+    "errors": [],
+    "camera_diagnostics": [
+      {
+        "name": "agentview",
+        "translation_error_m": 0.0,
+        "rotation_error_deg": 0.0,
+        "focal_relative_error": 0.0,
+        "principal_point_error_px": 0.0,
+        "errors": []
+      },
+      {
+        "name": "frontview",
+        "translation_error_m": 0.0,
+        "rotation_error_deg": 0.0,
+        "focal_relative_error": 0.0,
+        "principal_point_error_px": 0.0,
+        "errors": []
+      }
+    ],
+    "target_position_error_m": 5.334274688628682e-17,
+    "table_normal_error_deg": 0.0,
+    "table_height_error_m": 0.0,
+    "object_dimension_relative_errors": {
+      "source_diameter_m": 0.0,
+      "target_outer_diameter_m": 0.0,
+      "target_height_m": 0.0
+    }
   },
   "checkpoint": {
     "sha256": "c1b5310537d85734ecef0d427a1a9a13f49d69eb617842802a044ecdcd228125",
@@ -38,19 +68,26 @@
       -0.2025296591115801,
       0.8191606110498586
     ],
-    "smoke_error_m": 0.0038437234680316645
+    "smoke_error_m": 0.0038437234680316645,
+    "smoke_prediction_robot_m": [
+      0.569337010383606,
+      -0.10204496383666992,
+      -0.09283941936492923
+    ]
   },
   "dry_run": {
-    "commands": 143,
+    "commands": 149,
     "final_position_m": [
-      0.1,
-      -0.20000000000000004,
-      1.02
+      0.6,
+      -0.10000000000000003,
+      0.108
     ],
-    "elapsed_command_time_s": 17.360115293503515,
+    "elapsed_command_time_s": 18.685058427403515,
     "stopped": false,
     "max_step_m": 0.01,
-    "max_speed_m_s": 0.08
+    "max_speed_m_s": 0.08,
+    "camera_timeout_s": 0.25,
+    "max_camera_skew_s": 0.05
   },
   "arming_blockers": [
     "replace simulation fixture with measured physical calibration",

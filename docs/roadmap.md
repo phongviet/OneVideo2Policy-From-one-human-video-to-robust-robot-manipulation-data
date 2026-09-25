@@ -27,7 +27,7 @@ Completed evidence:
 13. Semantic metric anchors register robosuite into HOI4D with a 2.7 mm table-plane
     residual and produce a 353-sample depth-ordered dual-camera Gaussian demo.
 14. The physical deployment preflight validates calibration, freezes artifact hashes,
-    smoke-tests checkpoint inference to 3.84 mm, and safety-checks a 143-command
+    smoke-tests checkpoint inference to 3.84 mm, and safety-checks a 149-command
     Cartesian dry run. A paired-trial validator enforces the final hardware gate.
 
 ## Remaining gates
@@ -69,8 +69,13 @@ combination. The combined condition passes 18/20. Physical transfer remains Gate
 ### Gate E — physical validation
 
 The local deployment package and software preflight are complete. The preflight uses
-the frozen policy checkpoint, enforces 1 cm steps, 8 cm/s speed, a 15 N force limit,
-and workspace bounds, and refuses to arm from the simulation calibration fixture.
+the frozen policy checkpoint, transforms policy outputs into the robot-base frame,
+enforces 1 cm steps, stationary gripper transitions,
+8 cm/s speed, a 15 N force limit, workspace bounds, and the exact dual-camera training
+geometry. It refuses to arm from the simulation calibration fixture.
+The physical object gate also requires the 3.832 cm source and 9.912 × 5.693 cm target
+geometry used to train and evaluate the selected policy; the separate 3 cm filmed
+object is outside this tolerance.
 The remaining evidence is a measured two-camera calibration and five paired physical
 trials per controller on a real robot. Both scripted and learned controllers must
 reach at least 4/5 successes with zero safety aborts or force violations. Follow

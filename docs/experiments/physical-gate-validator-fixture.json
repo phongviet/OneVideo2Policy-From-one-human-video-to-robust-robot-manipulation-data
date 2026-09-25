@@ -5,7 +5,9 @@
     "trials_per_controller": 5,
     "min_success_rate": 0.8,
     "max_force_n": 15.0,
-    "zero_safety_aborts": true
+    "zero_safety_aborts": true,
+    "paired_resets": true,
+    "counterbalanced_order": true
   },
   "controllers": {
     "scripted": {

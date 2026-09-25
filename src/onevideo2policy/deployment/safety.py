@@ -87,18 +87,8 @@ class SafetySupervisor:
         self.envelope = envelope
 
     def send(self, command: CartesianCommand) -> None:
-        state = self.robot.state()
-        current = np.asarray(state.position_m, dtype=np.float64)
+        _, current = self._validated_state()
         target = np.asarray(command.position_m, dtype=np.float64)
-        if state.fault:
-            self.robot.stop()
-            raise RuntimeError("robot reports a fault")
-        if not np.isfinite(state.force_n) or state.force_n > self.envelope.max_force_n:
-            self.robot.stop()
-            raise RuntimeError("force reading invalid or limit exceeded")
-        if current.shape != (3,) or not np.isfinite(current).all():
-            self.robot.stop()
-            raise RuntimeError("robot position is invalid")
         if target.shape != (3,) or not np.isfinite(target).all():
             raise ValueError("command position must be finite xyz")
         bounds = self.envelope.workspace_bounds_m
@@ -117,6 +107,28 @@ class SafetySupervisor:
         if not low <= command.gripper <= high:
             raise ValueError("gripper command outside configured range")
         self.robot.command(command)
+        self._validated_state()
+
+    def _validated_state(self) -> tuple[RobotState, NDArray[np.float64]]:
+        state = self.robot.state()
+        current = np.asarray(state.position_m, dtype=np.float64)
+        if state.fault:
+            self.robot.stop()
+            raise RuntimeError("robot reports a fault")
+        if not np.isfinite(state.force_n) or state.force_n > self.envelope.max_force_n:
+            self.robot.stop()
+            raise RuntimeError("force reading invalid or limit exceeded")
+        if not np.isfinite(state.timestamp_s):
+            self.robot.stop()
+            raise RuntimeError("robot timestamp is invalid")
+        if current.shape != (3,) or not np.isfinite(current).all():
+            self.robot.stop()
+            raise RuntimeError("robot position is invalid")
+        bounds = self.envelope.workspace_bounds_m
+        if np.any(current < bounds[:, 0]) or np.any(current > bounds[:, 1]):
+            self.robot.stop()
+            raise RuntimeError("robot position is outside workspace bounds")
+        return state, current
 
 
 def interpolate_keyframes(
@@ -125,11 +137,21 @@ def interpolate_keyframes(
     *,
     max_step_m: float,
     speed_m_s: float,
+    hold_duration_s: float = 0.5,
 ) -> list[CartesianCommand]:
     keyframes = np.asarray(keyframes_m, dtype=np.float64)
     gripper = np.asarray(gripper, dtype=np.float64)
-    if keyframes.ndim != 2 or keyframes.shape[1] != 3 or gripper.shape != (len(keyframes),):
+    if (
+        keyframes.ndim != 2
+        or keyframes.shape[1] != 3
+        or gripper.shape != (len(keyframes),)
+        or not np.isfinite(keyframes).all()
+        or not np.isfinite(gripper).all()
+    ):
         raise ValueError("keyframes must be [N,3] with one gripper value each")
+    limits = np.asarray([max_step_m, speed_m_s, hold_duration_s], dtype=np.float64)
+    if not np.isfinite(limits).all() or np.any(limits <= 0):
+        raise ValueError("interpolation limits must be positive")
     commands = []
     for index in range(1, len(keyframes)):
         delta = keyframes[index] - keyframes[index - 1]
@@ -137,11 +159,16 @@ def interpolate_keyframes(
         for step in range(1, steps + 1):
             position = keyframes[index - 1] + delta * step / steps
             distance = np.linalg.norm(delta) / steps
+            duration_s = (
+                hold_duration_s
+                if distance < 1e-12
+                else max(float(distance / speed_m_s), 0.05)
+            )
             commands.append(
                 CartesianCommand(
                     position_m=position,
                     gripper=float(gripper[index]),
-                    duration_s=max(float(distance / speed_m_s), 0.05),
+                    duration_s=duration_s,
                 )
             )
     return commands
