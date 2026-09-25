@@ -48,7 +48,8 @@ placeholder from measurements:
 5. Measure the table plane, home pose, target center, source diameter, target outer
    diameter, and target height in robot-base coordinates. The previously supplied
    3 cm source does not match the frozen 3.832 cm training object and cannot be used
-   for the final Gate E claim.
+   for the final Gate E claim. Printable matched assets and their dimensional audit
+   are in [`physical-fixtures.md`](physical-fixtures.md).
 6. Set workspace bounds in robot-base coordinates inside the mechanically clear region. Keep them no wider than
    the limits in `configs/physical_safety.yaml` unless the safety review updates both.
 7. Estimate the task-to-robot and camera-to-robot transforms and held-out errors:

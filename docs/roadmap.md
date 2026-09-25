@@ -29,6 +29,8 @@ Completed evidence:
 14. The physical deployment preflight validates calibration, freezes artifact hashes,
     smoke-tests checkpoint inference to 3.84 mm, and safety-checks a 149-command
     Cartesian dry run. A paired-trial validator enforces the final hardware gate.
+15. Printable watertight source and target fixtures match the frozen policy geometry
+    to STL float precision and include reproducible hash and manifold audits.
 
 ## Remaining gates
 

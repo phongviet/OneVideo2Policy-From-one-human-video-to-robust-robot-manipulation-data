@@ -16,6 +16,15 @@ from onevideo2policy.deployment.calibration import (
     validate_camera_alignment,
 )
 from onevideo2policy.deployment.camera import CameraFrame, SynchronizedCameraPair
+from onevideo2policy.deployment.physical_assets import (
+    BALL_DIAMETER_M,
+    BOWL_HEIGHT_M,
+    BOWL_OUTER_DIAMETER_M,
+    audit_binary_stl,
+    bowl_triangles,
+    sphere_triangles,
+    write_binary_stl,
+)
 from onevideo2policy.deployment.planning import build_pick_place_commands
 from onevideo2policy.deployment.results import FROZEN_CHECKPOINT_SHA256, validate_results
 from onevideo2policy.deployment.runtime import execute_trial
@@ -286,6 +295,27 @@ def test_deployment_package_verifies_arming_state_and_hashes(tmp_path, monkeypat
     safety.write_text(safety.read_text(encoding="utf-8") + "# tampered\n", encoding="utf-8")
     with pytest.raises(RuntimeError, match="hash mismatch"):
         deployment_package.load_deployment_package(tmp_path)
+
+
+def test_printable_task_meshes_are_watertight_and_dimensionally_exact(tmp_path) -> None:
+    fixtures = {
+        "ball.stl": (
+            sphere_triangles(BALL_DIAMETER_M / 2, 32, 16),
+            np.full(3, BALL_DIAMETER_M * 1000),
+        ),
+        "bowl.stl": (
+            bowl_triangles(BOWL_OUTER_DIAMETER_M / 2, BOWL_HEIGHT_M, 0.004, 32),
+            np.array(
+                [BOWL_OUTER_DIAMETER_M * 1000, BOWL_OUTER_DIAMETER_M * 1000, BOWL_HEIGHT_M * 1000]
+            ),
+        ),
+    }
+    for name, (triangles, expected_extents) in fixtures.items():
+        path = tmp_path / name
+        write_binary_stl(path, triangles * 1000)
+        audit = audit_binary_stl(path)
+        assert audit["watertight"]
+        assert np.allclose(audit["extents_mm"], expected_extents, atol=1e-4)
 
 
 def test_safety_supervisor_stops_on_force_and_rejects_workspace() -> None:

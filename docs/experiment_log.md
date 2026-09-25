@@ -364,6 +364,10 @@
 - Object contract: measured physical dimensions must remain within 10% of the
   3.832 cm source diameter and 9.912 cm outer diameter by 5.693 cm target height.
   The separately supplied 3 cm source is rejected for this frozen-policy test.
+- Fixture preparation: generated watertight binary STL files for a 38.321 mm sphere
+  and a 99.123 × 56.933 mm bowl. Their audited extents differ from the frozen values
+  by less than 0.003 mm due to float32 STL storage, with zero boundary or nonmanifold
+  edges. Final printed parts still require calliper measurements.
 - Trial gate test: an empty physical template is rejected; a synthetic paired fixture
   at 4/5 scripted and 4/5 learned successes passes with zero safety aborts and force
   violations. The gate also requires five shared reset IDs, counterbalanced order,

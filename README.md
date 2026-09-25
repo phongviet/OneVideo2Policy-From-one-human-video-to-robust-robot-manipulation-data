@@ -8,7 +8,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-Ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
-[![Tests](https://img.shields.io/badge/tests-71%20passing-2EA44F)](#testing)
+[![Tests](https://img.shields.io/badge/tests-72%20passing-2EA44F)](#testing)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-early%20research%20prototype-orange)](#project-status)
 
@@ -92,6 +92,7 @@ physical robot success, or sim-to-real transfer.
 | Synthetic demonstrations | ✅ | 10/10 measured ball-to-bowl trajectories plus 500 randomized localization frames |
 | Policy benchmark | ✅ | Final 4,000-frame waypoint model passes 97/100 across five clean and shifted conditions |
 | Physical deployment preflight | ✅ | Calibration validator, safety supervisor, frozen-checkpoint smoke test, artifact hashes, and paired result gate |
+| Matched physical fixtures | ✅ | Watertight 38.321 mm ball and 99.123 × 56.933 mm bowl STL files with audited dimensions |
 | Physical robot evaluation | ⬜ | Five scripted plus five learned trials; see [`docs/physical-evaluation-runbook.md`](docs/physical-evaluation-runbook.md) |
 
 Legend: ✅ implemented · 🟡 contract/scaffold ready · ⬜ planned

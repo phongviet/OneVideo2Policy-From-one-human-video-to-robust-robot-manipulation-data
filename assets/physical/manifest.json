@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "units": "millimeters in STL coordinates",
+  "source": {
+    "diameter_m": 0.03832122209971702,
+    "color": "matte orange"
+  },
+  "target": {
+    "outer_diameter_m": 0.0991230365017926,
+    "height_m": 0.05693338151487156,
+    "wall_m": 0.004,
+    "color": "matte blue"
+  },
+  "files": {
+    "source-ball-38.321mm.stl": {
+      "sha256": "b876442009dd43fb8ac0c761dd8ba26b7ba7ef01b5f00eee9b6119583e5ad04e",
+      "triangles": 3968,
+      "extents_mm": [
+        38.32122039794922,
+        38.32122039794922,
+        38.32122039794922
+      ],
+      "watertight": true,
+      "boundary_or_nonmanifold_edges": 0
+    },
+    "target-bowl-99.123x56.933mm.stl": {
+      "sha256": "19828800fbcf1737371f06ea17d3b56ffac3907641301fc892194bd44e71d8eb",
+      "triangles": 512,
+      "extents_mm": [
+        99.12303924560547,
+        99.12303924560547,
+        56.933380126953125
+      ],
+      "watertight": true,
+      "boundary_or_nonmanifold_edges": 0
+    }
+  },
+  "usage": "Printable geometry fixture; verify final printed dimensions before Gate E."
+}
