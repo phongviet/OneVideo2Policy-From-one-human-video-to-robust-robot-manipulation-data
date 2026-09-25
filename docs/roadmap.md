@@ -31,6 +31,8 @@ Completed evidence:
     Cartesian dry run. A paired-trial validator enforces the final hardware gate.
 15. Printable watertight source and target fixtures match the frozen policy geometry
     to STL float precision and include reproducible hash and manifold audits.
+16. A print-ready ChArUco target and automatic detector produce native intrinsics,
+    distortion, robot-frame correspondences, and held-out camera calibration inputs.
 
 ## Remaining gates
 

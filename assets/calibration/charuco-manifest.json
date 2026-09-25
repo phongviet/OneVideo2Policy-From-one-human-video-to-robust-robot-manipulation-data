@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "dictionary": "DICT_5X5_100",
+  "squares_x": 7,
+  "squares_y": 5,
+  "square_length_m": 0.03,
+  "marker_length_m": 0.022,
+  "printed_width_m": 0.21,
+  "printed_height_m": 0.15,
+  "inner_corners": 24,
+  "files": {
+    "charuco-7x5-30mm.png": {
+      "sha256": "8783f646fba7098c68d0539ba7aaa10990f82092f43e8431a2c3ca58091603ef",
+      "pixels": [
+        1680,
+        1200
+      ]
+    },
+    "charuco-7x5-30mm.pdf": {
+      "sha256": "e85bea38471b107f613b6bfd47d35660ed2945c6e5ac7192c88203a9905cb721",
+      "page_size_mm": [
+        210.0,
+        150.0
+      ]
+    }
+  },
+  "print_instruction": "Print PDF at 100% / actual size and verify square length with callipers."
+}

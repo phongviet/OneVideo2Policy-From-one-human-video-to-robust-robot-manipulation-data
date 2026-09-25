@@ -16,6 +16,11 @@ from onevideo2policy.deployment.calibration import (
     validate_camera_alignment,
 )
 from onevideo2policy.deployment.camera import CameraFrame, SynchronizedCameraPair
+from onevideo2policy.deployment.charuco import (
+    calibrate_intrinsics,
+    create_board,
+    detect_charuco,
+)
 from onevideo2policy.deployment.physical_assets import (
     BALL_DIAMETER_M,
     BOWL_HEIGHT_M,
@@ -316,6 +321,41 @@ def test_printable_task_meshes_are_watertight_and_dimensionally_exact(tmp_path) 
         audit = audit_binary_stl(path)
         assert audit["watertight"]
         assert np.allclose(audit["extents_mm"], expected_extents, atol=1e-4)
+
+
+def test_charuco_board_detection_and_intrinsic_calibration() -> None:
+    cv2 = pytest.importorskip("cv2")
+    config = {
+        "dictionary": "DICT_5X5_100",
+        "squares_x": 7,
+        "squares_y": 5,
+        "square_length_m": 0.03,
+        "marker_length_m": 0.022,
+    }
+    board = create_board(config)
+    image = board.generateImage((1400, 1000), marginSize=0, borderBits=1)
+    board_points, pixels, ids = detect_charuco(image, board)
+    assert len(ids) == len(board.getChessboardCorners()) == 24
+    assert board_points.shape == (24, 3)
+    assert pixels.shape == (24, 2)
+
+    matrix = np.array([[500.0, 0, 320], [0, 520.0, 240], [0, 0, 1]])
+    object_views = []
+    pixel_views = []
+    for index in range(8):
+        rotation = np.array([0.04 * index, -0.03 * index, 0.02 * index])
+        translation = np.array([0.01 * index, -0.005 * index, 0.8 + 0.04 * index])
+        projected, _ = cv2.projectPoints(
+            board_points, rotation, translation, matrix, np.zeros(5)
+        )
+        object_views.append(board_points)
+        pixel_views.append(projected[:, 0].astype(np.float32))
+    estimated, distortion, rms = calibrate_intrinsics(
+        object_views, pixel_views, (640, 480)
+    )
+    assert rms < 1e-3
+    assert np.allclose(estimated, matrix, rtol=2e-2, atol=2.0)
+    assert np.linalg.norm(distortion) < 0.1
 
 
 def test_safety_supervisor_stops_on_force_and_rejects_workspace() -> None:

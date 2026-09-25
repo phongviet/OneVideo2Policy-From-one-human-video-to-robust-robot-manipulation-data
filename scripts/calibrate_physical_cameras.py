@@ -119,6 +119,7 @@ def main() -> None:
             "task_frame_validation_points": len(validation_task_points),
             "task_frame_validation_rmse_m": task_validation_rmse,
             "cameras": diagnostics,
+            "capture_diagnostics": observations.get("charuco_diagnostics"),
         },
     }
     report = validate_calibration(bundle)

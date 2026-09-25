@@ -37,14 +37,13 @@ Copy `configs/physical_calibration_observations_template.json` and fill every
 placeholder from measurements:
 
 1. Record the physical robot serial.
-2. Calibrate both 84×84 observation streams and enter their 3×3 intrinsics and
-   distortion coefficients. Use explicit zero coefficients only for a verified
-   distortion-free or already rectified stream.
+2. Print the supplied ChArUco PDF at actual size, attach it to a rigid backing, and
+   verify its 30 mm squares. Follow [`charuco-calibration.md`](charuco-calibration.md).
 3. Record at least three noncollinear correspondences between the frozen robosuite
    task frame and robot-base frame in `task_frame.fit`, plus independent validation
    correspondences. The held-out rigid-alignment RMSE must be at most 5 mm.
-4. Record at least six calibration-target robot-frame 3D points and corresponding
-   pixels in each camera's `fit`; use separate points in `validation`.
+4. Capture at least seven board views for each camera and record each independent
+   board-to-robot transform. Reserve at least one view for validation.
 5. Measure the table plane, home pose, target center, source diameter, target outer
    diameter, and target height in robot-base coordinates. The previously supplied
    3 cm source does not match the frozen 3.832 cm training object and cannot be used
@@ -52,7 +51,15 @@ placeholder from measurements:
    are in [`physical-fixtures.md`](physical-fixtures.md).
 6. Set workspace bounds in robot-base coordinates inside the mechanically clear region. Keep them no wider than
    the limits in `configs/physical_safety.yaml` unless the safety review updates both.
-7. Estimate the task-to-robot and camera-to-robot transforms and held-out errors:
+7. Automatically detect corners and estimate native intrinsics and distortion:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/extract_charuco_calibration.py \
+  --captures path/to/physical-charuco-captures.json \
+  --output path/to/physical-calibration-observations.json
+```
+
+8. Estimate the task-to-robot and camera-to-robot transforms and held-out errors:
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/calibrate_physical_cameras.py \
@@ -60,7 +67,7 @@ PYTHONPATH=src .venv/bin/python scripts/calibrate_physical_cameras.py \
   --output path/to/measured-physical-calibration.json
 ```
 
-8. After the operator checks the emergency stop, swept volume, tool, gripper, camera
+9. After the operator checks the emergency stop, swept volume, tool, gripper, camera
    mounts, and low-speed mode, set `operator_approved` and
    `emergency_stop_verified` to true.
 

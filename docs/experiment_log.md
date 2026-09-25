@@ -368,6 +368,10 @@
   and a 99.123 × 56.933 mm bowl. Their audited extents differ from the frozen values
   by less than 0.003 mm due to float32 STL storage, with zero boundary or nonmanifold
   edges. Final printed parts still require calliper measurements.
+- Calibration capture check: generated a dimensioned 7×5 ChArUco board and exercised
+  the complete detector-to-extrinsics path on seven synthetic views per camera.
+  Native intrinsic RMS is 0.36–0.38 px and held-out extrinsic RMSE is 0.10–0.23 px.
+  This verifies automation only; physical captures remain required.
 - Trial gate test: an empty physical template is rejected; a synthetic paired fixture
   at 4/5 scripted and 4/5 learned successes passes with zero safety aborts and force
   violations. The gate also requires five shared reset IDs, counterbalanced order,

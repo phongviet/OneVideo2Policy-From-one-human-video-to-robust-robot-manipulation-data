@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "robot": "Panda",
+  "robot_serial": "REPLACE_WITH_ROBOT_SERIAL",
+  "workspace_bounds_m": [
+    [
+      0.4,
+      0.7
+    ],
+    [
+      -0.25,
+      0.35
+    ],
+    [
+      -0.122,
+      0.168
+    ]
+  ],
+  "table_normal_robot": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "table_height_robot_m": null,
+  "home_position_robot_m": [
+    null,
+    null,
+    null
+  ],
+  "target_center_robot_m": [
+    null,
+    null,
+    null
+  ],
+  "task_frame": {
+    "fit": {
+      "task_points_m": [],
+      "robot_points_m": []
+    },
+    "validation": {
+      "task_points_m": [],
+      "robot_points_m": []
+    }
+  },
+  "source_diameter_m": null,
+  "target_outer_diameter_m": null,
+  "target_height_m": null,
+  "runtime_resolution": [
+    84,
+    84
+  ],
+  "board": {
+    "dictionary": "DICT_5X5_100",
+    "squares_x": 7,
+    "squares_y": 5,
+    "square_length_m": 0.03,
+    "marker_length_m": 0.022
+  },
+  "cameras": [
+    {
+      "name": "agentview",
+      "capture_resolution": [
+        null,
+        null
+      ],
+      "captures": []
+    },
+    {
+      "name": "frontview",
+      "capture_resolution": [
+        null,
+        null
+      ],
+      "captures": []
+    }
+  ],
+  "capture_record_schema": {
+    "image": "relative/path/to/image.png",
+    "split": "fit_or_validation",
+    "board_to_robot": [
+      [
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        0,
+        0,
+        0,
+        1
+      ]
+    ]
+  }
+}
